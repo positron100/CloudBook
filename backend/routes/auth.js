@@ -18,6 +18,7 @@ router.post('/createuser',
         let status = false ; 
         // on error return status(400) and the errors
         const result = validationResult(req);
+        // validationResult() : when there are validation errors returns false else true
         if (!result.isEmpty()) {
             return res.status(400).json({ error: result.array() });
         }
@@ -80,7 +81,7 @@ router.post('/login',
 
                 return res.status(400).json({status , error : "please try to login with correct credentials"})
             }
-            // commparing the entered password and the storred password
+            // commparing the entered password and the stored password
             const passwordCompare = await bcrypt.compare(password , user.password);
             if(!passwordCompare)
             {
