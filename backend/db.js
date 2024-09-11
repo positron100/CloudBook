@@ -1,7 +1,5 @@
-require('dotenv').config();
 const mongoose = require('mongoose');
-const database = process.env.database;
-const mongoURI = database;
+const mongoURI = "mongodb://localhost:27017/cloudbook";
 
 const connectToMongo = ()=>{
     let connection = mongoose.connect(mongoURI)
