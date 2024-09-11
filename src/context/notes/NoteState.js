@@ -2,7 +2,7 @@ import { useState } from 'react';
 import NoteContext from './NoteContext';
 // import { useState } from 'react';
 const NoteState = (props) =>{
-  const host = "http://localhost:5000";
+  const host = "https://cloud-book-backend.onrender.com";
     // state to be passed Globally
   const [notes, setNotes] = useState([])
   
