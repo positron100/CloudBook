@@ -20,7 +20,7 @@ function Navbar() {
       <nav className="navbar navbar-expand-lg " style={{ backgroundColor: "black" }}>
         <div className="container-fluid">
           <Link className="navbar-brand" to="/" style={{ color: "white" }}>CloudBook</Link>
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation" style="background-color:white;">
             <span className="navbar-toggler-icon"></span>
           </button>
           <div className="collapse navbar-collapse" id="navbarSupportedContent">
@@ -31,7 +31,7 @@ function Navbar() {
               </li>
               <li className="nav-item">
                 {/* route to about component */}
-                <Link className={`nav-link ${location.pathname === '/about' ? 'active' : ''}`} to="/about" style={{ color: "white" }}>About</Link>
+                <Link className={`nav-link ${location.                    pathname === '/about' ? 'active' : ''}`} to="/about" style={{ color: "white" }}>About</Link>
               </li>
             </ul>
 
