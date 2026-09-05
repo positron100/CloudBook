@@ -11,7 +11,7 @@ const AddNote = ({ showAlert }: { showAlert: ShowAlert }) => {
     try {
       await addNote(note.title, note.description, note.tag || "General");
       setNote({ title: "", description: "", tag: "General" });
-      showAlert("Note added successfully", "success");
+      showAlert("Added Successfully", "success");
     } catch (err) {
       showAlert(err instanceof Error ? err.message : "Could not add note", "danger");
     }
@@ -20,6 +20,8 @@ const AddNote = ({ showAlert }: { showAlert: ShowAlert }) => {
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     setNote({ ...note, [e.target.name]: e.target.value });
   };
+
+  const reset = (field: "title" | "description") => setNote({ ...note, [field]: "" });
 
   return (
     <>
@@ -40,9 +42,9 @@ const AddNote = ({ showAlert }: { showAlert: ShowAlert }) => {
             name="title"
             aria-describedby="titleHelp"
           />
-          <div id="titleHelp" className="form-text">
-            We'll never share your notes with anyone else.
-          </div>
+          <button type="button" className="btn btn-link btn-sm px-0" onClick={() => reset("title")}>
+            Reset title
+          </button>
         </div>
         <div className="mb-3">
           <label htmlFor="description" className="form-label">
@@ -56,6 +58,13 @@ const AddNote = ({ showAlert }: { showAlert: ShowAlert }) => {
             value={note.description}
             name="description"
           />
+          <button
+            type="button"
+            className="btn btn-link btn-sm px-0"
+            onClick={() => reset("description")}
+          >
+            Reset description
+          </button>
         </div>
         <div className="mb-3">
           <label htmlFor="tag" className="form-label">

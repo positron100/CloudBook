@@ -31,57 +31,70 @@ describe("auth gating", () => {
   it("redirects an anonymous visitor from / to the login page", async () => {
     window.history.pushState({}, "", "/");
     render(<App />);
-    expect(await screen.findByRole("heading", { name: /login to continue/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /login to see your notes/i })).toBeInTheDocument();
   });
 
-  it("shows notes when a valid token is present", async () => {
-    localStorage.setItem("Token", "valid.jwt");
+  it("accepts a session stored under the legacy 'Token' key and promotes it", async () => {
+    localStorage.setItem("Token", "legacy.jwt");
     vi.mocked(api.fetchNotes).mockResolvedValue([note()]);
     window.history.pushState({}, "", "/");
     render(<App />);
     expect(await screen.findByText("First note")).toBeInTheDocument();
+    await waitFor(() => expect(localStorage.getItem("token")).toBe("legacy.jwt"));
+    expect(localStorage.getItem("Token")).toBeNull();
   });
 });
 
 describe("login flow", () => {
-  it("logs in, stores the token, and lands on the notes page", async () => {
+  it("logs in, stores the token under 'token', lands on notes", async () => {
     vi.mocked(api.login).mockResolvedValue("new.jwt");
+    vi.mocked(api.fetchNotes).mockResolvedValue([note()]);
     window.history.pushState({}, "", "/login");
     render(<App />);
 
     await userEvent.type(screen.getByLabelText(/email address/i), "m@example.com");
-    await userEvent.type(screen.getByLabelText(/password/i), "secret");
+    await userEvent.type(screen.getByLabelText(/^password$/i), "secret");
     await userEvent.click(screen.getByRole("button", { name: /^login$/i }));
 
-    await waitFor(() => expect(localStorage.getItem("Token")).toBe("new.jwt"));
+    await waitFor(() => expect(localStorage.getItem("token")).toBe("new.jwt"));
+    expect(localStorage.getItem("Token")).toBeNull();
     expect(api.login).toHaveBeenCalledWith({ email: "m@example.com", password: "secret" });
     expect(await screen.findByRole("heading", { name: /your notes/i })).toBeInTheDocument();
   });
 
-  it("surfaces a server error and does not store a token", async () => {
+  it("surfaces a server error and stores no token", async () => {
     vi.mocked(api.login).mockRejectedValue(new Error("please try to login with correct credentials"));
     window.history.pushState({}, "", "/login");
     render(<App />);
 
     await userEvent.type(screen.getByLabelText(/email address/i), "x@example.com");
-    await userEvent.type(screen.getByLabelText(/password/i), "wrong");
+    await userEvent.type(screen.getByLabelText(/^password$/i), "wrong");
     await userEvent.click(screen.getByRole("button", { name: /^login$/i }));
 
     expect(await screen.findByText(/correct credentials/i)).toBeInTheDocument();
-    expect(localStorage.getItem("Token")).toBeNull();
+    expect(localStorage.getItem("token")).toBeNull();
+  });
+});
+
+describe("routing", () => {
+  it("redirects /signup to /register", async () => {
+    window.history.pushState({}, "", "/signup");
+    render(<App />);
+    expect(await screen.findByRole("heading", { name: /create an account/i })).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/register");
   });
 });
 
 describe("notes CRUD", () => {
   beforeEach(() => {
-    localStorage.setItem("Token", "valid.jwt");
+    localStorage.setItem("token", "valid.jwt");
     window.history.pushState({}, "", "/");
   });
 
   it("adds a note", async () => {
     vi.mocked(api.addNote).mockResolvedValue(note({ _id: "n2", title: "Groceries", description: "milk eggs" }));
     render(<App />);
-    await screen.findByRole("heading", { name: /your notes/i });
+    await screen.findByRole("heading", { name: /no notes to display/i });
 
     await userEvent.type(screen.getByLabelText(/^title$/i), "Groceries");
     await userEvent.type(screen.getByLabelText(/^description$/i), "milk eggs");
@@ -106,15 +119,30 @@ describe("notes CRUD", () => {
 });
 
 describe("signup flow", () => {
-  it("creates an account and redirects to login", async () => {
-    vi.mocked(api.signup).mockResolvedValue("signup.jwt");
-    window.history.pushState({}, "", "/signup");
+  it("blocks submit when passwords don't match", async () => {
+    window.history.pushState({}, "", "/register");
     render(<App />);
 
-    await userEvent.type(screen.getByLabelText(/name/i), "New User");
+    await userEvent.type(screen.getByLabelText(/^name$/i), "New User");
     await userEvent.type(screen.getByLabelText(/email address/i), "new@example.com");
-    await userEvent.type(screen.getByLabelText(/password/i), "secret");
-    await userEvent.click(screen.getByRole("button", { name: /register/i }));
+    await userEvent.type(screen.getByLabelText(/^password$/i), "secret");
+    await userEvent.type(screen.getByLabelText(/confirm password/i), "different");
+    await userEvent.click(screen.getByRole("button", { name: /sign-up/i }));
+
+    expect(await screen.findByText(/doesn't match/i)).toBeInTheDocument();
+    expect(api.signup).not.toHaveBeenCalled();
+  });
+
+  it("creates an account (name/email/password only) and redirects to login", async () => {
+    vi.mocked(api.signup).mockResolvedValue("signup.jwt");
+    window.history.pushState({}, "", "/register");
+    render(<App />);
+
+    await userEvent.type(screen.getByLabelText(/^name$/i), "New User");
+    await userEvent.type(screen.getByLabelText(/email address/i), "new@example.com");
+    await userEvent.type(screen.getByLabelText(/^password$/i), "secret");
+    await userEvent.type(screen.getByLabelText(/confirm password/i), "secret");
+    await userEvent.click(screen.getByRole("button", { name: /sign-up/i }));
 
     await waitFor(() =>
       expect(api.signup).toHaveBeenCalledWith({
@@ -123,7 +151,17 @@ describe("signup flow", () => {
         password: "secret",
       }),
     );
-    expect(await screen.findByRole("heading", { name: /login to continue/i })).toBeInTheDocument();
-    expect(localStorage.getItem("Token")).toBeNull();
+    expect(await screen.findByRole("heading", { name: /login to see your notes/i })).toBeInTheDocument();
+    expect(localStorage.getItem("token")).toBeNull();
+  });
+});
+
+describe("profile", () => {
+  it("shows the authenticated user's details", async () => {
+    localStorage.setItem("token", "valid.jwt");
+    window.history.pushState({}, "", "/profile");
+    render(<App />);
+    expect(await screen.findByRole("heading", { name: /user profile/i })).toBeInTheDocument();
+    expect(screen.getByText("m@example.com")).toBeInTheDocument();
   });
 });

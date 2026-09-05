@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import type { ShowAlert } from "@/types/alert";
 
@@ -17,10 +17,10 @@ const Login = ({ showAlert }: { showAlert: ShowAlert }) => {
     setSubmitting(true);
     try {
       await login(credentials.email, credentials.password);
-      showAlert("Logged in successfully", "success");
+      showAlert("Logged in Successfully", "success");
       navigate(from, { replace: true });
     } catch (err) {
-      showAlert(err instanceof Error ? err.message : "Invalid details", "danger");
+      showAlert(err instanceof Error ? err.message : "Invalid credentials", "danger");
     } finally {
       setSubmitting(false);
     }
@@ -32,7 +32,7 @@ const Login = ({ showAlert }: { showAlert: ShowAlert }) => {
 
   return (
     <div className="container my-3">
-      <h2>Login to continue where you left …</h2>
+      <h1 className="h3">Login to see your notes</h1>
       <form onSubmit={handleSubmit}>
         <div className="mb-3 mt-3">
           <label htmlFor="email" className="form-label">
@@ -72,6 +72,9 @@ const Login = ({ showAlert }: { showAlert: ShowAlert }) => {
           {submitting ? "Logging in…" : "Login"}
         </button>
       </form>
+      <p className="mt-3">
+        Not have an account? <Link to="/register">Register here</Link>
+      </p>
     </div>
   );
 };

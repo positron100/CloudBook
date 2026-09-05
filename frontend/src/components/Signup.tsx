@@ -1,20 +1,25 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import type { ShowAlert } from "@/types/alert";
 
 const Signup = ({ showAlert }: { showAlert: ShowAlert }) => {
   const navigate = useNavigate();
   const { signup } = useAuth();
-  const [credentials, setCredentials] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", cPassword: "" });
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (form.password !== form.cPassword) {
+      showAlert("Password Doesn't Match", "danger");
+      return;
+    }
     setSubmitting(true);
     try {
-      await signup(credentials.name, credentials.email, credentials.password);
-      showAlert("Your account has been created", "success");
+      // Backend contract: { name, email, password } — cPassword is client-only.
+      await signup(form.name, form.email, form.password);
+      showAlert("Account Created Successfully", "success");
       navigate("/login");
     } catch (err) {
       showAlert(err instanceof Error ? err.message : "Invalid credentials", "danger");
@@ -24,12 +29,12 @@ const Signup = ({ showAlert }: { showAlert: ShowAlert }) => {
   };
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setCredentials({ ...credentials, [e.target.name]: e.target.value });
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   return (
     <div className="container my-3">
-      <h2>Register to use CloudBook</h2>
+      <h1 className="h3">Create an account</h1>
       <form onSubmit={handleSubmit}>
         <div className="mb-3 my-3">
           <label htmlFor="name" className="form-label">
@@ -43,7 +48,7 @@ const Signup = ({ showAlert }: { showAlert: ShowAlert }) => {
             autoComplete="name"
             minLength={3}
             onChange={onChange}
-            value={credentials.name}
+            value={form.name}
             required
           />
         </div>
@@ -59,7 +64,7 @@ const Signup = ({ showAlert }: { showAlert: ShowAlert }) => {
             autoComplete="email"
             aria-describedby="emailHelp"
             onChange={onChange}
-            value={credentials.email}
+            value={form.email}
             required
           />
           <div id="emailHelp" className="form-text">
@@ -78,14 +83,32 @@ const Signup = ({ showAlert }: { showAlert: ShowAlert }) => {
             autoComplete="new-password"
             minLength={5}
             onChange={onChange}
-            value={credentials.password}
+            value={form.password}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <label htmlFor="cPassword" className="form-label">
+            Confirm Password
+          </label>
+          <input
+            type="password"
+            className="form-control"
+            id="cPassword"
+            name="cPassword"
+            autoComplete="new-password"
+            onChange={onChange}
+            value={form.cPassword}
             required
           />
         </div>
         <button type="submit" className="btn btn-primary" disabled={submitting}>
-          {submitting ? "Creating account…" : "Register"}
+          {submitting ? "Creating account…" : "Sign-up"}
         </button>
       </form>
+      <p className="mt-3">
+        Already have an account? <Link to="/login">Click to login</Link>
+      </p>
     </div>
   );
 };

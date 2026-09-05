@@ -33,7 +33,7 @@ function Notes({ showAlert }: { showAlert: ShowAlert }) {
     try {
       await editNote(form.id, form.etitle, form.edescription, form.etag);
       closeModalRef.current?.click();
-      showAlert("Updated successfully", "success");
+      showAlert("Updates Successfully", "success");
     } catch (err) {
       showAlert(err instanceof Error ? err.message : "Could not update note", "danger");
     }
@@ -107,11 +107,10 @@ function Notes({ showAlert }: { showAlert: ShowAlert }) {
       </div>
 
       <div className="row my-3 mx-0">
-        <h2>Your Notes</h2>
+        <h2>{notes.length === 0 ? "No notes to display" : "Your Notes"}</h2>
         <div className="container my-2 mx-1">
           {status === "loading" && "Loading your notes…"}
           {status === "error" && "Could not load your notes. Refresh to try again."}
-          {status === "ready" && notes.length === 0 && "Waiting for you to add notes …"}
         </div>
         {notes.map((note) => (
           <NoteItem key={note._id} note={note} updatenote={beginEdit} showAlert={showAlert} />
