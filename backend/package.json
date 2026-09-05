@@ -4,11 +4,11 @@
   "description": "cloudbook - Your notebook on cloud",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "node --test \"test/**/*.test.js\""
   },
-  "keywords": [
-    "awesome"
-  ],
+  "keywords": [],
   "author": "Mukul Negi",
   "license": "ISC",
   "dependencies": {

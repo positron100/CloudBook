@@ -5,8 +5,7 @@ const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fetchuser = require('../middleware/fetchuser')
-
-const JWT_SECRET = "TokenSignature";
+const { jwtSecret } = require('../config');
 // Route 1 :  Create a user using : POST "/api/auth/createuser" [do not need authentication]
 router.post('/createuser',
     [
@@ -32,7 +31,7 @@ router.post('/createuser',
             }
             // generating the password hash
             const salt = await bcrypt.genSalt(10);
-            setpass = await bcrypt.hash(req.body.password, salt);
+            const setpass = await bcrypt.hash(req.body.password, salt);
             // create a new document in users collection
             user = await User.create({
                 name: req.body.name,
@@ -44,7 +43,7 @@ router.post('/createuser',
                     id: user.id
                 }
             }
-            const authToken = jwt.sign(data, JWT_SECRET);
+            const authToken = jwt.sign(data, jwtSecret);
             status=true
             res.json({status, authToken });
             // catching errors
@@ -92,7 +91,7 @@ router.post('/login',
                     id : user.id
                 }
             }
-            const authToken = jwt.sign(data, JWT_SECRET);
+            const authToken = jwt.sign(data, jwtSecret);
             status = true;
             return res.json({status , authToken });
         } catch (error) {
@@ -106,7 +105,7 @@ router.post('/login',
 // Route 3 : Get loggedin user details : POST "/api/auth/getuser" [do need authentication]
 router.post('/getuser', fetchuser ,  async (req,res)=>{
 try{
-    userId = req.user.id;
+    const userId = req.user.id;
     const user = await User.findById(userId).select('-password')
     res.send(user);
 }

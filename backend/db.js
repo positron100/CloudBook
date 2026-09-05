@@ -1,17 +1,14 @@
 const mongoose = require('mongoose');
-// const mongoURI = "mongodb://localhost:27017/cloudbook";
-// mongoURI for atlas
-const mongoURI = "mongodb+srv://mukulnegi:RTd%24%2EiwhwG%235DYi@cluster0.llxmm.mongodb.net/cloudbook?retryWrites=true&w=majority&appName=Cluster0";
+const { mongoUri } = require('./config');
 
-const connectToMongo = ()=>{
-    let connection = mongoose.connect(mongoURI)
-    if(connection)
-    {
-        console.log('connection estabilished')
-    }
-    else{
-        console.log('error');
-    }
-}
+const connectToMongo = async () => {
+  try {
+    await mongoose.connect(mongoUri);
+    console.log('MongoDB connected');
+  } catch (err) {
+    console.error('MongoDB connection failed:', err.message);
+    process.exit(1);
+  }
+};
 
-module.exports=connectToMongo
+module.exports = connectToMongo;

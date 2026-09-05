@@ -1,8 +1,17 @@
 const express = require('express');
-var fetchuser = require("../middleware/fetchuser")
+const mongoose = require('mongoose');
+const fetchuser = require("../middleware/fetchuser")
 const Note = require('../models/Note')
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
+
+// Reject malformed :id params early so a bad id is a 400, not a 500 from Mongoose.
+const validateId = (req, res, next) => {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+        return res.status(400).json({ error: 'Invalid note id' });
+    }
+    next();
+};
 
 // Route 1 : Get all the notes using : GET "api/notes/getuser" . Login required
 router.get('/fetchallnotes', fetchuser, async (req, res) => {
@@ -18,7 +27,7 @@ router.get('/fetchallnotes', fetchuser, async (req, res) => {
 })
 
 
-// Route 2 : Add a new note using : POST "api/notes/addnote" . No Login required
+// Route 2 : Add a new note using : POST "api/notes/addnote" . Login required
 router.post('/addnote', fetchuser,
     [
         body('title', 'Enter a valid title').isLength({ min: 3 }),
@@ -54,7 +63,7 @@ router.post('/addnote', fetchuser,
 
 // Route 3 : Update an existing note using : POST "api/notes/updatenote" . Login required
 
-router.put('/updatenote/:id', fetchuser, async (req, res) => {
+router.put('/updatenote/:id', fetchuser, validateId, async (req, res) => {
     const { title, description, tag } = req.body
     // Create a newNote object
     const newNote = {}
@@ -91,7 +100,7 @@ router.put('/updatenote/:id', fetchuser, async (req, res) => {
 
 // Route 4 : Delete an existing note using : POST "api/notes/deletenote" . Login required
 
-router.delete('/deletenote/:id', fetchuser, async (req, res) => {
+router.delete('/deletenote/:id', fetchuser, validateId, async (req, res) => {
 
     try {
         // Find the note to be deleted 
