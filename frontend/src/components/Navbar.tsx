@@ -56,7 +56,14 @@ function Navbar() {
           <div className="d-flex align-items-center gap-2">
             <button
               className="btn btn-outline-secondary btn-sm"
-              onClick={toggleTheme}
+              onClick={(e) => {
+                // Keyboard activation reports clientX/Y as 0 — fall back to the
+                // button's own centre so the reveal still starts from here.
+                const r = e.currentTarget.getBoundingClientRect();
+                const x = e.clientX || r.left + r.width / 2;
+                const y = e.clientY || r.top + r.height / 2;
+                toggleTheme({ x, y });
+              }}
               aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
             >
               {theme === "dark" ? "Light" : "Dark"}

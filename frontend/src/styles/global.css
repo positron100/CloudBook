@@ -82,16 +82,46 @@ canvas {
       stroke var(--dur-fast) var(--ease-standard);
   }
 }
+/* While a circular reveal is in flight, the real (hidden) DOM must snap to its
+   destination colours instantly, otherwise the scoped colour transition above
+   can still be mid-fade when the View Transition snapshot is captured and the
+   leftover blend pops once the snapshot is torn down. */
 :root[data-theme-transition] * {
   transition: none !important;
 }
 
-/* View Transitions choreography — declared now, inert until P1.2 wires the
-   reveal. Harmless on browsers without the API. */
+/* --- Circular theme reveal (lib/themeTransition.ts) ------------------------
+   The browser's default cross-fade is disabled so the only motion is the
+   clip-path circle driven from JS. Also disable the UA animation on
+   ::view-transition-group(root), which can independently resize/shift the
+   whole clipped layer. Inert on browsers without the API. */
+::view-transition-group(root) {
+  animation: none;
+}
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
+}
+
+/* Entering dark: the incoming (new) layer grows from the toggle, on top,
+   starting collapsed to a point at the reveal origin. */
+:root[data-theme-transition="to-dark"]::view-transition-old(root) {
+  z-index: 1;
+}
+:root[data-theme-transition="to-dark"]::view-transition-new(root) {
+  z-index: 2;
+  clip-path: circle(0px at var(--reveal-x, 50%) var(--reveal-y, 50%));
+}
+
+/* Entering light: the outgoing (old, dark) layer shrinks back into the
+   toggle, on top — darkness retracting rather than light expanding. */
+:root[data-theme-transition="to-light"]::view-transition-old(root) {
+  z-index: 2;
+  clip-path: circle(150vmax at var(--reveal-x, 50%) var(--reveal-y, 50%));
+}
+:root[data-theme-transition="to-light"]::view-transition-new(root) {
+  z-index: 1;
 }
 
 /* Global reduced-motion kill. Everything the app adds later must also gate on
