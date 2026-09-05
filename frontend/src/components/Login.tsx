@@ -1,10 +1,9 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Button, Field, Surface } from "@/components/ui";
-import { Reveal } from "@/components/motion";
+import { Button, Field } from "@/components/ui";
+import { AuthLayout } from "@/components/auth/AuthLayout";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
-import "./auth.css";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -21,7 +20,7 @@ export default function Login() {
     setSubmitting(true);
     try {
       await login(credentials.email, credentials.password);
-      toast.success("Logged in");
+      toast.success("Welcome back");
       navigate(from, { replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Invalid credentials");
@@ -34,37 +33,37 @@ export default function Login() {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
 
   return (
-    <Reveal as="div" onView={false} className="auth">
-      <Surface level={4} as="section" className="auth__card">
-        <h1 className="auth__title">Log in to your notes</h1>
-        <form className="auth__form" aria-label="Log in" onSubmit={handleSubmit}>
-          <Field
-            label="Email address"
-            type="email"
-            name="email"
-            autoComplete="email"
-            value={credentials.email}
-            onChange={onChange}
-            hint="We'll never share your email with anyone else."
-            required
-          />
-          <Field
-            label="Password"
-            type="password"
-            name="password"
-            autoComplete="current-password"
-            value={credentials.password}
-            onChange={onChange}
-            required
-          />
-          <Button type="submit" variant="primary" block loading={submitting}>
-            {submitting ? "Logging in…" : "Log in"}
-          </Button>
-        </form>
-        <p className="auth__alt">
-          Don't have an account? <Link to="/register">Create one</Link>
-        </p>
-      </Surface>
-    </Reveal>
+    <AuthLayout
+      pitch="Pick up where you left off."
+      pitchSub="Your notes, kept on the cloud and ready on every device — a calm place to collect your thoughts."
+    >
+      <h2 className="auth__title">Log in</h2>
+      <form className="auth__form" aria-label="Log in" onSubmit={handleSubmit}>
+        <Field
+          label="Email address"
+          type="email"
+          name="email"
+          autoComplete="email"
+          value={credentials.email}
+          onChange={onChange}
+          required
+        />
+        <Field
+          label="Password"
+          type="password"
+          name="password"
+          autoComplete="current-password"
+          value={credentials.password}
+          onChange={onChange}
+          required
+        />
+        <Button type="submit" variant="primary" block loading={submitting}>
+          {submitting ? "Logging in…" : "Log in"}
+        </Button>
+      </form>
+      <p className="auth__alt">
+        New to CloudBook? <Link to="/register">Create an account</Link>
+      </p>
+    </AuthLayout>
   );
 }

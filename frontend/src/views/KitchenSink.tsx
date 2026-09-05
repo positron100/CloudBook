@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Reveal, Stagger, Magnetic, FadePresence } from "@/components/motion";
-import { Button, Card, Chip, Field, IconButton, Skeleton } from "@/components/ui";
+import { Button, Card, Chip, Field, IconButton, SegmentedControl, Select, Skeleton } from "@/components/ui";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useTheme } from "@/context/ThemeContext";
@@ -19,6 +19,7 @@ export default function KitchenSink() {
   const { theme } = useTheme();
   const toast = useToast();
   const [view, setView] = useState<"a" | "b">("a");
+  const [layout, setLayout] = useState<"grid" | "list">("grid");
 
   return (
     <div style={{ padding: "var(--space-6) 0", maxWidth: 900, display: "grid", gap: "var(--space-7)" }}>
@@ -61,6 +62,30 @@ export default function KitchenSink() {
           <Button size="sm" onClick={() => toast.warning("Careful")}>
             warning
           </Button>
+        </div>
+      </section>
+
+      <section>
+        <h2 style={{ fontSize: "var(--text-h3)" }}>Select · Segmented</h2>
+        <div style={{ display: "flex", gap: "var(--space-4)", flexWrap: "wrap", alignItems: "flex-end" }}>
+          <Select
+            label="Sort"
+            value="newest"
+            onChange={() => {}}
+            options={[
+              { value: "newest", label: "Newest first" },
+              { value: "oldest", label: "Oldest first" },
+            ]}
+          />
+          <SegmentedControl
+            label="Layout"
+            value={layout}
+            onChange={setLayout}
+            segments={[
+              { value: "grid", label: "Grid", icon: "grid" },
+              { value: "list", label: "List", icon: "list" },
+            ]}
+          />
         </div>
       </section>
 

@@ -1,0 +1,50 @@
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  background-color: var(--surface);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-pill);
+}
+.segmented__option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 2rem;
+  padding-inline: var(--space-3);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--fg-faint);
+  font-family: var(--font-sans);
+  font-size: var(--text-meta);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
+}
+.segmented__option:hover {
+  color: var(--fg-muted);
+}
+.segmented__option[aria-checked="true"] {
+  background-color: var(--sheet-raised);
+  color: var(--fg);
+  box-shadow: var(--elev-1);
+}
+
+/* Icon-only below the label breakpoint. */
+@media (max-width: 480px) {
+  .segmented__text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .segmented__option {
+    padding-inline: var(--space-2);
+  }
+}

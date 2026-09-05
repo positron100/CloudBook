@@ -1,6 +1,6 @@
-import Notes from "./Notes";
+import Workspace from "@/views/Workspace";
 
-/** Authenticated landing — the notes workspace. Gains its real layout in P1.4. */
+/** Authenticated landing — the notes workspace, the app's primary surface. */
 export default function Home() {
-  return <Notes />;
+  return <Workspace />;
 }

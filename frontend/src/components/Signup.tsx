@@ -1,10 +1,9 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Button, Field, Surface } from "@/components/ui";
-import { Reveal } from "@/components/motion";
+import { Button, Field } from "@/components/ui";
+import { AuthLayout } from "@/components/auth/AuthLayout";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
-import "./auth.css";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -37,57 +36,57 @@ export default function Signup() {
     setForm({ ...form, [e.target.name]: e.target.value });
 
   return (
-    <Reveal as="div" onView={false} className="auth">
-      <Surface level={4} as="section" className="auth__card">
-        <h1 className="auth__title">Create your account</h1>
-        <form className="auth__form" aria-label="Sign up" onSubmit={handleSubmit}>
-          <Field
-            label="Name"
-            name="name"
-            autoComplete="name"
-            minLength={3}
-            value={form.name}
-            onChange={onChange}
-            required
-          />
-          <Field
-            label="Email address"
-            type="email"
-            name="email"
-            autoComplete="email"
-            value={form.email}
-            onChange={onChange}
-            hint="We'll never share your email with anyone else."
-            required
-          />
-          <Field
-            label="Password"
-            type="password"
-            name="password"
-            autoComplete="new-password"
-            minLength={5}
-            value={form.password}
-            onChange={onChange}
-            required
-          />
-          <Field
-            label="Confirm password"
-            type="password"
-            name="cPassword"
-            autoComplete="new-password"
-            value={form.cPassword}
-            onChange={onChange}
-            error={mismatch ? "Passwords don't match" : undefined}
-            required
-          />
-          <Button type="submit" variant="primary" block loading={submitting} disabled={mismatch}>
-            {submitting ? "Creating account…" : "Sign up"}
-          </Button>
-        </form>
-        <p className="auth__alt">
-          Already have an account? <Link to="/login">Log in</Link>
-        </p>
-      </Surface>
-    </Reveal>
+    <AuthLayout
+      pitch="Start your cloud desk."
+      pitchSub="One account keeps every note in sync — write on your laptop, read on your phone."
+    >
+      <h2 className="auth__title">Create your account</h2>
+      <form className="auth__form" aria-label="Sign up" onSubmit={handleSubmit}>
+        <Field
+          label="Name"
+          name="name"
+          autoComplete="name"
+          minLength={3}
+          value={form.name}
+          onChange={onChange}
+          required
+        />
+        <Field
+          label="Email address"
+          type="email"
+          name="email"
+          autoComplete="email"
+          value={form.email}
+          onChange={onChange}
+          required
+        />
+        <Field
+          label="Password"
+          type="password"
+          name="password"
+          autoComplete="new-password"
+          minLength={5}
+          value={form.password}
+          onChange={onChange}
+          required
+        />
+        <Field
+          label="Confirm password"
+          type="password"
+          name="cPassword"
+          autoComplete="new-password"
+          value={form.cPassword}
+          onChange={onChange}
+          error={mismatch ? "Passwords don't match" : undefined}
+          required
+        />
+        <Button type="submit" variant="primary" block loading={submitting} disabled={mismatch}>
+          {submitting ? "Creating account…" : "Sign up"}
+        </Button>
+      </form>
+      <p className="auth__alt">
+        Already have an account? <Link to="/login">Log in</Link>
+      </p>
+    </AuthLayout>
   );
 }

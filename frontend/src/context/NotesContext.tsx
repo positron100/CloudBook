@@ -15,7 +15,10 @@ interface NotesContextValue {
   deleteNote: (id: string) => Promise<void>;
 }
 
-const NotesContext = createContext<NotesContextValue | null>(null);
+// Exported so a dev-only preview harness can supply mock data (see
+// views/WorkspacePreview). Production code uses <NotesProvider> + useNotes().
+export const NotesContext = createContext<NotesContextValue | null>(null);
+export type { NotesContextValue };
 
 export function NotesProvider({ children }: { children: ReactNode }) {
   const [notes, setNotes] = useState<Note[]>([]);

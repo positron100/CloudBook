@@ -7,6 +7,8 @@ export { Icon, type IconName } from "./Icon";
 export { Button } from "./Button";
 export { IconButton } from "./IconButton";
 export { Field } from "./Field";
+export { Select } from "./Select";
+export { SegmentedControl } from "./SegmentedControl";
 export { Surface } from "./Surface";
 export { Card } from "./Card";
 export { Chip } from "./Chip";

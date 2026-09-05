@@ -1,0 +1,54 @@
+.composer {
+  padding: var(--space-5);
+}
+.composer__open {
+  gap: var(--space-2);
+}
+.composer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+.composer__head-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.composer__glyph {
+  color: var(--accent);
+}
+.composer__heading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+  font-weight: var(--weight-semibold);
+}
+.composer__collapse {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--fg-faint);
+  cursor: pointer;
+}
+.composer__collapse:hover {
+  background-color: var(--surface);
+  color: var(--fg-muted);
+}
+.composer__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.composer__form textarea.field__control {
+  min-height: 5rem;
+}
+.composer__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}

@@ -24,7 +24,13 @@ export type IconName =
   | "info"
   | "alert-triangle"
   | "alert-circle"
-  | "logout";
+  | "logout"
+  | "grid"
+  | "list"
+  | "filter"
+  | "sort"
+  | "note"
+  | "sparkle";
 
 const PATHS: Record<IconName, string> = {
   plus: "M12 5v14M5 12h14",
@@ -45,6 +51,12 @@ const PATHS: Record<IconName, string> = {
   "alert-triangle": "M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0ZM12 9v4M12 17h.01",
   "alert-circle": "M12 8v4M12 16h.01M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z",
   logout: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9",
+  grid: "M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z",
+  list: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
+  filter: "M22 3H2l8 9.46V19l4 2v-8.54L22 3z",
+  sort: "M11 5h10M11 9h7M11 13h4M3 17l3 3 3-3M6 18V4",
+  note: "M4 4a2 2 0 0 1 2-2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4zM14 2v6h6M9 13h6M9 17h4",
+  sparkle: "M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z",
 };
 
 interface IconProps extends Omit<SVGProps<SVGSVGElement>, "name"> {

@@ -1,0 +1,38 @@
+.workspace {
+  width: 100%;
+}
+
+.workspace__layout {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.workspace__main {
+  min-width: 0;
+}
+
+/* Two-column desk from lg up: a fixed creation rail, the collection fills the
+   rest so the canvas is never mostly empty. */
+@media (min-width: 1024px) {
+  .workspace__layout {
+    grid-template-columns: minmax(0, 19rem) minmax(0, 1fr);
+    gap: var(--space-7);
+    align-items: start;
+  }
+  .workspace__rail {
+    position: sticky;
+    top: calc(var(--nav-height) + var(--space-5));
+  }
+}
+@media (min-width: 1440px) {
+  .workspace__layout {
+    grid-template-columns: minmax(0, 21rem) minmax(0, 1fr);
+    gap: var(--space-8);
+  }
+}
+
+@media (max-width: 1023px) {
+  .workspace__rail {
+    max-width: 34rem;
+  }
+}

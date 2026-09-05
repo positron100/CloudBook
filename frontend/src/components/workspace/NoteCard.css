@@ -1,0 +1,181 @@
+.note-card {
+  position: relative;
+  border-radius: var(--radius-md);
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* The paper sheet. */
+.note-card__sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background-color: var(--sheet);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elev-1);
+  transition:
+    box-shadow var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
+}
+.note-card:hover .note-card__sheet {
+  box-shadow: var(--elev-2);
+}
+.note-card[data-open] .note-card__sheet {
+  background-color: var(--sheet-raised);
+  box-shadow:
+    var(--elev-3),
+    inset 0 0 0 1.5px var(--accent-soft);
+}
+
+/* Dog-ear: the top-right corner reads as folded away — a small triangle of
+   desk colour with a soft fold shadow. Drawn on the sheet so the card's own
+   elevation shadow and any focus ring are untouched. */
+.note-card__sheet::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 15px;
+  height: 15px;
+  background: var(--surface);
+  clip-path: polygon(100% 0, 0 0, 100% 100%);
+  box-shadow: -1px 1px 2px hsl(var(--shadow-hsl) / 0.16);
+  border-top-right-radius: var(--radius-md);
+}
+
+/* The clickable read area (title + preview). */
+.note-card__reader {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.note-card__reader:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.note-card__title {
+  margin: 0 0 var(--space-2);
+  padding-right: 12px;
+  font-size: 1.0625rem;
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.note-card__preview {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: var(--text-label);
+  line-height: var(--leading-snug);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: pre-wrap;
+}
+.note-card__preview[data-open] {
+  -webkit-line-clamp: unset;
+  display: block;
+}
+
+.note-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: var(--border-width) solid var(--border);
+}
+.note-card__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.note-card__date {
+  font-size: var(--text-meta);
+  color: var(--fg-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.note-card__icons {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  color: var(--fg-faint);
+}
+.note-card:hover .note-card__icons,
+.note-card:focus-within .note-card__icons {
+  color: var(--fg-muted);
+}
+
+/* --- List view: one dense row --------------------------------------------- */
+.note-card[data-view="list"] .note-card__sheet {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+}
+.note-card[data-view="list"] .note-card__sheet::before {
+  display: none;
+}
+.note-card[data-view="list"] .note-card__reader {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+.note-card[data-view="list"] .note-card__title {
+  flex-shrink: 0;
+  max-width: 15rem;
+  margin: 0;
+  padding-right: 0;
+}
+.note-card[data-view="list"] .note-card__preview {
+  -webkit-line-clamp: 1;
+  flex: 1;
+}
+.note-card[data-view="list"] .note-card__preview[data-open] {
+  -webkit-line-clamp: 3;
+  display: -webkit-box;
+}
+.note-card[data-view="list"] .note-card__foot {
+  flex-shrink: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+@media (max-width: 640px) {
+  .note-card[data-view="list"] .note-card__sheet {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .note-card[data-view="list"] .note-card__reader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+  .note-card[data-view="list"] .note-card__title {
+    max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .note-card {
+    will-change: auto;
+  }
+}

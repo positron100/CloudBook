@@ -13,8 +13,9 @@ import Login from "@/components/Login";
 import Signup from "@/components/Signup";
 import Profile from "@/components/Profile";
 
-// Dev-only visual harness — tree-shaken from production builds.
+// Dev-only visual harnesses — tree-shaken from production builds.
 const KitchenSink = import.meta.env.DEV ? lazy(() => import("@/views/KitchenSink")) : null;
+const WorkspacePreview = import.meta.env.DEV ? lazy(() => import("@/views/WorkspacePreview")) : null;
 
 function App() {
   return (
@@ -53,6 +54,16 @@ function App() {
                         element={
                           <Suspense fallback={null}>
                             <KitchenSink />
+                          </Suspense>
+                        }
+                      />
+                    )}
+                    {WorkspacePreview && (
+                      <Route
+                        path="/workspace-preview"
+                        element={
+                          <Suspense fallback={null}>
+                            <WorkspacePreview />
                           </Suspense>
                         }
                       />

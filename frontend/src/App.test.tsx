@@ -31,7 +31,7 @@ describe("auth gating", () => {
   it("redirects an anonymous visitor from / to the login page", async () => {
     window.history.pushState({}, "", "/");
     render(<App />);
-    expect(await screen.findByRole("heading", { name: /log in to your notes/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /^log in$/i })).toBeInTheDocument();
   });
 
   it("accepts a session stored under the legacy 'Token' key and promotes it", async () => {
@@ -59,7 +59,7 @@ describe("login flow", () => {
     await waitFor(() => expect(localStorage.getItem("token")).toBe("new.jwt"));
     expect(localStorage.getItem("Token")).toBeNull();
     expect(api.login).toHaveBeenCalledWith({ email: "m@example.com", password: "secret" });
-    expect(await screen.findByRole("heading", { name: /your notes/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /your desk/i })).toBeInTheDocument();
   });
 
   it("surfaces a server error and stores no token", async () => {
@@ -94,10 +94,10 @@ describe("notes CRUD", () => {
   it("adds a note", async () => {
     vi.mocked(api.addNote).mockResolvedValue(note({ _id: "n2", title: "Groceries", description: "milk eggs" }));
     render(<App />);
-    await screen.findByRole("heading", { name: /no notes yet/i });
+    await screen.findByRole("heading", { name: /your desk is clear/i });
 
     await userEvent.type(screen.getByLabelText(/^title$/i), "Groceries");
-    await userEvent.type(screen.getByLabelText(/^description$/i), "milk eggs");
+    await userEvent.type(screen.getByLabelText(/^note$/i), "milk eggs");
     await userEvent.click(screen.getByRole("button", { name: /add note/i }));
 
     expect(api.addNote).toHaveBeenCalledWith({ title: "Groceries", description: "milk eggs", tag: "General" });
@@ -110,7 +110,7 @@ describe("notes CRUD", () => {
     vi.mocked(api.deleteNote).mockResolvedValue(existing);
     render(<App />);
 
-    const card = (await screen.findByText("Delete me")).closest(".card") as HTMLElement;
+    const card = (await screen.findByText("Delete me")).closest(".note-card") as HTMLElement;
     await userEvent.click(within(card).getByRole("button", { name: /delete note/i }));
 
     await waitFor(() => expect(screen.queryByText("Delete me")).not.toBeInTheDocument());
@@ -151,7 +151,7 @@ describe("signup flow", () => {
         password: "secret",
       }),
     );
-    expect(await screen.findByRole("heading", { name: /log in to your notes/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /^log in$/i })).toBeInTheDocument();
     expect(localStorage.getItem("token")).toBeNull();
   });
 });

@@ -9,7 +9,7 @@
 .app-shell__main {
   flex: 1;
   width: 100%;
-  max-width: var(--container-max);
+  max-width: var(--container-wide);
   margin-inline: auto;
   padding-block: var(--space-6);
 }
