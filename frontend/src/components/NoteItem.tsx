@@ -1,67 +1,68 @@
 import { useState } from "react";
 import type { Note } from "@shared/types";
+import { Card, Chip, IconButton } from "@/components/ui";
+import { Stagger } from "@/components/motion";
 import { useNotes } from "@/context/NotesContext";
-import type { ShowAlert } from "@/types/alert";
+import { useToast } from "@/context/ToastContext";
+import "./NoteItem.css";
 
 interface NoteItemProps {
   note: Note;
-  updatenote: (note: Note) => void;
-  showAlert: ShowAlert;
+  onEdit: (note: Note) => void;
 }
 
-function NoteItem({ note, updatenote, showAlert }: NoteItemProps) {
+export default function NoteItem({ note, onEdit }: NoteItemProps) {
   const { deleteNote } = useNotes();
+  const toast = useToast();
   const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const handleDelete = async () => {
+    setBusy(true);
     try {
       await deleteNote(note._id);
-      showAlert("Deleted Successfully", "warning");
+      toast.warning("Note deleted");
     } catch (err) {
-      showAlert(err instanceof Error ? err.message : "Could not delete note", "danger");
+      toast.error(err instanceof Error ? err.message : "Could not delete note");
+      setBusy(false);
     }
   };
 
   return (
-    <div className="col-md-3">
-      <div className="card my-3">
-        <div className="card-body">
-          <h5 className="card-title">{note.title}</h5>
-          <p className="card-text">{note.description}</p>
-          {note.tag && <span className="badge text-bg-secondary mb-2">{note.tag}</span>}
-
-          <div className="d-flex gap-2 align-items-center">
-            <button className="btn btn-link btn-sm px-0" onClick={() => setOpen((o) => !o)}>
-              {open ? "Hide" : "View Note"}
-            </button>
-            <i
-              className="fa-solid fa-trash"
-              role="button"
-              aria-label="Delete note"
-              onClick={handleDelete}
-            ></i>
-            <i
-              className="fa-solid fa-pen-to-square"
-              role="button"
-              aria-label="Edit note"
-              onClick={() => updatenote(note)}
-            ></i>
-          </div>
-
-          {open && (
-            <div className="mt-2 border-top pt-2">
-              <p className="mb-1">{note.description}</p>
-              {note.date && (
-                <p className="mb-0 text-secondary small">
-                  Added on: {new Date(note.date).toUTCString()}
-                </p>
-              )}
-            </div>
-          )}
+    <Stagger.Item>
+      <Card className="note-item" aria-busy={busy || undefined}>
+        <div className="note-item__body">
+          <h3 className="note-item__title">{note.title}</h3>
+          <p className="note-item__preview">{note.description}</p>
         </div>
-      </div>
-    </div>
+
+        {open && (
+          <div className="note-item__detail">
+            <p>{note.description}</p>
+            {note.date && (
+              <p className="note-item__date">Added {new Date(note.date).toLocaleDateString()}</p>
+            )}
+          </div>
+        )}
+
+        <div className="note-item__foot">
+          {note.tag && <Chip tone="accent">{note.tag}</Chip>}
+          <div className="note-item__actions">
+            <button type="button" className="note-item__view" onClick={() => setOpen((v) => !v)}>
+              {open ? "Hide" : "View"}
+            </button>
+            <IconButton icon="pencil" label="Edit note" size="sm" onClick={() => onEdit(note)} />
+            <IconButton
+              icon="trash"
+              label="Delete note"
+              size="sm"
+              variant="danger"
+              disabled={busy}
+              onClick={handleDelete}
+            />
+          </div>
+        </div>
+      </Card>
+    </Stagger.Item>
   );
 }
-
-export default NoteItem;

@@ -1,11 +1,12 @@
-// Interim About page — redesigned in the UI/UX overhaul.
-const About = () => {
-  return (
-    <div className="container my-4">
-      <h1>CloudBook let's you save your notes on the cloud!</h1>
-      <h2 className="my-3">So That you can get your notes anytime you need!</h2>
-    </div>
-  );
-};
+import { Reveal } from "@/components/motion";
+import "./About.css";
 
-export default About;
+/** Interim About — real composition in a later phase. */
+export default function About() {
+  return (
+    <Reveal as="section" onView={false} className="about">
+      <h1 className="about__title">CloudBook lets you save your notes on the cloud.</h1>
+      <p className="about__lede">So you can get to them anytime you need.</p>
+    </Reveal>
+  );
+}

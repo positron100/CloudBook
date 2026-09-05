@@ -1,0 +1,32 @@
+.card {
+  position: relative;
+  background-color: var(--sheet);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elev-1);
+  /* Dog-ear cue — one clipped corner. */
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+  transition:
+    box-shadow var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
+}
+
+.card--interactive {
+  cursor: pointer;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .card--interactive:hover {
+    box-shadow: var(--elev-2);
+    transform: translateY(-2px);
+  }
+}
+.card--interactive:hover {
+  box-shadow: var(--elev-2);
+}
+
+.card--selected {
+  background-color: var(--sheet-raised);
+  box-shadow:
+    var(--elev-3),
+    0 0 0 2px var(--accent);
+}

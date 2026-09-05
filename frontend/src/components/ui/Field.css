@@ -1,0 +1,73 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.field__label {
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  color: var(--fg);
+}
+.field--required .field__label::after {
+  content: "*";
+  margin-inline-start: 2px;
+  color: var(--danger);
+}
+
+.field__control {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--sheet);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+  transition:
+    border-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
+}
+.field__control::placeholder {
+  color: var(--fg-faint);
+}
+
+/* Text fields carry their own focus treatment (accent border + faint wash),
+   not the global outline ring — it reads as part of the field. */
+.field__control:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.field__control:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.field--invalid .field__control {
+  border-color: var(--danger);
+}
+.field--invalid .field__control:focus-visible {
+  box-shadow: 0 0 0 3px var(--danger-soft);
+}
+
+textarea.field__control {
+  min-height: 6rem;
+  resize: vertical;
+}
+
+.field__hint {
+  font-size: var(--text-meta);
+  color: var(--fg-faint);
+}
+.field__error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-meta);
+  color: var(--danger);
+}

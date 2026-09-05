@@ -1,0 +1,23 @@
+.surface {
+  background-color: var(--sheet);
+  border-radius: var(--radius-lg);
+  color: var(--fg);
+}
+.surface--0 {
+  background-color: transparent;
+  box-shadow: var(--elev-0);
+}
+.surface--1 {
+  box-shadow: var(--elev-1);
+}
+.surface--2 {
+  box-shadow: var(--elev-2);
+}
+.surface--3 {
+  background-color: var(--sheet-raised);
+  box-shadow: var(--elev-3);
+}
+.surface--4 {
+  background-color: var(--float);
+  box-shadow: var(--elev-4);
+}

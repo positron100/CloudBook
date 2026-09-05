@@ -1,0 +1,14 @@
+.nav-indicator {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 2rem;
+  translate: 0 -50%;
+  border-radius: var(--radius-pill);
+  background-color: var(--sheet-raised);
+  box-shadow: var(--elev-2);
+  z-index: 0;
+}
+:root[data-theme="dark"] .nav-indicator {
+  background-color: var(--float);
+}

@@ -1,0 +1,43 @@
+.profile {
+  max-width: 40rem;
+  margin-inline: auto;
+  padding-block: var(--space-6);
+}
+.profile__title {
+  margin: 0 0 var(--space-5);
+  font-family: var(--font-display);
+  font-size: var(--text-h1);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+}
+.profile__card {
+  padding: var(--space-5);
+}
+.profile__muted {
+  margin: 0;
+  color: var(--fg-muted);
+}
+.profile__list {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+}
+.profile__list div {
+  display: grid;
+  gap: 2px;
+}
+.profile__list dt {
+  font-size: var(--text-meta);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--fg-faint);
+}
+.profile__list dd {
+  margin: 0;
+  font-size: var(--text-body);
+  color: var(--fg);
+}
+.profile__mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+}

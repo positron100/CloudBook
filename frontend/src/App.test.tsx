@@ -31,7 +31,7 @@ describe("auth gating", () => {
   it("redirects an anonymous visitor from / to the login page", async () => {
     window.history.pushState({}, "", "/");
     render(<App />);
-    expect(await screen.findByRole("heading", { name: /login to see your notes/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /log in to your notes/i })).toBeInTheDocument();
   });
 
   it("accepts a session stored under the legacy 'Token' key and promotes it", async () => {
@@ -54,7 +54,7 @@ describe("login flow", () => {
 
     await userEvent.type(screen.getByLabelText(/email address/i), "m@example.com");
     await userEvent.type(screen.getByLabelText(/^password$/i), "secret");
-    await userEvent.click(screen.getByRole("button", { name: /^login$/i }));
+    await userEvent.click(within(screen.getByRole("form", { name: /log in/i })).getByRole("button", { name: /^log in$/i }));
 
     await waitFor(() => expect(localStorage.getItem("token")).toBe("new.jwt"));
     expect(localStorage.getItem("Token")).toBeNull();
@@ -69,7 +69,7 @@ describe("login flow", () => {
 
     await userEvent.type(screen.getByLabelText(/email address/i), "x@example.com");
     await userEvent.type(screen.getByLabelText(/^password$/i), "wrong");
-    await userEvent.click(screen.getByRole("button", { name: /^login$/i }));
+    await userEvent.click(within(screen.getByRole("form", { name: /log in/i })).getByRole("button", { name: /^log in$/i }));
 
     expect(await screen.findByText(/correct credentials/i)).toBeInTheDocument();
     expect(localStorage.getItem("token")).toBeNull();
@@ -80,7 +80,7 @@ describe("routing", () => {
   it("redirects /signup to /register", async () => {
     window.history.pushState({}, "", "/signup");
     render(<App />);
-    expect(await screen.findByRole("heading", { name: /create an account/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /create your account/i })).toBeInTheDocument();
     expect(window.location.pathname).toBe("/register");
   });
 });
@@ -94,7 +94,7 @@ describe("notes CRUD", () => {
   it("adds a note", async () => {
     vi.mocked(api.addNote).mockResolvedValue(note({ _id: "n2", title: "Groceries", description: "milk eggs" }));
     render(<App />);
-    await screen.findByRole("heading", { name: /no notes to display/i });
+    await screen.findByRole("heading", { name: /no notes yet/i });
 
     await userEvent.type(screen.getByLabelText(/^title$/i), "Groceries");
     await userEvent.type(screen.getByLabelText(/^description$/i), "milk eggs");
@@ -127,9 +127,9 @@ describe("signup flow", () => {
     await userEvent.type(screen.getByLabelText(/email address/i), "new@example.com");
     await userEvent.type(screen.getByLabelText(/^password$/i), "secret");
     await userEvent.type(screen.getByLabelText(/confirm password/i), "different");
-    await userEvent.click(screen.getByRole("button", { name: /sign-up/i }));
+    await userEvent.click(within(screen.getByRole("form", { name: /sign up/i })).getByRole("button", { name: /^sign up$/i }));
 
-    expect(await screen.findByText(/doesn't match/i)).toBeInTheDocument();
+    expect(await screen.findByText(/don't match/i)).toBeInTheDocument();
     expect(api.signup).not.toHaveBeenCalled();
   });
 
@@ -142,7 +142,7 @@ describe("signup flow", () => {
     await userEvent.type(screen.getByLabelText(/email address/i), "new@example.com");
     await userEvent.type(screen.getByLabelText(/^password$/i), "secret");
     await userEvent.type(screen.getByLabelText(/confirm password/i), "secret");
-    await userEvent.click(screen.getByRole("button", { name: /sign-up/i }));
+    await userEvent.click(within(screen.getByRole("form", { name: /sign up/i })).getByRole("button", { name: /^sign up$/i }));
 
     await waitFor(() =>
       expect(api.signup).toHaveBeenCalledWith({
@@ -151,7 +151,7 @@ describe("signup flow", () => {
         password: "secret",
       }),
     );
-    expect(await screen.findByRole("heading", { name: /login to see your notes/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /log in to your notes/i })).toBeInTheDocument();
     expect(localStorage.getItem("token")).toBeNull();
   });
 });
@@ -161,7 +161,7 @@ describe("profile", () => {
     localStorage.setItem("token", "valid.jwt");
     window.history.pushState({}, "", "/profile");
     render(<App />);
-    expect(await screen.findByRole("heading", { name: /user profile/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /^profile$/i })).toBeInTheDocument();
     expect(screen.getByText("m@example.com")).toBeInTheDocument();
   });
 });

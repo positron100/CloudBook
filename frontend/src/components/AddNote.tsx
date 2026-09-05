@@ -1,95 +1,54 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
+import { Button, Field, Surface } from "@/components/ui";
 import { useNotes } from "@/context/NotesContext";
-import type { ShowAlert } from "@/types/alert";
+import { useToast } from "@/context/ToastContext";
+import "./AddNote.css";
 
-const AddNote = ({ showAlert }: { showAlert: ShowAlert }) => {
+const EMPTY = { title: "", description: "", tag: "General" };
+
+export default function AddNote() {
   const { addNote } = useNotes();
-  const [note, setNote] = useState({ title: "", description: "", tag: "General" });
+  const toast = useToast();
+  const [note, setNote] = useState(EMPTY);
+  const [submitting, setSubmitting] = useState(false);
+
+  const invalid = note.title.trim().length < 3 || note.description.trim().length < 3;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
     try {
       await addNote(note.title, note.description, note.tag || "General");
-      setNote({ title: "", description: "", tag: "General" });
-      showAlert("Added Successfully", "success");
+      setNote(EMPTY);
+      toast.success("Note added");
     } catch (err) {
-      showAlert(err instanceof Error ? err.message : "Could not add note", "danger");
+      toast.error(err instanceof Error ? err.message : "Could not add note");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const onChange = (e: ChangeEvent<HTMLInputElement>) =>
     setNote({ ...note, [e.target.name]: e.target.value });
-  };
-
-  const reset = (field: "title" | "description") => setNote({ ...note, [field]: "" });
 
   return (
-    <>
-      <div className="container my-3">
-        <h2>Add a Note</h2>
-      </div>
-      <form className="container" onSubmit={handleSubmit}>
-        <div className="mb-3 my-3">
-          <label htmlFor="title" className="form-label">
-            Title
-          </label>
-          <input
-            type="text"
-            className="form-control"
-            onChange={onChange}
-            value={note.title}
-            id="title"
-            name="title"
-            aria-describedby="titleHelp"
-          />
-          <button type="button" className="btn btn-link btn-sm px-0" onClick={() => reset("title")}>
-            Reset title
-          </button>
+    <Surface level={2} as="section" className="add-note" aria-labelledby="add-note-heading">
+      <h2 id="add-note-heading" className="add-note__heading">
+        New note
+      </h2>
+      <form className="add-note__form" onSubmit={handleSubmit}>
+        <Field label="Title" name="title" value={note.title} onChange={onChange} required />
+        <Field label="Description" name="description" value={note.description} onChange={onChange} required />
+        <Field label="Tag" name="tag" value={note.tag} onChange={onChange} hint="Optional — groups notes together." />
+        <div className="add-note__actions">
+          <Button type="button" variant="ghost" size="sm" onClick={() => setNote(EMPTY)}>
+            Clear
+          </Button>
+          <Button type="submit" variant="primary" loading={submitting} disabled={invalid}>
+            Add note
+          </Button>
         </div>
-        <div className="mb-3">
-          <label htmlFor="description" className="form-label">
-            Description
-          </label>
-          <input
-            type="text"
-            className="form-control"
-            id="description"
-            onChange={onChange}
-            value={note.description}
-            name="description"
-          />
-          <button
-            type="button"
-            className="btn btn-link btn-sm px-0"
-            onClick={() => reset("description")}
-          >
-            Reset description
-          </button>
-        </div>
-        <div className="mb-3">
-          <label htmlFor="tag" className="form-label">
-            Tag
-          </label>
-          <input
-            type="text"
-            className="form-control"
-            id="tag"
-            onChange={onChange}
-            value={note.tag}
-            name="tag"
-          />
-        </div>
-
-        <button
-          disabled={note.title.length < 3 || note.description.length < 3}
-          type="submit"
-          className="btn btn-primary"
-        >
-          Add Note
-        </button>
       </form>
-    </>
+    </Surface>
   );
-};
-
-export default AddNote;
+}

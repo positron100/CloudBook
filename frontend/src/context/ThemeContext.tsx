@@ -12,9 +12,8 @@ import { prefersReducedMotionNow, startThemeReveal, type RevealOrigin } from "@/
 /**
  * Theme state for the CloudBook token system.
  *
- * `data-theme` on <html> drives styles/tokens.css. `data-bs-theme` mirrors it
- * so the still-present Bootstrap components stay themed until Bootstrap is
- * removed. The pre-paint script in index.html sets both before first render.
+ * `data-theme` on <html> drives styles/tokens.css. The pre-paint script in
+ * index.html sets it before first render.
  *
  * Switching the theme runs a circular View-Transitions reveal from the origin
  * point (the toggle's position) when the API is available AND the user has not
@@ -37,9 +36,7 @@ function readInitial(): Theme {
 }
 
 function applyThemeAttrs(theme: Theme) {
-  const root = document.documentElement;
-  root.setAttribute("data-theme", theme);
-  root.setAttribute("data-bs-theme", theme);
+  document.documentElement.setAttribute("data-theme", theme);
 }
 
 interface ThemeContextValue {

@@ -1,0 +1,30 @@
+.footer {
+  margin-top: auto;
+  border-top: var(--border-width) solid var(--border);
+}
+.footer__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  max-width: var(--container-wide);
+  margin-inline: auto;
+  padding-block: var(--space-5);
+}
+.footer__mark {
+  font-size: var(--text-meta);
+  color: var(--fg-faint);
+}
+.footer__nav {
+  display: flex;
+  gap: var(--space-4);
+}
+.footer__nav a {
+  font-size: var(--text-meta);
+  color: var(--fg-muted);
+  text-decoration: none;
+}
+.footer__nav a:hover {
+  color: var(--fg);
+}

@@ -1,8 +1,6 @@
 import Notes from "./Notes";
-import type { ShowAlert } from "@/types/alert";
 
-const Home = ({ showAlert }: { showAlert: ShowAlert }) => {
-  return <Notes showAlert={showAlert} />;
-};
-
-export default Home;
+/** Authenticated landing — the notes workspace. Gains its real layout in P1.4. */
+export default function Home() {
+  return <Notes />;
+}

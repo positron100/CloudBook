@@ -1,0 +1,20 @@
+.about {
+  max-width: var(--measure-prose);
+  margin-inline: auto;
+  padding-block: var(--space-8) var(--space-6);
+}
+.about__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-h1);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  text-wrap: balance;
+}
+.about__lede {
+  margin: var(--space-4) 0 0;
+  font-size: 1.125rem;
+  color: var(--fg-muted);
+  line-height: var(--leading-normal);
+}

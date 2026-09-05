@@ -1,0 +1,42 @@
+.desk-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-base);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Key-light bloom from the upper-left, plus a fainter warm counter-glow. */
+.desk-backdrop::before,
+.desk-backdrop::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+}
+.desk-backdrop::before {
+  width: 44rem;
+  height: 44rem;
+  top: -16rem;
+  left: -10rem;
+  background: radial-gradient(
+    circle at 50% 50%,
+    color-mix(in oklab, var(--key-light) 70%, transparent),
+    transparent 70%
+  );
+}
+.desk-backdrop::after {
+  width: 34rem;
+  height: 34rem;
+  right: -12rem;
+  bottom: -14rem;
+  background: radial-gradient(
+    circle at 50% 50%,
+    color-mix(in oklab, var(--accent) 10%, transparent),
+    transparent 70%
+  );
+}
+
+:root[data-theme="dark"] .desk-backdrop::before {
+  opacity: 0.5;
+}

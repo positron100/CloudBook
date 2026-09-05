@@ -1,12 +1,16 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Button, Field, Surface } from "@/components/ui";
+import { Reveal } from "@/components/motion";
 import { useAuth } from "@/context/AuthContext";
-import type { ShowAlert } from "@/types/alert";
+import { useToast } from "@/context/ToastContext";
+import "./auth.css";
 
-const Login = ({ showAlert }: { showAlert: ShowAlert }) => {
+export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
+  const toast = useToast();
   const [credentials, setCredentials] = useState({ email: "", password: "" });
   const [submitting, setSubmitting] = useState(false);
 
@@ -17,66 +21,50 @@ const Login = ({ showAlert }: { showAlert: ShowAlert }) => {
     setSubmitting(true);
     try {
       await login(credentials.email, credentials.password);
-      showAlert("Logged in Successfully", "success");
+      toast.success("Logged in");
       navigate(from, { replace: true });
     } catch (err) {
-      showAlert(err instanceof Error ? err.message : "Invalid credentials", "danger");
+      toast.error(err instanceof Error ? err.message : "Invalid credentials");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const onChange = (e: ChangeEvent<HTMLInputElement>) =>
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
-  };
 
   return (
-    <div className="container my-3">
-      <h1 className="h3">Login to see your notes</h1>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-3 mt-3">
-          <label htmlFor="email" className="form-label">
-            Email address
-          </label>
-          <input
+    <Reveal as="div" onView={false} className="auth">
+      <Surface level={4} as="section" className="auth__card">
+        <h1 className="auth__title">Log in to your notes</h1>
+        <form className="auth__form" aria-label="Log in" onSubmit={handleSubmit}>
+          <Field
+            label="Email address"
             type="email"
-            className="form-control"
-            id="email"
             name="email"
             autoComplete="email"
-            aria-describedby="emailHelp"
-            onChange={onChange}
             value={credentials.email}
+            onChange={onChange}
+            hint="We'll never share your email with anyone else."
             required
           />
-          <div id="emailHelp" className="form-text">
-            We'll never share your email with anyone else.
-          </div>
-        </div>
-        <div className="mb-3">
-          <label htmlFor="password" className="form-label">
-            Password
-          </label>
-          <input
+          <Field
+            label="Password"
             type="password"
-            className="form-control"
-            id="password"
             name="password"
             autoComplete="current-password"
             value={credentials.password}
             onChange={onChange}
             required
           />
-        </div>
-        <button type="submit" className="btn btn-primary" disabled={submitting}>
-          {submitting ? "Logging in…" : "Login"}
-        </button>
-      </form>
-      <p className="mt-3">
-        Not have an account? <Link to="/register">Register here</Link>
-      </p>
-    </div>
+          <Button type="submit" variant="primary" block loading={submitting}>
+            {submitting ? "Logging in…" : "Log in"}
+          </Button>
+        </form>
+        <p className="auth__alt">
+          Don't have an account? <Link to="/register">Create one</Link>
+        </p>
+      </Surface>
+    </Reveal>
   );
-};
-
-export default Login;
+}

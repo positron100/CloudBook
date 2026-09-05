@@ -1,0 +1,22 @@
+.app-shell {
+  position: relative;
+  z-index: var(--z-raised);
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.app-shell__main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-block: var(--space-6);
+}
+
+/* Room for the fixed bottom nav on mobile so content never hides behind it. */
+@media (max-width: 767px) {
+  .app-shell__main {
+    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + var(--space-5));
+  }
+}

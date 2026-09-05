@@ -1,0 +1,46 @@
+.icon-btn {
+  --sz: 2.75rem;
+  display: inline-grid;
+  place-items: center;
+  width: var(--sz);
+  height: var(--sz);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-md);
+  background-color: transparent;
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard);
+}
+.icon-btn--sm {
+  --sz: 2.25rem;
+  border-radius: var(--radius-sm);
+}
+.icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.icon-btn--ghost:hover {
+  background-color: var(--accent-soft);
+  color: var(--accent-strong);
+}
+.icon-btn--solid {
+  background-color: var(--sheet);
+  border-color: var(--border);
+  color: var(--fg);
+  box-shadow: var(--elev-1);
+}
+.icon-btn--solid:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--elev-2);
+}
+.icon-btn--danger {
+  color: var(--fg-faint);
+}
+.icon-btn--danger:hover {
+  background-color: var(--danger-soft);
+  color: var(--danger);
+}

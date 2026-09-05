@@ -1,123 +1,120 @@
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import type { Note } from "@shared/types";
+import { Button, Field, Modal, Skeleton } from "@/components/ui";
+import { Stagger } from "@/components/motion";
 import { useNotes } from "@/context/NotesContext";
+import { useToast } from "@/context/ToastContext";
 import NoteItem from "./NoteItem";
 import AddNote from "./AddNote";
-import type { ShowAlert } from "@/types/alert";
+import "./Notes.css";
 
 interface EditForm {
   id: string;
-  etitle: string;
-  edescription: string;
-  etag: string;
+  title: string;
+  description: string;
+  tag: string;
 }
 
-function Notes({ showAlert }: { showAlert: ShowAlert }) {
+export default function Notes() {
   const { notes, status, getNotes, editNote } = useNotes();
+  const toast = useToast();
+  const [edit, setEdit] = useState<EditForm | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    // The route is gated by <RequireAuth>, so we're always authenticated here.
     void getNotes();
   }, [getNotes]);
 
-  const openModalRef = useRef<HTMLButtonElement>(null);
-  const closeModalRef = useRef<HTMLButtonElement>(null);
-  const [form, setForm] = useState<EditForm>({ id: "", etitle: "", edescription: "", etag: "General" });
-
-  const beginEdit = (note: Note) => {
-    setForm({ id: note._id, etitle: note.title, edescription: note.description, etag: note.tag });
-    openModalRef.current?.click();
-  };
+  const beginEdit = (note: Note) =>
+    setEdit({ id: note._id, title: note.title, description: note.description, tag: note.tag });
 
   const submitEdit = async () => {
+    if (!edit) return;
+    setSaving(true);
     try {
-      await editNote(form.id, form.etitle, form.edescription, form.etag);
-      closeModalRef.current?.click();
-      showAlert("Updates Successfully", "success");
+      await editNote(edit.id, edit.title, edit.description, edit.tag || "General");
+      setEdit(null);
+      toast.success("Note updated");
     } catch (err) {
-      showAlert(err instanceof Error ? err.message : "Could not update note", "danger");
+      toast.error(err instanceof Error ? err.message : "Could not update note");
+    } finally {
+      setSaving(false);
     }
   };
 
-  const onChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const onEditChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setEdit((prev) => (prev ? { ...prev, [e.target.name]: e.target.value } : prev));
+
+  const editInvalid = !edit || edit.title.trim().length < 3 || edit.description.trim().length < 3;
 
   return (
-    <>
-      <AddNote showAlert={showAlert} />
+    <div className="notes">
+      <AddNote />
 
-      {/* Hidden trigger — beginEdit() clicks it to open the Bootstrap modal. */}
-      <button
-        type="button"
-        className="btn btn-primary d-none"
-        data-bs-toggle="modal"
-        data-bs-target="#editNoteModal"
-        ref={openModalRef}
-      >
-        Open edit modal
-      </button>
+      <section className="notes__list" aria-labelledby="notes-heading">
+        <h2 id="notes-heading" className="notes__heading">
+          {status === "ready" && notes.length === 0 ? "No notes yet" : "Your notes"}
+        </h2>
 
-      <div className="modal fade" id="editNoteModal" tabIndex={-1} aria-labelledby="editNoteModalLabel" aria-hidden="true">
-        <div className="modal-dialog">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h1 className="modal-title fs-5" id="editNoteModalLabel">
-                Edit Note
-              </h1>
-              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div className="modal-body">
-              <form>
-                <div className="mb-3">
-                  <label htmlFor="etitle" className="col-form-label">
-                    Title:
-                  </label>
-                  <input type="text" className="form-control" id="etitle" name="etitle" value={form.etitle} onChange={onChange} />
-                </div>
-                <div className="mb-3">
-                  <label htmlFor="etag" className="col-form-label">
-                    Tag:
-                  </label>
-                  <input type="text" className="form-control" id="etag" name="etag" value={form.etag} onChange={onChange} />
-                </div>
-                <div className="mb-3">
-                  <label htmlFor="edescription" className="col-form-label">
-                    Description:
-                  </label>
-                  <textarea className="form-control" id="edescription" name="edescription" value={form.edescription} onChange={onChange}></textarea>
-                </div>
-              </form>
-            </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal" ref={closeModalRef}>
-                Close
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={form.etitle.length < 3 || form.edescription.length < 3}
-                onClick={submitEdit}
-              >
-                Update
-              </button>
-            </div>
+        {status === "loading" && (
+          <div className="notes__grid" aria-hidden="true">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="notes__skeleton">
+                <Skeleton height="1.1rem" width="70%" />
+                <Skeleton height="0.8rem" />
+                <Skeleton height="0.8rem" width="85%" />
+              </div>
+            ))}
           </div>
-        </div>
-      </div>
+        )}
 
-      <div className="row my-3 mx-0">
-        <h2>{notes.length === 0 ? "No notes to display" : "Your Notes"}</h2>
-        <div className="container my-2 mx-1">
-          {status === "loading" && "Loading your notes…"}
-          {status === "error" && "Could not load your notes. Refresh to try again."}
-        </div>
-        {notes.map((note) => (
-          <NoteItem key={note._id} note={note} updatenote={beginEdit} showAlert={showAlert} />
-        ))}
-      </div>
-    </>
+        {status === "error" && (
+          <p className="notes__state">Couldn't load your notes. Refresh to try again.</p>
+        )}
+
+        {status === "ready" && notes.length === 0 && (
+          <p className="notes__state">Your desk is clear — add your first note above.</p>
+        )}
+
+        {notes.length > 0 && (
+          <Stagger as="div" className="notes__grid" onView={false}>
+            {notes.map((note) => (
+              <NoteItem key={note._id} note={note} onEdit={beginEdit} />
+            ))}
+          </Stagger>
+        )}
+      </section>
+
+      {edit && (
+        <Modal
+          open
+          onClose={() => setEdit(null)}
+          title="Edit note"
+          footer={
+            <>
+              <Button variant="ghost" onClick={() => setEdit(null)}>
+                Cancel
+              </Button>
+              <Button variant="primary" onClick={submitEdit} loading={saving} disabled={editInvalid}>
+                Save changes
+              </Button>
+            </>
+          }
+        >
+          <div className="notes__edit-form">
+            <Field label="Title" name="title" value={edit.title} onChange={onEditChange} required />
+            <Field label="Tag" name="tag" value={edit.tag} onChange={onEditChange} />
+            <Field
+              as="textarea"
+              label="Description"
+              name="description"
+              value={edit.description}
+              onChange={onEditChange}
+              required
+            />
+          </div>
+        </Modal>
+      )}
+    </div>
   );
 }
-
-export default Notes;

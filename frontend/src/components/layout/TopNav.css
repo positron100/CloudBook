@@ -1,0 +1,77 @@
+.topnav {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-nav);
+  background-color: color-mix(in oklab, var(--float) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: var(--border-width) solid var(--border);
+}
+
+.topnav__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  height: var(--nav-height);
+  max-width: var(--container-wide);
+  margin-inline: auto;
+}
+
+.topnav__brand {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.topnav__nav {
+  flex: 1;
+}
+.topnav__list {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.topnav__link {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  height: 2rem;
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  color: var(--fg-muted);
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+.topnav__link:hover {
+  color: var(--fg);
+}
+.topnav__link[aria-current="page"] {
+  color: var(--fg);
+  font-weight: var(--weight-semibold);
+}
+
+.topnav__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Below md the top nav collapses to just brand + theme toggle; primary nav
+   moves to <BottomNav>. */
+@media (max-width: 767px) {
+  .topnav__nav {
+    display: none;
+  }
+  .topnav__actions .btn {
+    display: none;
+  }
+}

@@ -1,6 +1,10 @@
 import "@testing-library/jest-dom/vitest";
 import { afterEach, vi } from "vitest";
-import { cleanup } from "@testing-library/react";
+import { cleanup, configure } from "@testing-library/react";
+
+// The flow tests render the whole app (framer-motion + toast timers + a route
+// change) and can exceed the 1000ms default before an assertion resolves.
+configure({ asyncUtilTimeout: 4000 });
 
 afterEach(() => cleanup());
 
@@ -17,6 +21,17 @@ if (typeof window !== "undefined" && !window.matchMedia) {
     removeListener: () => {},
     dispatchEvent: () => false,
   })) as unknown as typeof window.matchMedia;
+}
+
+// jsdom has no ResizeObserver — the nav indicator measures with one.
+if (typeof window !== "undefined" && !("ResizeObserver" in window)) {
+  class RO {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  (window as unknown as { ResizeObserver: unknown }).ResizeObserver = RO;
+  (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = RO;
 }
 
 // jsdom has no IntersectionObserver — framer-motion's `whileInView` uses one.
