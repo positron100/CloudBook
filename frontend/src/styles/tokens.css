@@ -1,0 +1,201 @@
+/* ===========================================================================
+   CloudBook design tokens — "the lit desk"
+   ---------------------------------------------------------------------------
+   The entire visual system lives here as CSS custom properties. Change the
+   palette / scale here, never in components.
+
+   Identity: a digital writing desk. Warm paper ground, deep ink text, one
+   blue-violet ink accent. Depth comes from layered light + shadow under a
+   single key light from the upper-left — NOT from darkening colours.
+
+   Deliberately not Sattva's sage, Portfolio's indigo/terminal, or TextUtils'
+   ink-blue-on-brown. Only the token *structure* is shared with those projects.
+   =========================================================================== */
+
+:root {
+  /* --- Surfaces: a 4-level stack, distinguished by lightness + light, not by
+     going darker. surface (the desk) < sheet (a note) < sheet-raised
+     (hovered / selected / dragged) < float (nav, menus, toasts, modals). --- */
+  --surface: #f4f1ea;
+  --sheet: #fdfbf6;
+  --sheet-raised: #ffffff;
+  --float: #fdfbf6;
+
+  /* --- Ink --- */
+  --fg: #201e1a;
+  --fg-muted: #6a6357;
+  --fg-faint: #9a9184;
+
+  /* --- Lines --- */
+  --border: #e6e0d3;
+  --border-strong: #d3cab9;
+
+  /* --- Accent: blue-violet ink. One accent only. --- */
+  --accent: #5b53d6;
+  --accent-strong: #4a42c4;
+  --accent-soft: #ecebfb;
+  --accent-fg: #ffffff;
+
+  /* --- Semantic, tuned warm so they sit inside the palette --- */
+  --ok: #3f7d55;
+  --ok-soft: #e4efe6;
+  --warn: #a9762c;
+  --warn-soft: #f3e9d6;
+  --danger: #b4432f;
+  --danger-soft: #f6e2dc;
+
+  /* --- The physical world: one key light, upper-left. Every shadow in the
+     system (CSS and, later, WebGL) points down and slightly right. --- */
+  --key-light: #fffdf7;
+  --shadow-hsl: 30 24% 16%;
+
+  /* Elevation scale — level maps to how far a surface sits off the desk.
+     0 flat · 1 resting card / nav · 2 hover · 3 selected / editor · 4 modal. */
+  --elev-0: none;
+  --elev-1: 0 1px 2px hsl(var(--shadow-hsl) / 0.06), 0 2px 6px -2px hsl(var(--shadow-hsl) / 0.1);
+  --elev-2: 0 2px 4px hsl(var(--shadow-hsl) / 0.06), 0 8px 18px -6px hsl(var(--shadow-hsl) / 0.14);
+  --elev-3: 0 4px 10px hsl(var(--shadow-hsl) / 0.08), 0 18px 36px -12px hsl(var(--shadow-hsl) / 0.18);
+  --elev-4: 0 8px 20px hsl(var(--shadow-hsl) / 0.1), 0 36px 64px -18px hsl(var(--shadow-hsl) / 0.26);
+  --scrim: hsl(var(--shadow-hsl) / 0.42);
+
+  /* --- Spacing — 4px base. Semantic aliases below the raw scale. --- */
+  --space-px: 1px;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+
+  --pad-page-inline: clamp(1rem, 4vw, 3rem);
+  --pad-section: var(--space-7);
+  --pad-card: var(--space-5);
+  --gap-grid: var(--space-5);
+  --gap-control: var(--space-2);
+
+  /* --- Shape --- */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+  --radius-sheet: 14px;
+
+  --border-width: 1px;
+
+  /* --- Typography.
+     Fraunces (display) and Inter (UI/editor) are NOT loaded yet — P1.1 keeps
+     the current system-font rendering. The tokens carry real fallback stacks
+     so wiring the self-hosted subset fonts later is a one-line change. --- */
+  --font-display: "Fraunces", "Iowan Old Style", Georgia, "Times New Roman", serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  --font-note: var(--font-sans);
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+
+  --text-display: clamp(2.75rem, 1.8rem + 4.2vw, 4.25rem);
+  --text-h1: clamp(2rem, 1.5rem + 2.2vw, 2.6rem);
+  --text-h2: 1.75rem;
+  --text-h3: 1.25rem;
+  --text-body: 1rem;
+  --text-label: 0.875rem;
+  --text-meta: 0.8125rem;
+  --text-editor: 1.0625rem;
+
+  --leading-tight: 1.12;
+  --leading-snug: 1.3;
+  --leading-normal: 1.6;
+  --leading-editor: 1.75;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  --tracking-tight: -0.011em;
+  --tracking-wide: 0.08em;
+
+  --measure-editor: 68ch;
+  --measure-prose: 62ch;
+
+  /* --- Breakpoints (for reference + JS; see utils/breakpoints.ts).
+     Design targets: 360 390 430 768 864 1024 1280 1440 1600 1920. --- */
+  --bp-xs: 360px;
+  --bp-sm: 430px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  --bp-xl: 1280px;
+  --bp-2xl: 1600px;
+  --container-max: 1440px;
+  --container-wide: 1680px;
+
+  /* --- Motion. Durations + easings only; no library. utils/motion.ts mirrors
+     these for JS/Framer use in P1.2. --- */
+  --dur-micro: 140ms;
+  --dur-fast: 240ms;
+  --dur-base: 400ms;
+  --dur-section: 600ms;
+  --dur-cinematic: 900ms;
+
+  --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-entrance: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ease-press: cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  --reveal-dur: 700ms;
+  --reveal-ease: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Restraint: the maximum a large card may tilt toward the pointer. */
+  --tilt-max: 4deg;
+
+  /* --- Stacking --- */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-sticky: 20;
+  --z-nav: 40;
+  --z-overlay: 100;
+  --z-toast: 1000;
+
+  --nav-height: 3.5rem;
+  --bottom-nav-height: 3.75rem;
+}
+
+/* ===========================================================================
+   Dark — "the drafting table at night". Warm graphite with a faint blue
+   undertone, paper surfaces lifted (not inverted), accent brightened.
+   Every value re-tuned for the dark lighting model, never algorithmically
+   inverted.
+   =========================================================================== */
+:root[data-theme="dark"] {
+  --surface: #15161a;
+  --sheet: #1e2027;
+  --sheet-raised: #262932;
+  --float: #23252d;
+
+  --fg: #ece7dd;
+  --fg-muted: #a49d90;
+  --fg-faint: #6f6a5f;
+
+  --border: #2c2e37;
+  --border-strong: #3c3f4b;
+
+  --accent: #8c84f1;
+  --accent-strong: #a7a0f6;
+  --accent-soft: #211f33;
+  --accent-fg: #0d0b1a;
+
+  --ok: #6fae83;
+  --ok-soft: #17251b;
+  --warn: #d0a05b;
+  --warn-soft: #2a2113;
+  --danger: #d98576;
+  --danger-soft: #2c1c18;
+
+  --key-light: #2a2c35;
+  --shadow-hsl: 230 45% 3%;
+  --scrim: hsl(230 45% 3% / 0.62);
+}

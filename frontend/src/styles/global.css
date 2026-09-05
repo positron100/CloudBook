@@ -1,0 +1,147 @@
+/* ===========================================================================
+   CloudBook global styles — reset, base, theme plumbing.
+   Loaded after tokens.css. Screen/component styling comes in later phases;
+   P1.1 keeps the current (Bootstrap-driven) UI visually intact and only
+   changes the page ground to the new paper/graphite tokens.
+   =========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+  -webkit-text-size-adjust: 100%;
+  /* Painted here as well as on body so a future theme reveal has a ground
+     colour of its own; identical value, nothing changes at rest. */
+  background-color: var(--surface);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background-color: var(--surface);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--font-mono);
+}
+
+img,
+picture,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+::selection {
+  background-color: var(--accent);
+  color: var(--accent-fg);
+}
+
+/* Keyboard focus — one treatment everywhere. No border-radius override here:
+   browsers already follow the element's own radius, and forcing one squares
+   off every pill/rounded control the moment it takes focus. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Smooth theme change — scoped to colour properties only, never layout or
+   transform. `.btn` and other components that declare their own transition
+   keep it (higher specificity than `*`). Dormant guard below is used by the
+   circular theme reveal in P1.2. */
+@media (prefers-reduced-motion: no-preference) {
+  * {
+    transition:
+      background-color var(--dur-fast) var(--ease-standard),
+      border-color var(--dur-fast) var(--ease-standard),
+      color var(--dur-fast) var(--ease-standard),
+      fill var(--dur-fast) var(--ease-standard),
+      stroke var(--dur-fast) var(--ease-standard);
+  }
+}
+:root[data-theme-transition] * {
+  transition: none !important;
+}
+
+/* View Transitions choreography — declared now, inert until P1.2 wires the
+   reveal. Harmless on browsers without the API. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* Global reduced-motion kill. Everything the app adds later must also gate on
+   the useReducedMotion() hook — this is the CSS backstop. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Screen-reader-only, and the skip link that becomes visible on focus. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: fixed;
+  top: var(--space-3);
+  left: var(--space-3);
+  z-index: var(--z-toast);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  background-color: var(--accent);
+  color: var(--accent-fg);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+  transform: translateY(-150%);
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.container-px {
+  padding-inline: max(var(--pad-page-inline), env(safe-area-inset-left), env(safe-area-inset-right));
+}

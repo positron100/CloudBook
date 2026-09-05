@@ -19,6 +19,13 @@ frontend/dist
 !.env.example
 !**/.env.example
 
+# tooling output (graphify analysis, audit screenshots, playwright artifacts)
+graphify-out/
+**/graphify-out/
+.audit-artifacts/
+.playwright-mcp/
+**/.playwright-mcp/
+
 # misc
 .DS_Store
 *.local
