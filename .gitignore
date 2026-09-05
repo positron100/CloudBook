@@ -1,24 +1,27 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-node_modules
-# node_modules would not get pushed into github
+node_modules/
 /.pnp
 .pnp.js
 
-# testing
+# testing / coverage
 /coverage
+**/coverage
 
-# production
+# build output
 /build
+frontend/dist
+
+# env — never commit real secrets (see *.env.example for the shape)
+.env
+.env.*
+!.env.example
+!**/.env.example
 
 # misc
 .DS_Store
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
+*.local
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
