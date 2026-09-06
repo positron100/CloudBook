@@ -35,4 +35,13 @@ describe("ContactLetter", () => {
     expect(screen.getByLabelText(/your name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^message$/i)).toBeInTheDocument();
   });
+
+  it("offers the direct address and the repo alongside the letter", () => {
+    render(wrap(<ContactLetter />));
+    expect(screen.getByRole("button", { name: /hello@cloudbook\.app/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /positron100\/CloudBook/i })).toHaveAttribute(
+      "href",
+      "https://github.com/positron100/CloudBook",
+    );
+  });
 });

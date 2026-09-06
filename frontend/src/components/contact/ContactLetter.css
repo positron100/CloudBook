@@ -4,116 +4,201 @@
   align-items: center;
   gap: var(--space-4);
   width: 100%;
-  max-width: 26rem;
+  max-width: 30rem;
 }
 
-/* The stage: a small closed envelope, growing to release the sheet. The grid
-   row is the "how far the letter has come out" value — brief-sanctioned
-   clip/height for a genuine fold, everything else is transform + clip-path. */
+/* The stage. One grid row carries "how far the letter has come out" — a fixed
+   envelope height when closed, content height when open — the one place a
+   height animates; the flap and sheet are transform + opacity. */
 .contact-letter__stage {
   position: relative;
   width: 100%;
-  perspective: 1400px;
   display: grid;
-  grid-template-rows: 5.5rem;
+  grid-template-rows: 6.5rem;
+  perspective: 1600px;
   transition: grid-template-rows var(--dur-section) var(--ease-standard);
 }
 .contact-letter__stage[data-open="true"] {
   grid-template-rows: 1fr;
 }
 
-.contact-letter__paper {
-  overflow: hidden;
+/* Clipped to the grid row — a fixed envelope height when closed, the letter's
+   full height when open. */
+.contact-letter__well {
   min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+}
+
+/* The letter — the desk's paper, faintly ruled, with its own soft elevation. */
+.contact-letter__sheet {
+  position: relative;
   border-radius: var(--radius-lg);
   background-color: var(--sheet-raised);
-  box-shadow: var(--elev-field);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(1.75rem - 1px),
+    var(--rule-line) calc(1.75rem - 1px),
+    var(--rule-line) 1.75rem
+  );
+  background-position: 0 3.4rem;
+  border: 1px solid color-mix(in oklab, var(--border) 55%, transparent);
+  box-shadow:
+    0 3px 10px hsl(var(--shadow-hsl) / 0.08),
+    0 22px 46px -22px hsl(var(--shadow-hsl) / 0.22),
+    inset 0 1px 0 color-mix(in oklab, var(--key-light) 75%, transparent);
+}
+.contact-letter__content {
+  padding: var(--space-6) var(--space-5) var(--space-5) 3.4rem;
+}
+/* A quiet margin rule down the left, like a real letter page. */
+.contact-letter__sheet::before {
+  content: "";
+  position: absolute;
+  inset: var(--space-4) auto var(--space-4) 2.4rem;
+  width: 1px;
+  background-color: color-mix(in oklab, var(--danger) 26%, transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+.contact-letter__salutation {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+  color: var(--fg);
 }
 .contact-letter__form {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  padding: var(--space-5);
-  transform-origin: top center;
-  transform: translateY(-14%);
-  opacity: 0;
-  clip-path: inset(0 0 100% 0);
-  transition:
-    transform var(--dur-section) var(--ease-standard),
-    opacity var(--dur-fast) var(--ease-standard),
-    clip-path var(--dur-section) var(--ease-standard);
-}
-.contact-letter__stage[data-open="true"] .contact-letter__form {
-  transform: translateY(0);
-  opacity: 1;
-  clip-path: inset(0 0 0 0);
-}
-.contact-letter__salutation {
-  margin: 0 0 var(--space-1);
-  font-family: var(--font-display);
-  font-size: var(--text-h3);
-  color: var(--fg);
 }
 
-/* --- Envelope (visible while closed, folds away as the sheet rises) --- */
-.contact-letter__pocket,
+/* --- Envelope: shown while closed, fades once the sheet is clear of it. --- */
+.contact-letter__envelope {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 6.5rem;
+  pointer-events: none;
+  transition: opacity var(--dur-base) var(--ease-standard);
+}
+.contact-letter__stage[data-open="true"] .contact-letter__envelope {
+  opacity: 0;
+}
+.contact-letter__pocket {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  background-color: var(--sheet);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 6px 16px -8px hsl(var(--shadow-hsl) / 0.22);
+}
+/* The front V lip — drawn over the sheet so it emerges from behind it. */
+.contact-letter__lip {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  background-color: color-mix(in oklab, var(--sheet) 92%, var(--fg));
+  clip-path: polygon(0 38%, 50% 100%, 100% 38%, 100% 100%, 0 100%);
+}
 .contact-letter__flap {
   position: absolute;
   inset-inline: 0;
-  pointer-events: none;
-  transition:
-    transform var(--dur-section) var(--ease-standard),
-    opacity var(--dur-fast) var(--ease-standard);
-}
-.contact-letter__pocket {
   top: 0;
-  height: 5.5rem;
-  border-radius: var(--radius-lg);
-  background-color: var(--sheet);
-  border: var(--border-width) solid var(--border-strong);
-  box-shadow: var(--elev-field);
-  /* the front pocket edge */
-  clip-path: polygon(0 42%, 50% 100%, 100% 42%, 100% 100%, 0 100%);
-}
-.contact-letter__flap {
-  top: 0;
-  height: 3rem;
+  height: 3.4rem;
+  z-index: 2;
   transform-origin: top center;
-  background-color: var(--sheet-raised);
-  border: var(--border-width) solid var(--border-strong);
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background-color: var(--sheet-raised);
+  border: 1px solid var(--border-strong);
+  border-bottom: none;
   clip-path: polygon(0 0, 100% 0, 50% 100%);
 }
-.contact-letter__stage[data-open="true"] .contact-letter__pocket {
-  transform: translateY(30%);
-  opacity: 0;
+.contact-letter__seal {
+  position: absolute;
+  top: 3rem;
+  left: 50%;
+  translate: -50% -50%;
+  z-index: 4;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: var(--radius-pill);
+  background:
+    radial-gradient(120% 120% at 30% 25%, var(--accent-highlight), var(--accent) 55%, var(--accent-strong));
+  box-shadow: 0 2px 5px -1px color-mix(in oklab, var(--accent) 50%, transparent);
 }
-.contact-letter__stage[data-open="true"] .contact-letter__flap {
-  transform: rotateX(-158deg);
-  opacity: 0;
+
+/* --- Other ways to reach us --- */
+.contact-letter__aside {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-4);
+}
+.contact-letter__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
+}
+.contact-letter__link:hover {
+  color: var(--fg);
+  background-color: color-mix(in oklab, var(--fg) 5%, transparent);
+}
+.contact-letter__link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.contact-letter__link-hint {
+  color: var(--fg-faint);
 }
 
 /* --- Toggle --- */
 .contact-letter__toggle {
-  padding: var(--space-2) var(--space-4);
-  border: var(--border-width) solid var(--border-strong);
+  padding: var(--space-2) var(--space-5);
+  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
   border-radius: var(--radius-pill);
-  background-color: var(--sheet);
+  background-color: color-mix(in oklab, var(--float) 66%, transparent);
+  backdrop-filter: blur(12px) saturate(1.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
   color: var(--fg-muted);
   font-family: var(--font-sans);
   font-size: var(--text-label);
   font-weight: var(--weight-medium);
   cursor: pointer;
-  box-shadow: var(--elev-field);
+  box-shadow: var(--elev-1), inset 0 1px 0 color-mix(in oklab, var(--key-light) 55%, transparent);
   transition:
     color var(--dur-fast) var(--ease-standard),
     box-shadow var(--dur-fast) var(--ease-standard);
 }
 .contact-letter__toggle:hover {
   color: var(--fg);
-  box-shadow: var(--elev-field-focus);
+  box-shadow: var(--elev-2), inset 0 1px 0 color-mix(in oklab, var(--key-light) 70%, transparent);
 }
 .contact-letter__toggle:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact-letter__stage {
+    transition: none;
+  }
 }
