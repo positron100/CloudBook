@@ -17,6 +17,7 @@ export type IconName =
   | "moon"
   | "user"
   | "arrow-left"
+  | "arrow-right"
   | "chevron-down"
   | "menu"
   | "home"
@@ -47,6 +48,7 @@ const PATHS: Record<IconName, string> = {
   moon: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z",
   user: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z",
   "arrow-left": "M19 12H5M12 19l-7-7 7-7",
+  "arrow-right": "M5 12h14M12 5l7 7-7 7",
   "chevron-down": "m6 9 6 6 6-6",
   menu: "M4 12h16M4 6h16M4 18h16",
   home: "M3 12l2-2m0 0 7-7 7 7M5 10v10a1 1 0 0 0 1 1h3m10-11 2 2m-2-2v10a1 1 0 0 1-1 1h-3m-6 0a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1m-6 0h6",

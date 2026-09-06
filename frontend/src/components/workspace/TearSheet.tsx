@@ -10,26 +10,59 @@ interface TearSheetProps {
   onDone: () => void;
 }
 
-// Same vertex count both sides so Framer can interpolate the top edge from
-// straight to torn.
-const FLAT =
-  "polygon(0% 0%, 12% 0%, 26% 0%, 41% 0%, 58% 0%, 73% 0%, 88% 0%, 100% 0%, 100% 100%, 0% 100%)";
-const TORN =
-  "polygon(0% 5%, 12% 0%, 26% 6%, 41% 1%, 58% 7%, 73% 2%, 88% 6%, 100% 1%, 100% 100%, 0% 100%)";
+// Same vertex count both sides so Framer can interpolate the bottom edge from
+// near-straight to a fine ragged tear (a few px of texture, not SVG teeth).
+const EDGE_FLAT =
+  "polygon(0% 0%, 0% 98.5%, 12% 99%, 24% 98.5%, 37% 99%, 50% 98.5%, 63% 99%, 76% 98.5%, 88% 99%, 100% 98.5%, 100% 0%)";
+const EDGE_TORN =
+  "polygon(0% 0%, 0% 95%, 12% 98.5%, 24% 94.5%, 37% 98%, 50% 95%, 63% 98.5%, 76% 94.5%, 88% 98%, 100% 95.5%, 100% 0%)";
 
 /**
- * The signature create interaction. A clone of the notebook page tears off at
- * the top, lifts, then flies and shrinks onto the new card's slot in the
- * stack. Mounted only after the API has confirmed the note; on failure it is
- * never rendered. One element, one continuous move.
+ * The signature create interaction — four continuous phases over ONE element:
+ *
+ *   prep    the written page lifts a hair, the bottom edge starts to give
+ *   tear    the edge unzips into a ragged tear, the page bends off the pad
+ *   flight  it arcs from the notebook toward the pile, rotating and shrinking
+ *   land    it overshoots its slot and settles; the real card takes over
+ *
+ * Mounted only after the API confirms the note; never rendered on failure.
  */
 export function TearSheet({ from, to, title, body, onDone }: TearSheetProps) {
-  const [phase, setPhase] = useState<"rip" | "fly">("rip");
+  const [phase, setPhase] = useState<"prep" | "tear" | "flight">("prep");
 
   const dx = to.left - from.left;
   const dy = to.top - from.top;
   const sx = to.width / from.width;
   const sy = to.height / from.height;
+  const arcY = Math.min(0, dy) - 64;
+
+  const target =
+    phase === "prep"
+      ? { y: -6, rotate: -1, clipPath: EDGE_FLAT }
+      : phase === "tear"
+        ? { y: -12, rotate: -3.5, skewX: -2, clipPath: EDGE_TORN }
+        : {
+            x: [0, dx * 0.55, dx],
+            y: [-12, arcY, dy],
+            rotate: [-3.5, 6, 1.5],
+            skewX: [-2, -1, 0],
+            scaleX: [1, (1 + sx) / 2, sx],
+            scaleY: [1, (1 + sy) / 2, sy],
+            clipPath: EDGE_TORN,
+            opacity: [1, 1, 0],
+          };
+
+  const transition =
+    phase === "prep"
+      ? { duration: 0.13, ease: [0.16, 1, 0.3, 1] as const }
+      : phase === "tear"
+        ? { duration: 0.2, ease: [0.16, 1, 0.3, 1] as const }
+        : {
+            duration: 0.58,
+            ease: [0.32, 0.9, 0.35, 1] as const,
+            times: [0, 0.52, 1],
+            opacity: { duration: 0.58, times: [0, 0.86, 1] },
+          };
 
   return (
     <m.div
@@ -44,22 +77,12 @@ export function TearSheet({ from, to, title, body, onDone }: TearSheetProps) {
         transformOrigin: "top left",
         zIndex: 90,
       }}
-      initial={{ clipPath: FLAT, y: 0, rotate: 0, x: 0, scaleX: 1, scaleY: 1, opacity: 1 }}
-      animate={
-        phase === "rip"
-          ? { clipPath: TORN, y: -12, rotate: -1.4 }
-          : { clipPath: TORN, x: dx, y: dy, scaleX: sx, scaleY: sy, rotate: 0, opacity: [1, 1, 0] }
-      }
-      transition={
-        phase === "rip"
-          ? { duration: 0.19, ease: [0.16, 1, 0.3, 1] }
-          : {
-              default: { duration: 0.46, ease: [0.22, 1, 0.36, 1] },
-              opacity: { duration: 0.46, times: [0, 0.8, 1] },
-            }
-      }
+      initial={{ clipPath: EDGE_FLAT, y: 0, rotate: 0, x: 0, scaleX: 1, scaleY: 1, opacity: 1 }}
+      animate={target}
+      transition={transition}
       onAnimationComplete={() => {
-        if (phase === "rip") setPhase("fly");
+        if (phase === "prep") setPhase("tear");
+        else if (phase === "tear") setPhase("flight");
         else onDone();
       }}
     >

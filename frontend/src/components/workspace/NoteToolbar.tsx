@@ -1,6 +1,11 @@
-import { Field, Icon, Select } from "@/components/ui";
+import { type Ref } from "react";
+import { m } from "framer-motion";
+import { Field, Icon } from "@/components/ui";
 import { cn } from "@/utils/cn";
-import { SORT_OPTIONS, type SortKey } from "@/lib/notesQuery";
+import { useMagnetic } from "@/hooks/useMagnetic";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { type SortKey } from "@/lib/notesQuery";
+import { SortMenu } from "./SortMenu";
 import "./NoteToolbar.css";
 
 interface NoteToolbarProps {
@@ -13,8 +18,40 @@ interface NoteToolbarProps {
   onTag: (value: string) => void;
 }
 
-/** A quiet glass strip above the stack: search · tag filters · sort. Kept
- *  compact and secondary — the note stack is the hero. */
+/** A magnetic tag chip — a small physical object that leans toward the cursor
+ *  on fine pointers, springs back on leave, inert on touch / reduced motion. */
+function TagChip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  const reduce = useReducedMotion();
+  const magnetic = useMagnetic({ strength: 4 });
+  return (
+    <m.button
+      ref={magnetic.ref as Ref<HTMLButtonElement>}
+      type="button"
+      className={cn("note-toolbar__tag", active && "is-active")}
+      aria-pressed={active}
+      onClick={onClick}
+      onMouseMove={magnetic.onMouseMove}
+      onMouseLeave={magnetic.onMouseLeave}
+      style={magnetic.style}
+      whileHover={reduce ? undefined : { y: -2 }}
+      whileTap={reduce ? undefined : { scale: 0.95 }}
+      transition={{ type: "spring", stiffness: 400, damping: 22 }}
+    >
+      {label}
+    </m.button>
+  );
+}
+
+/** Search · tag filters · sort, sitting in the desk header — not a boxed
+ *  dashboard toolbar. The note pile stays the hero. */
 export function NoteToolbar({
   search,
   onSearch,
@@ -28,48 +65,32 @@ export function NoteToolbar({
 
   return (
     <div className="note-toolbar" role="search">
-      <div className="note-toolbar__bar">
-        <div className="note-toolbar__search">
-          <Icon name="search" size={16} className="note-toolbar__search-icon" />
-          <Field
-            label="Search notes"
-            hideLabel
-            type="search"
-            placeholder="Search notes…"
-            value={search}
-            onChange={(e) => onSearch(e.target.value)}
-          />
-        </div>
-
-        {tags.length > 0 && (
-          <>
-            <span className="note-toolbar__sep" aria-hidden="true" />
-            <div className="note-toolbar__tags" role="group" aria-label="Filter by tag">
-              {filters.map((name) => (
-                <button
-                  key={name}
-                  type="button"
-                  className={cn("note-toolbar__tag", activeTag === name && "is-active")}
-                  aria-pressed={activeTag === name}
-                  onClick={() => onTag(name)}
-                >
-                  {name === "all" ? "All" : name}
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-
-        <span className="note-toolbar__sep note-toolbar__sep--end" aria-hidden="true" />
-
-        <Select
-          label="Sort"
+      <label className="note-toolbar__search">
+        <Icon name="search" size={15} className="note-toolbar__search-icon" />
+        <Field
+          label="Search notes"
           hideLabel
-          value={sort}
-          onChange={(e) => onSort(e.target.value as SortKey)}
-          options={SORT_OPTIONS}
+          type="search"
+          placeholder="Search notes…"
+          value={search}
+          onChange={(e) => onSearch(e.target.value)}
         />
-      </div>
+      </label>
+
+      {tags.length > 0 && (
+        <div className="note-toolbar__tags" role="group" aria-label="Filter by tag">
+          {filters.map((name) => (
+            <TagChip
+              key={name}
+              label={name === "all" ? "All" : name}
+              active={activeTag === name}
+              onClick={() => onTag(name)}
+            />
+          ))}
+        </div>
+      )}
+
+      <SortMenu value={sort} onChange={onSort} />
     </div>
   );
 }

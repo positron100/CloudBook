@@ -74,6 +74,7 @@ export function NoteCard({
         style={tilt.style}
       >
         <span className="note-card__light" aria-hidden="true" />
+        <span className="note-card__tear" aria-hidden="true" />
 
         <button
           type="button"

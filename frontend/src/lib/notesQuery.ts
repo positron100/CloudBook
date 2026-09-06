@@ -5,7 +5,7 @@ export type SortKey = "newest" | "oldest" | "title";
 export const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: "newest", label: "Newest first" },
   { value: "oldest", label: "Oldest first" },
-  { value: "title", label: "Title A–Z" },
+  { value: "title", label: "A–Z" },
 ];
 
 /** Unique tags present in the collection, sorted, case-insensitively de-duped. */

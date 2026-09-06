@@ -47,7 +47,7 @@ describe("Notebook", () => {
 
   it("keeps Add note disabled until title and body are long enough", async () => {
     mount();
-    const button = screen.getByRole("button", { name: /add note/i });
+    const button = screen.getByRole("button", { name: /tear out/i });
     expect(button).toBeDisabled();
     await userEvent.type(screen.getByLabelText(/^title$/i), "Hi");
     await userEvent.type(screen.getByLabelText(/^note$/i), "there");
@@ -60,7 +60,7 @@ describe("Notebook", () => {
     const { notes, onCreated } = mount();
     await userEvent.type(screen.getByLabelText(/^title$/i), "  Groceries  ");
     await userEvent.type(screen.getByLabelText(/^note$/i), "milk, eggs");
-    await userEvent.click(screen.getByRole("button", { name: /add note/i }));
+    await userEvent.click(screen.getByRole("button", { name: /tear out/i }));
     expect(notes.addNote).toHaveBeenCalledWith("Groceries", "milk, eggs", "General");
     expect(onCreated).toHaveBeenCalledWith(
       expect.objectContaining({ _id: "n1" }),
@@ -76,7 +76,7 @@ describe("Notebook", () => {
     });
     await userEvent.type(screen.getByLabelText(/^title$/i), "Keep me");
     await userEvent.type(screen.getByLabelText(/^note$/i), "still here");
-    await userEvent.click(screen.getByRole("button", { name: /add note/i }));
+    await userEvent.click(screen.getByRole("button", { name: /tear out/i }));
     expect(onCreated).not.toHaveBeenCalled();
     expect(screen.getByLabelText(/^title$/i)).toHaveValue("Keep me");
   });

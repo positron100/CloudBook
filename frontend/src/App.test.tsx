@@ -107,7 +107,7 @@ describe("notes CRUD", () => {
 
     await userEvent.type(screen.getByLabelText(/^title$/i), "Groceries");
     await userEvent.type(screen.getByLabelText(/^note$/i), "milk eggs");
-    await userEvent.click(screen.getByRole("button", { name: /add note/i }));
+    await userEvent.click(screen.getByRole("button", { name: /tear out/i }));
 
     expect(api.addNote).toHaveBeenCalledWith({ title: "Groceries", description: "milk eggs", tag: "General" });
     expect(await screen.findByText("Groceries")).toBeInTheDocument();

@@ -122,79 +122,75 @@ export default function Workspace() {
     }
   };
 
-  // Persistent load error with nothing to show — keep the desk chrome around it.
-  if (status === "error" && notes.length === 0) {
-    return (
-      <div className="workspace">
-        <header className="ws-header">
-          <h1 className="ws-header__title">Your desk</h1>
-        </header>
-        <div className="workspace__desk">
-          <WorkspaceState
-            icon="alert-triangle"
-            tone="error"
-            title="Couldn't reach your notes"
-            body="Something went wrong loading your desk. Check your connection and try again."
-            action={{ label: "Try again", onClick: () => void getNotes() }}
-          />
-        </div>
-      </div>
-    );
-  }
-
   const loading = status === "loading" && notes.length === 0;
+  const loadError = status === "error" && notes.length === 0;
 
   return (
     <div className="workspace">
-      <WorkspaceHeader total={notes.length} shown={visible.length} filtered={isFiltering} />
-
-      <Notebook onCreated={handleCreated} />
-
-      {notes.length > 0 && (
-        <NoteToolbar
-          search={search}
-          onSearch={setSearch}
-          sort={sort}
-          onSort={setSort}
-          tags={tags}
-          activeTag={tag}
-          onTag={setTag}
-        />
-      )}
+      <div className="workspace__head">
+        <WorkspaceHeader total={notes.length} shown={visible.length} filtered={isFiltering} />
+        {notes.length > 0 && (
+          <NoteToolbar
+            search={search}
+            onSearch={setSearch}
+            sort={sort}
+            onSort={setSort}
+            tags={tags}
+            activeTag={tag}
+            onTag={setTag}
+          />
+        )}
+      </div>
 
       <div className="workspace__desk">
-        {loading && <NoteStackSkeleton />}
+        <div className="workspace__diary">
+          <Notebook onCreated={handleCreated} />
+        </div>
 
-        {!loading && status === "ready" && notes.length === 0 && (
-          <WorkspaceState
-            icon="note"
-            title="Your desk is clear."
-            body="Write something worth keeping — it lands here as a fresh sheet."
-            action={{ label: "Start a note", onClick: focusComposer }}
-          />
-        )}
+        <div className="workspace__board">
+          {loading && <NoteStackSkeleton />}
 
-        {!loading && notes.length > 0 && visible.length === 0 && (
-          <WorkspaceState
-            icon="search"
-            title="No notes match"
-            body="Nothing on your desk fits that search or tag. Try a different term, or clear the filters."
-            action={{ label: "Clear filters", onClick: clearFilters }}
-          />
-        )}
+          {loadError && (
+            <WorkspaceState
+              icon="alert-triangle"
+              tone="error"
+              title="Couldn't reach your notes"
+              body="Something went wrong loading your desk. Check your connection and try again."
+              action={{ label: "Try again", onClick: () => void getNotes() }}
+            />
+          )}
 
-        {visible.length > 0 && (
-          <NoteStack
-            notes={visible}
-            openId={openId}
-            onToggle={(id) => setOpenId((cur) => (cur === id ? null : id))}
-            onEdit={setEditing}
-            onDelete={handleDelete}
-            deletingId={deletingId}
-            hiddenId={hiddenId}
-            arrivedId={arrivedId}
-          />
-        )}
+          {!loading && !loadError && status !== "loading" && notes.length === 0 && (
+            <WorkspaceState
+              icon="note"
+              title="Your desk is clear."
+              body="Start by writing in the diary — tear the page out and it lands here."
+              action={{ label: "Start writing", onClick: focusComposer }}
+            />
+          )}
+
+          {!loading && notes.length > 0 && visible.length === 0 && (
+            <WorkspaceState
+              icon="search"
+              title="No notes match"
+              body="Nothing on your desk fits that search or tag. Try a different term, or clear the filters."
+              action={{ label: "Clear filters", onClick: clearFilters }}
+            />
+          )}
+
+          {visible.length > 0 && (
+            <NoteStack
+              notes={visible}
+              openId={openId}
+              onToggle={(id) => setOpenId((cur) => (cur === id ? null : id))}
+              onEdit={setEditing}
+              onDelete={handleDelete}
+              deletingId={deletingId}
+              hiddenId={hiddenId}
+              arrivedId={arrivedId}
+            />
+          )}
+        </div>
       </div>
 
       {tear && (

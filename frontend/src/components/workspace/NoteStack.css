@@ -1,39 +1,119 @@
-/* A pile of paper on the desk — columns of sheets that overlap at the edge so
-   each one tucks slightly under the sheet above it. Not a spreadsheet grid:
-   the overlap, the per-sheet rotation and the layered shadows carry the
-   "stack of physical notes" reading. */
+/* The clipboard board — fixed height, fills the right zone. Sheets pile into
+   short columns that cascade down and to the right; the board scrolls
+   sideways when the pile outgrows it, so the page height never changes. */
 .note-stack {
   --stack-overlap: 14px;
+  --col-overlap: 12px;
+  --card-w: 17rem;
+  position: relative;
+  height: 100%;
+  min-height: 0;
+}
+
+/* A soft fade on the trailing edge to say the pile continues. */
+.note-stack::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 3rem;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--surface) 72%, transparent)
+  );
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-standard);
+}
+.note-stack[data-more]::after {
+  opacity: 1;
+}
+
+.note-stack__scroll {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-5);
-  width: 100%;
+  height: 100%;
+  padding: var(--space-3) var(--space-5) var(--space-5) var(--space-3);
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
 }
 
 .note-stack__col {
+  flex: none;
   display: flex;
   flex-direction: column;
-  flex: 1 1 0;
-  min-width: 0;
+  width: var(--card-w);
+  scroll-snap-align: start;
+  /* Each column cascades a little further down and tucks under the last. */
+  margin-top: calc(var(--col) * 6px);
+}
+.note-stack__col + .note-stack__col {
+  margin-left: calc(-1 * var(--col-overlap));
 }
 
 .note-stack__slot {
   position: relative;
 }
-/* Each sheet after the first slides up under the one above. The overlap is
-   less than a card's own top padding, so no title or body ever collides. */
 .note-stack__slot + .note-stack__slot {
   margin-top: calc(-1 * var(--stack-overlap));
 }
 
-@media (max-width: 767px) {
+/* Scroll-right affordance — a soft glass nudge on the trailing edge. */
+.note-stack__more {
+  position: absolute;
+  right: var(--space-2);
+  top: 50%;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid color-mix(in oklab, var(--border) 55%, transparent);
+  border-radius: var(--radius-pill);
+  background-color: color-mix(in oklab, var(--float) 78%, transparent);
+  backdrop-filter: blur(14px) saturate(1.5);
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  box-shadow: var(--elev-2), inset 0 1px 0 color-mix(in oklab, var(--key-light) 60%, transparent);
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard);
+}
+.note-stack__more:hover {
+  color: var(--fg);
+  box-shadow: var(--elev-3), inset 0 1px 0 color-mix(in oklab, var(--key-light) 75%, transparent);
+}
+.note-stack__more:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Stacked layout: the board grows to its pile and scrolls only sideways. */
+@media (max-width: 1199px) {
   .note-stack {
-    --stack-overlap: 10px;
+    height: auto;
+  }
+  .note-stack__scroll {
+    height: auto;
+    overflow-y: visible;
+    padding: var(--space-3) var(--space-5) var(--space-4) 0;
+  }
+}
+@media (max-width: 640px) {
+  .note-stack {
+    --card-w: 15.5rem;
+  }
+  .note-stack__scroll {
+    padding-inline: var(--space-1) var(--space-4);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .note-stack {
-    --stack-overlap: 4px;
+    --stack-overlap: 6px;
+  }
+  .note-stack__scroll {
+    scroll-snap-type: none;
   }
 }
