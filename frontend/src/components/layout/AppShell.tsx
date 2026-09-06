@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { ToastRegion } from "@/components/ui/ToastRegion";
+import { RouteTransitionStage } from "@/components/transitions/RouteTransition";
 import { DeskBackdrop } from "./DeskBackdrop";
 import { TopNav } from "./TopNav";
 import { BottomNav } from "./BottomNav";
@@ -19,7 +20,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <DeskBackdrop />
       <TopNav />
       <main id="main" className="app-shell__main container-px">
-        {children}
+        <RouteTransitionStage>{children}</RouteTransitionStage>
       </main>
       <BottomNav />
       <ToastRegion />

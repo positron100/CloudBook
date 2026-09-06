@@ -3,7 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui";
 import { Magnetic } from "@/components/motion";
 import { useAuth } from "@/context/AuthContext";
-import { usePageCurtain } from "@/components/transitions/PageCurtain";
+import { useRouteTransition } from "@/components/transitions/RouteTransition";
 import { ThemeToggle } from "./ThemeToggle";
 import { NavIndicator } from "./NavIndicator";
 import "./TopNav.css";
@@ -21,7 +21,7 @@ function isPlainClick(e: MouseEvent) {
  * Mobile uses <BottomNav>. */
 export function TopNav() {
   const { pathname } = useLocation();
-  const { curtainTo } = usePageCurtain();
+  const { transitionTo } = useRouteTransition();
   const { isAuthenticated, logout } = useAuth();
   const listRef = useRef<HTMLUListElement>(null);
   const [hovered, setHovered] = useState<string | null>(null);
@@ -39,7 +39,7 @@ export function TopNav() {
     if (!isPlainClick(e)) return;
     e.preventDefault();
     if (path === pathname) return;
-    curtainTo(path);
+    transitionTo(path);
   };
 
   return (
@@ -92,7 +92,7 @@ export function TopNav() {
               size="sm"
               onClick={() => {
                 logout();
-                curtainTo("/login");
+                transitionTo("/login");
               }}
             >
               Sign out
@@ -100,12 +100,12 @@ export function TopNav() {
           ) : (
             <>
               <Magnetic>
-                <Button variant="ghost" size="sm" onClick={() => curtainTo("/login")}>
+                <Button variant="ghost" size="sm" onClick={() => transitionTo("/login")}>
                   Log in
                 </Button>
               </Magnetic>
               <Magnetic>
-                <Button variant="primary" size="sm" onClick={() => curtainTo("/register")}>
+                <Button variant="primary" size="sm" onClick={() => transitionTo("/register")}>
                   Sign up
                 </Button>
               </Magnetic>

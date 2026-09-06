@@ -6,7 +6,7 @@ import { NotesProvider } from "@/context/NotesContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { ToastProvider } from "@/context/ToastContext";
 import { RequireAuth } from "@/routes/RequireAuth";
-import { PageCurtainProvider } from "@/components/transitions/PageCurtain";
+import { RouteTransitionProvider } from "@/components/transitions/RouteTransition";
 import { AppShell } from "@/components/layout/AppShell";
 import Home from "@/components/Home";
 import About from "@/components/About";
@@ -25,7 +25,7 @@ function App() {
           <AuthProvider>
             <NotesProvider>
               <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-                <PageCurtainProvider>
+                <RouteTransitionProvider>
                 <AppShell>
                   <Routes>
                     <Route
@@ -78,7 +78,7 @@ function App() {
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </AppShell>
-                </PageCurtainProvider>
+                </RouteTransitionProvider>
               </Router>
             </NotesProvider>
           </AuthProvider>

@@ -1,0 +1,16 @@
+/* Transparent transform layer around the routed page. At rest it is a plain
+   block; during a dissolve it carries the scale / opacity / blur. The nav and
+   the desk backdrop sit outside it and never move. */
+.route-stage {
+  display: block;
+  width: 100%;
+  transform-origin: center 40%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-stage {
+    transform: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+  }
+}
