@@ -76,6 +76,15 @@
   --elev-4: 0 8px 20px hsl(var(--shadow-hsl) / 0.1), 0 36px 64px -18px hsl(var(--shadow-hsl) / 0.26);
   --scrim: hsl(var(--shadow-hsl) / 0.42);
 
+  /* --- Ring binding — the diary's spiral, and the trace it leaves on a page
+     torn from it. One rhythm across the notebook, the flying sheet and the
+     resting note card so every note reads as a sheet from *that* notebook. --- */
+  --bind-pitch: 3rem; /* centre-to-centre of binding points (matches .diary__ring) */
+  --bind-hole: 3px; /* punched-hole radius on a torn page */
+  --bind-inset: 1.5rem; /* offset of the first/last point from the paper edge */
+  --bind-ink: color-mix(in oklab, var(--fg) 11%, transparent); /* hole shadow at rest */
+  --bind-lip: color-mix(in oklab, var(--key-light) 60%, transparent); /* its lower rim */
+
   /* --- Spacing — 4px base. Semantic aliases below the raw scale. --- */
   --space-px: 1px;
   --space-1: 0.25rem;
@@ -240,4 +249,8 @@
   --key-light: #2a2c35;
   --shadow-hsl: 230 45% 3%;
   --scrim: hsl(230 45% 3% / 0.62);
+
+  /* Holes read as darker punctures in the dim paper. */
+  --bind-ink: color-mix(in oklab, #000 38%, transparent);
+  --bind-lip: color-mix(in oklab, var(--fg) 12%, transparent);
 }

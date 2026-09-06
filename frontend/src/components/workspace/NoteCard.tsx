@@ -75,6 +75,7 @@ export function NoteCard({
       >
         <span className="note-card__light" aria-hidden="true" />
         <span className="note-card__tear" aria-hidden="true" />
+        <span className="note-card__binding" aria-hidden="true" />
 
         <button
           type="button"

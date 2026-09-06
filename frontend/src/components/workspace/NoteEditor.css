@@ -42,6 +42,25 @@
       hsl(var(--shadow-hsl) / calc(0.32 + var(--depth, 0) * 0.06)),
     inset 0 1px 0 color-mix(in oklab, var(--key-light) 80%, transparent);
 }
+/* Binding cross-fade on close: the diary's spiral gives way to the torn page's
+   punched-hole trace. `--bind-morph` 0→1 across stage 2. The trace is counter-
+   scaled (`--sx`/`--sy` carry the page's live scale) so it stays card-sized and
+   lines up with the real card's binding at the handoff. */
+.note-editor__page .diary__binding {
+  opacity: calc(1 - var(--bind-morph, 0));
+}
+.note-editor__page .note-card__tear,
+.note-editor__page .note-card__binding {
+  transform-origin: top center;
+  scale: calc(1 / max(var(--sx, 1), 0.05)) calc(1 / max(var(--sy, 1), 0.05));
+}
+.note-editor__page .note-card__tear {
+  opacity: var(--bind-morph, 0);
+}
+.note-editor__page .note-card__binding {
+  opacity: calc(var(--bind-morph, 0) * 0.46);
+}
+
 /* The fold seam — a faint crease across the upper third while the sheet folds. */
 .note-editor__page::after {
   content: "";

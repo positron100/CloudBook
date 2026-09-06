@@ -74,6 +74,10 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
   const rotateX = useMotionValue(0);
   const depth = useMotionValue(0);
   const seam = useMotionValue(0);
+  // 0 = the diary's full spiral binding (open / at rest); 1 = the torn page's
+  // punched-hole trace. Cross-faded as the page folds back to a card so the
+  // binding detail *reforms* rather than popping in at the handoff.
+  const bindMorph = useMotionValue(0);
   const pageOpacity = useMotionValue(reduce ? 0 : 0.55);
   const scrim = useMotionValue(0);
 
@@ -167,6 +171,7 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
       animate(depth, 0.12, { duration: D, ease: "easeOut" });
       animate(seam, 0.18, { duration: D });
       animate(skewX, [-1.6, 0.5, 0.1], { duration: D, ease: "easeInOut" });
+      animate(bindMorph, 1, { duration: D, ease: "easeOut" });
       animate(scrim, 0, { duration: D * 0.96 });
       await Promise.all([
         animate(x, target.x, { duration: D, ease: CLOSE_EASE }),
@@ -249,6 +254,9 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
           transformOrigin: closing ? "50% 34%" : "center",
           ["--depth" as string]: depth,
           ["--seam" as string]: seam,
+          ["--bind-morph" as string]: bindMorph,
+          ["--sx" as string]: sx,
+          ["--sy" as string]: sy,
         }}
       >
         <span className="diary__binding" aria-hidden="true">
@@ -256,6 +264,9 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
             <span key={i} className="diary__ring" />
           ))}
         </span>
+        {/* The torn-page binding trace — hidden until the close fold reforms it. */}
+        <span className="note-card__tear" aria-hidden="true" />
+        <span className="note-card__binding" aria-hidden="true" />
 
         <label className="sr-only" htmlFor="editor-title">
           Title

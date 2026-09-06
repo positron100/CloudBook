@@ -66,6 +66,32 @@
   pointer-events: none;
 }
 
+/* Binding trace — the row of punched holes where this page met the diary's
+   spiral. Same pitch as .diary__ring; low contrast at rest (a detail to be
+   discovered, never the focus). Carried by NoteFace too, so the flying sheet
+   and the return keep it. `--bind-tension` (set only by the flying sheet)
+   stretches and dims the holes as the page pulls off the rings. */
+.note-card__binding {
+  position: absolute;
+  top: 6px;
+  left: var(--bind-inset);
+  right: var(--bind-inset);
+  height: 8px;
+  pointer-events: none;
+  transform-origin: top center;
+  scale: 1 calc(1 + var(--bind-tension, 0) * 0.55);
+  opacity: calc(0.46 - var(--bind-tension, 0) * 0.24);
+  background-image: radial-gradient(
+    var(--bind-hole) calc(var(--bind-hole) + 1px) at 50% 42%,
+    var(--bind-ink) 0 calc(var(--bind-hole) - 1px),
+    var(--bind-lip) calc(var(--bind-hole) - 1px) var(--bind-hole),
+    transparent var(--bind-hole)
+  );
+  background-repeat: repeat-x;
+  background-position: center;
+  background-size: var(--bind-pitch) 100%;
+}
+
 /* Pointer light — a soft reflection travelling the paper. Warm desk light,
    never the accent, never a spotlight. Fades in on hover only. */
 .note-card__light {

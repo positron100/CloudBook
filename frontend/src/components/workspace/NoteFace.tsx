@@ -20,6 +20,7 @@ export function NoteFace({ note, contentOpacity }: NoteFaceProps) {
   return (
     <div className="note-card__sheet note-card__sheet--face">
       <span className="note-card__tear" aria-hidden="true" />
+      <span className="note-card__binding" aria-hidden="true" />
       <m.div className="note-card__face-content" style={{ opacity: contentOpacity }}>
         <div className="note-card__reader" aria-hidden="true">
           <h3 className="note-card__title">{note.title}</h3>

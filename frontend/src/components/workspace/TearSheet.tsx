@@ -61,16 +61,21 @@ export function TearSheet({ from, to, note, onDone }: TearSheetProps) {
   const scaleY = useMotionValue(upY);
   const clipPath = useMotionValue(EDGE_FLAT);
   const lift = useMotionValue(0);
+  // Stretches / dims the punched binding holes as the page pulls off the rings,
+  // then relaxes to the resting note's look as it flies free.
+  const bindTension = useMotionValue(0);
 
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
-      // 1 — tension against the perforation.
+      // 1 — tension against the perforation: a small pull, the binding holes
+      // stretch, the first bite of the tear opens at the spine.
       await Promise.all([
         animate(y, 3, { duration: 0.09, ease: "easeOut" }),
         animate(scaleY, upY * 1.015, { duration: 0.09, ease: "easeOut" }),
         animate(skewX, -1.1, { duration: 0.09, ease: "easeOut" }),
         animate(clipPath, EDGE_NICK, { duration: 0.09, ease: "easeOut" }),
+        animate(bindTension, 0.85, { duration: 0.1, ease: "easeOut" }),
       ]);
       if (cancelled) return;
 
@@ -93,6 +98,8 @@ export function TearSheet({ from, to, note, onDone }: TearSheetProps) {
       const yFrom = y.get();
       animate(skewX, [skewX.get(), 0.7, 0], { duration: D, ease: "easeInOut" });
       animate(lift, [1, 0.6, 0], { duration: D, ease: "easeInOut" });
+      // holes relax to the resting note's look as the page flies free
+      animate(bindTension, 0, { duration: D * 0.7, ease: "easeOut" });
       await Promise.all([
         animate(x, dx, { duration: D, ease: [0.25, 0.5, 0.3, 1] }),
         // arc — rise past the line, then ease down onto the pile
@@ -148,6 +155,7 @@ export function TearSheet({ from, to, note, onDone }: TearSheetProps) {
         scaleY,
         clipPath,
         ["--lift" as string]: lift,
+        ["--bind-tension" as string]: bindTension,
       }}
     >
       <NoteFace note={note} />
