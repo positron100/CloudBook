@@ -64,6 +64,9 @@
   color: var(--fg-faint);
   line-height: var(--leading-normal);
 }
+.about__reach {
+  margin-top: var(--space-6);
+}
 
 .about__letter {
   display: flex;

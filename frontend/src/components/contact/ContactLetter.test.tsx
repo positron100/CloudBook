@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { LazyMotion, domMax } from "framer-motion";
 import { describe, expect, it } from "vitest";
-import { ContactLetter } from "./ContactLetter";
+import { ContactLetter, ContactReach } from "./ContactLetter";
 
 const wrap = (ui: React.ReactNode) => (
   <LazyMotion features={domMax} strict>
@@ -31,8 +31,14 @@ describe("ContactLetter", () => {
     expect(screen.queryByText(/a name, however short/i)).toBeNull();
   });
 
-  it("offers the direct address below the letter, with a copy control", () => {
+  it("addresses the reader by name", () => {
     render(wrap(<ContactLetter />));
+    expect(screen.getByText(/dear mukul/i)).toBeInTheDocument();
+    expect(screen.queryByText(/github|positron100/i)).toBeNull();
+  });
+
+  it("ContactReach — direct address with a copy control, no github", () => {
+    render(wrap(<ContactReach />));
     expect(screen.getByRole("link", { name: /mukuknegi2005@gmail\.com/i })).toHaveAttribute(
       "href",
       "mailto:mukuknegi2005@gmail.com",

@@ -68,7 +68,6 @@ export function ContactLetter() {
   const [phase, setPhase] = useState<Phase>("writing");
   const [sending, setSending] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [reservedHeight, setReservedHeight] = useState<number | null>(null);
 
   const cardRef = useRef<HTMLDivElement>(null);
@@ -219,16 +218,6 @@ export function ContactLetter() {
     }
   }
 
-  const copyEmail = async () => {
-    try {
-      await navigator.clipboard?.writeText(CONTACT_EMAIL);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
-    } catch {
-      /* mailto still works */
-    }
-  };
-
   return (
     <div className="contact-letter" style={{ minHeight: reservedHeight ?? undefined }}>
       <FlightTrail active={phase === "flying"} />
@@ -256,7 +245,7 @@ export function ContactLetter() {
             >
               <form noValidate onSubmit={onSubmit} aria-label="Send a message">
                 <div className="contact-letter__head">
-                  <p className="contact-letter__salutation">Dear CloudBook,</p>
+                  <p className="contact-letter__salutation">Dear Mukul,</p>
                   <Stamp written={written} />
                 </div>
 
@@ -335,35 +324,57 @@ export function ContactLetter() {
 
         <Envelope phase={phase} />
       </m.div>
-
-      <Magnetic as="div" strength={4} className="contact-letter__reach">
-        <a className="contact-letter__addr" href={`mailto:${CONTACT_EMAIL}`}>
-          <Icon name="mail" size={15} />
-          <span>{CONTACT_EMAIL}</span>
-        </a>
-        <m.button
-          type="button"
-          className="contact-letter__copy"
-          onClick={copyEmail}
-          aria-label={copied ? "Email address copied" : "Copy email address"}
-          whileHover={reduce ? undefined : { y: -1 }}
-          whileTap={reduce ? undefined : { scale: 0.9 }}
-          transition={spring.snappy}
-        >
-          <AnimatePresence mode="wait" initial={false}>
-            <m.span
-              key={copied ? "done" : "copy"}
-              initial={reduce ? false : { opacity: 0, scale: 0.6 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.6 }}
-              transition={{ duration: 0.16 }}
-            >
-              <Icon name={copied ? "check" : "copy"} size={14} />
-            </m.span>
-          </AnimatePresence>
-        </m.button>
-      </Magnetic>
     </div>
+  );
+}
+
+/**
+ * The direct address + a copy control — a small tactile object that sits under
+ * the About note (not on the letter). Magnetic on fine pointers, copy flips to
+ * a check for a moment; the mailto link works regardless.
+ */
+export function ContactReach() {
+  const reduce = useReducedMotion();
+  const [copied, setCopied] = useState(false);
+
+  const copyEmail = async () => {
+    try {
+      await navigator.clipboard?.writeText(CONTACT_EMAIL);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* mailto still works */
+    }
+  };
+
+  return (
+    <Magnetic as="div" strength={4} className="contact-reach">
+      <a className="contact-reach__addr" href={`mailto:${CONTACT_EMAIL}`}>
+        <Icon name="mail" size={15} />
+        <span>{CONTACT_EMAIL}</span>
+      </a>
+      <m.button
+        type="button"
+        className="contact-reach__copy"
+        onClick={copyEmail}
+        aria-label={copied ? "Email address copied" : "Copy email address"}
+        whileHover={reduce ? undefined : { y: -1 }}
+        whileTap={reduce ? undefined : { scale: 0.9 }}
+        transition={spring.snappy}
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          <m.span
+            key={copied ? "done" : "copy"}
+            initial={reduce ? false : { opacity: 0, scale: 0.6 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.6 }}
+            transition={{ duration: 0.16 }}
+          >
+            <Icon name={copied ? "check" : "copy"} size={14} />
+          </m.span>
+        </AnimatePresence>
+      </m.button>
+    </Magnetic>
   );
 }
 

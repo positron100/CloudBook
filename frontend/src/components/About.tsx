@@ -1,5 +1,5 @@
 import { Reveal } from "@/components/motion";
-import { ContactLetter } from "@/components/contact/ContactLetter";
+import { ContactLetter, ContactReach } from "@/components/contact/ContactLetter";
 import "./About.css";
 
 /**
@@ -23,6 +23,9 @@ export default function About() {
               You write on a diary page, tear it out, and it lands on the clipboard. Pick one
               up to read or edit it; put it back to let it go.
             </p>
+            <div className="about__reach">
+              <ContactReach />
+            </div>
           </Reveal>
 
           <Reveal as="div" delay={0.1} className="about__letter">
