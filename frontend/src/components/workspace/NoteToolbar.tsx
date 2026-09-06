@@ -1,6 +1,6 @@
 import { type Ref } from "react";
 import { m, LayoutGroup } from "framer-motion";
-import { Field, Icon } from "@/components/ui";
+import { Field } from "@/components/ui";
 import { cn } from "@/utils/cn";
 import { useMagnetic } from "@/hooks/useMagnetic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -62,29 +62,25 @@ export function NoteToolbar({
   onTag,
 }: NoteToolbarProps) {
   const filters = ["all", ...tags];
-  const searchMagnet = useMagnetic({ strength: 3 });
 
   return (
     <LayoutGroup>
       <div className="note-toolbar" role="search">
-        <m.label
-          ref={searchMagnet.ref as Ref<HTMLLabelElement>}
-          className="note-toolbar__search"
-          style={searchMagnet.style}
-          onMouseMove={searchMagnet.onMouseMove}
-          onMouseLeave={searchMagnet.onMouseLeave}
-        >
-          <Icon name="search" size={15} className="note-toolbar__search-icon" />
+        {/* `lift` carries the whole affordance: a small pointer magnetism, a
+            focus Z-lift instead of a blue ring, and the leading icon rides
+            inside the control so it never drifts out of line with the text. */}
+        <div className="note-toolbar__search">
           <Field
             label="Search notes"
             hideLabel
             lift
+            iconStart="search"
             type="search"
             placeholder="Search notes…"
             value={search}
             onChange={(e) => onSearch(e.target.value)}
           />
-        </m.label>
+        </div>
 
         {tags.length > 0 && (
           <m.div
