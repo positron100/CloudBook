@@ -16,9 +16,6 @@
       calc(-14px - var(--lift) * 12px) hsl(var(--shadow-hsl) / calc(0.24 + var(--lift) * 0.09)),
     inset 0 1px 0 color-mix(in oklab, var(--key-light) 55%, transparent);
 }
-.note-card__sheet--face .note-card__preview {
-  -webkit-line-clamp: 3;
-}
 .note-card__face-content {
   display: flex;
   flex-direction: column;
