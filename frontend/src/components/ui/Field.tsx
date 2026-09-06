@@ -44,6 +44,8 @@ interface CommonProps {
   className?: string;
   /** Decorative icon shown inside the control, trailing edge. */
   icon?: IconName;
+  /** Decorative icon shown inside the control, leading edge. */
+  iconStart?: IconName;
   /**
    * Tactile treatment for the auth screens: a very small pointer magnetism on
    * the control and a focus Z-lift instead of a ring. Fine-pointer +
@@ -81,6 +83,7 @@ export const Field = forwardRef<HTMLInputElement | HTMLTextAreaElement, FieldPro
     required,
     className,
     icon,
+    iconStart,
     lift = false,
     previewText,
     as = "input",
@@ -100,8 +103,15 @@ export const Field = forwardRef<HTMLInputElement | HTMLTextAreaElement, FieldPro
   const [focused, setFocused] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [kbFocus, setKbFocus] = useState(false);
+  const [revealed, setRevealed] = useState(false);
 
   const r = rest as InputHTMLAttributes<HTMLInputElement> & TextareaHTMLAttributes<HTMLTextAreaElement>;
+  // A password input gets its own visibility toggle on the trailing edge; the
+  // decorative icon (if any) moves to the leading edge so the two never share
+  // a side.
+  const isPassword = as === "input" && (rest as { type?: string }).type === "password";
+  const leadingIcon = isPassword ? (iconStart ?? icon) : iconStart;
+  const trailingIcon = isPassword ? undefined : icon;
   const value = r.value;
   const isEmpty = value == null || value === "";
   const previewActive = Boolean(previewText) && isEmpty && !reduce && (focused || hovered);
@@ -121,12 +131,18 @@ export const Field = forwardRef<HTMLInputElement | HTMLTextAreaElement, FieldPro
   const controlProps = {
     id,
     ref: ref as never,
-    className: cn("field__control", icon && "field__control--has-icon"),
+    className: cn(
+      "field__control",
+      leadingIcon && "field__control--icon-start",
+      trailingIcon && "field__control--icon-end",
+      isPassword && "field__control--has-reveal",
+    ),
     "aria-describedby": describedBy,
     "aria-invalid": error ? true : undefined,
     "data-kbd-focus": lift && kbFocus ? "true" : undefined,
     required,
     ...rest,
+    ...(isPassword ? { type: revealed ? "text" : "password" } : null),
     onFocus: handleFocus,
     onBlur: handleBlur,
   };
@@ -140,8 +156,24 @@ export const Field = forwardRef<HTMLInputElement | HTMLTextAreaElement, FieldPro
 
   const wrapInner = (
     <div className="field__control-wrap">
+      {leadingIcon && (
+        <Icon name={leadingIcon} size={18} className="field__icon field__icon--start" />
+      )}
       {control}
-      {icon && <Icon name={icon} size={18} className="field__icon" />}
+      {trailingIcon && <Icon name={trailingIcon} size={18} className="field__icon field__icon--end" />}
+      {isPassword && (
+        <button
+          type="button"
+          className="field__reveal"
+          aria-label={revealed ? "Hide password" : "Show password"}
+          aria-pressed={revealed}
+          // keep the caret in the input — the toggle never takes focus on click
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setRevealed((v) => !v)}
+        >
+          <Icon name={revealed ? "eye-off" : "eye"} size={18} />
+        </button>
+      )}
       {preview && (
         <span className="field__preview" aria-hidden="true">
           {preview}

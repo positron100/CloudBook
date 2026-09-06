@@ -25,6 +25,21 @@ function Controlled({ lift, previewText }: { lift?: boolean; previewText?: strin
   );
 }
 
+function Password() {
+  const [value, setValue] = useState("");
+  return (
+    <Field
+      label="Password"
+      name="password"
+      type="password"
+      iconStart="lock"
+      lift
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+    />
+  );
+}
+
 describe("Field", () => {
   it("labels the control and stays keyboard-reachable", async () => {
     render(wrap(<Controlled />));
@@ -62,5 +77,37 @@ describe("Field", () => {
     await userEvent.tab();
     expect(input).toHaveFocus();
     expect(input).toHaveAttribute("data-kbd-focus", "true");
+  });
+
+  describe("password reveal", () => {
+    it("toggles the input type from an independent trailing button, lock stays leading", async () => {
+      const { container } = render(wrap(<Password />));
+      const input = screen.getByLabelText(/^password$/i) as HTMLInputElement;
+      const toggle = screen.getByRole("button", { name: /show password/i });
+
+      expect(input.type).toBe("password");
+      expect(container.querySelector(".field__icon--start")).not.toBeNull();
+      expect(container.querySelector(".field__control--has-reveal")).not.toBeNull();
+      expect(container.querySelector(".field__icon--end")).toBeNull();
+
+      await userEvent.click(toggle);
+      expect(input.type).toBe("text");
+      expect(screen.getByRole("button", { name: /hide password/i })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: /hide password/i }));
+      expect(input.type).toBe("password");
+    });
+
+    it("does not steal the caret from the input on click", async () => {
+      render(wrap(<Password />));
+      const input = screen.getByLabelText(/^password$/i);
+      await userEvent.type(input, "hunter2");
+      await userEvent.click(screen.getByRole("button", { name: /show password/i }));
+      expect(input).toHaveFocus();
+      expect((input as HTMLInputElement).value).toBe("hunter2");
+    });
   });
 });

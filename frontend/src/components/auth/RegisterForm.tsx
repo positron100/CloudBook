@@ -68,7 +68,7 @@ export function RegisterForm() {
           label="Password"
           type="password"
           name="password"
-          icon="lock"
+          iconStart="lock"
           autoComplete="new-password"
           minLength={5}
           value={form.password}
@@ -80,7 +80,7 @@ export function RegisterForm() {
           label="Confirm password"
           type="password"
           name="cPassword"
-          icon="lock"
+          iconStart="lock"
           autoComplete="new-password"
           value={form.cPassword}
           onChange={onChange}

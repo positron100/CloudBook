@@ -19,16 +19,68 @@
   position: relative;
   display: flex;
 }
+/* Icons sit inside the control on either edge; the control reserves padding so
+   text never runs under them. Never overlapping — a leading icon and the
+   trailing reveal button own opposite sides. */
 .field__icon {
   position: absolute;
-  right: var(--space-3);
   top: 50%;
   translate: 0 -50%;
   color: var(--fg-faint);
   pointer-events: none;
 }
-.field__control--has-icon {
-  padding-right: 2.5rem;
+.field__icon--start {
+  left: var(--space-3);
+}
+.field__icon--end {
+  right: var(--space-3);
+}
+/* Doubled class so these win over the base `.field__control` padding, which is
+   declared further down this file (equal specificity, later wins otherwise). */
+.field__control.field__control--icon-start {
+  padding-left: 2.6rem;
+}
+.field__control.field__control--icon-end {
+  padding-right: 2.6rem;
+}
+
+/* Native browser reveal/clear controls — replaced by .field__reveal. */
+.field__control::-ms-reveal,
+.field__control::-ms-clear {
+  display: none;
+}
+
+/* Password visibility toggle — trailing edge, its own hit area. */
+.field__control.field__control--has-reveal {
+  padding-right: 3rem;
+}
+.field__reveal {
+  position: absolute;
+  right: var(--space-2);
+  top: 50%;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--fg-faint);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
+}
+.field__reveal:hover {
+  color: var(--fg-muted);
+  background-color: color-mix(in oklab, var(--fg) 6%, transparent);
+}
+.field__reveal:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  color: var(--fg-muted);
 }
 
 /* Ghost example text typed over an empty field. Visual only. */

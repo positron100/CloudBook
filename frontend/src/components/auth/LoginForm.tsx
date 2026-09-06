@@ -53,7 +53,7 @@ export function LoginForm() {
           label="Password"
           type="password"
           name="password"
-          icon="lock"
+          iconStart="lock"
           autoComplete="current-password"
           value={creds.password}
           onChange={onChange}
