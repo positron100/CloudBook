@@ -28,8 +28,13 @@ export function usePageCurtain(): PageCurtainValue {
 
 type Phase = "idle" | "cover" | "reveal";
 
-/** Off both edges when idle so it is never visible at rest. */
-const X: Record<Phase, string> = { idle: "-105%", cover: "0%", reveal: "105%" };
+/**
+ * Leftward sweep — the same direction the approved auth curtain travels when
+ * *entering* Login (register → login moves the panel left through full cover).
+ * Enter from the right, cover, continue off the left; idle rests off the right
+ * ready for the next run. Every position is off-screen except `cover`.
+ */
+const X: Record<Phase, string> = { idle: "105%", cover: "0%", reveal: "-105%" };
 const EASE = [0.65, 0, 0.35, 1] as const;
 
 /**

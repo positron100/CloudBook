@@ -10,7 +10,7 @@
   position: absolute;
   inset: 0;
   width: 100%;
-  transform: translateX(-105%);
+  transform: translateX(105%);
   background-color: var(--accent);
   /* Same lit-acrylic treatment as the auth curtain. */
   background-image:

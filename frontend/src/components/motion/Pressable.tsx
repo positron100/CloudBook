@@ -1,7 +1,7 @@
 import { m } from "framer-motion";
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { ease, hoverLift } from "@/utils/motion";
+import { ease, hoverLift, spring } from "@/utils/motion";
 
 // Drop the DOM drag/animation handlers whose names collide with Framer's
 // gesture callbacks — Pressable does not expose them.
@@ -46,9 +46,11 @@ export const Pressable = forwardRef<HTMLButtonElement, PressableProps>(function 
   return (
     <m.button
       ref={ref}
+      // Hover lift is near-critically damped (no visible bounce); the tap
+      // compress keeps a little spring so the release reads as physical.
+      whileHover={lift ? { ...hoverLift, transition: spring.snappy } : undefined}
       whileTap={{ scale: 0.96 }}
-      whileHover={lift ? hoverLift : undefined}
-      transition={{ type: "spring", stiffness: 500, damping: 15, ease: ease.press }}
+      transition={{ type: "spring", stiffness: 500, damping: 18, ease: ease.press }}
       {...rest}
     >
       {children}

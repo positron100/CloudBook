@@ -45,28 +45,37 @@
    light on the top edge and lifts on its shadow, it does not just brighten. */
 .btn--primary {
   background-color: var(--accent);
-  background-image: linear-gradient(
-    180deg,
-    color-mix(in oklab, var(--accent-highlight) 45%, transparent),
-    transparent 46%
-  );
+  /* Light along the top edge + a faint spot where the "light source" hits —
+     the glass catch, not a fill. The accent colour itself never changes. */
+  background-image:
+    radial-gradient(
+      140% 120% at 22% -25%,
+      color-mix(in oklab, var(--accent-highlight) 32%, transparent),
+      transparent 55%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--accent-highlight) 42%, transparent),
+      transparent 46%
+    );
   color: var(--accent-fg);
   box-shadow:
     var(--elev-field),
     inset 0 1px 0 color-mix(in oklab, var(--accent-highlight) 55%, transparent);
-  transition:
-    box-shadow var(--dur-fast) var(--ease-standard),
-    background-color var(--dur-fast) var(--ease-standard);
+  transition: box-shadow var(--dur-fast) var(--ease-standard);
 }
 .btn--primary:hover {
+  /* the light-catch deepens (stronger top-edge line + a soft internal glow)
+     and the surface rises on its neutral shadow. No background brighten. */
   box-shadow:
     var(--elev-field-focus),
-    inset 0 1px 0 color-mix(in oklab, var(--accent-highlight) 80%, transparent);
+    inset 0 1px 0 color-mix(in oklab, var(--accent-highlight) 88%, transparent),
+    inset 0 6px 22px -6px color-mix(in oklab, var(--accent-highlight) 24%, transparent);
 }
 .btn--primary:active {
   box-shadow:
     var(--elev-field),
-    inset 0 1px 2px color-mix(in oklab, var(--accent-shade) 45%, transparent);
+    inset 0 1px 3px color-mix(in oklab, var(--accent-shade) 50%, transparent);
 }
 
 /* Secondary — bordered, sits on a surface. */
