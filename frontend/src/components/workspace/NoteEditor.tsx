@@ -16,10 +16,8 @@ interface NoteEditorProps {
 const escId = (v: string) =>
   typeof window !== "undefined" && window.CSS?.escape ? window.CSS.escape(v) : v;
 
-/** The close fold — a single tuned tween so every geometry channel arrives at
- *  the card in the same frame. Not a reversed open: soft in, controlled glide,
- *  soft settle, no bounce. */
-const CLOSE_MS = 520;
+/** Close easing — soft in, controlled glide, soft settle, no bounce. Shared by
+ *  every geometry channel in stage 2 so they arrive at the card together. */
 const CLOSE_EASE: [number, number, number, number] = [0.32, 0, 0.24, 1];
 
 /**
@@ -71,6 +69,11 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
   const sy = useMotionValue(reduce ? 1 : start.scale);
   const skewX = useMotionValue(0);
   const rotate = useMotionValue(0);
+  // Close-only: a subtle 3D bend, a deepening-then-settling shadow (`depth`),
+  // and a fold seam that surfaces while the paper folds (`seam`).
+  const rotateX = useMotionValue(0);
+  const depth = useMotionValue(0);
+  const seam = useMotionValue(0);
   const pageOpacity = useMotionValue(reduce ? 0 : 0.55);
   const scrim = useMotionValue(0);
 
@@ -92,9 +95,22 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
   }, []);
 
   /**
-   * Fold the page back onto the card. `then` runs at the instant the geometry
-   * lands, which is also the instant the editor unmounts — the card underneath
-   * takes over with no fade and no swap frame.
+   * Fold the page back onto the card as one physical transformation, in three
+   * stages that flow into each other:
+   *
+   *   1. initiation (~130ms) — the sheet is picked up: a small lift, a slight
+   *      3D bend, the shadow deepens, a fold seam surfaces. Barely smaller.
+   *   2. contraction + travel (~420ms) — the dominant, smoothest stage. Width,
+   *      height, x, y and rotation all resolve toward the card together; the
+   *      bend releases; the shadow winds down. The paper contracts toward its
+   *      upper third (transform-origin 34%) rather than zooming to its centre.
+   *   3. placement (~150ms) — the page is already on the card. The seam and
+   *      skew clear, the shadow settles, the card gives a 1.5px "received" dip,
+   *      then the editor unmounts. The eye already reads it as the card, so the
+   *      React handoff has nothing to hide — no fade, no swap frame.
+   *
+   * The destination is the *live* card rect, re-measured now (an optimistic
+   * edit, a sort or a resize may have moved the pile).
    */
   const foldAway = (then: () => void) => {
     if (closingRef.current) return;
@@ -105,8 +121,6 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
       return;
     }
 
-    // Re-measure the live card *now* — the pile may have moved while the editor
-    // was open. Fall back to the open rect only if it has genuinely vanished.
     const el =
       typeof document !== "undefined"
         ? (document.querySelector(`[data-note-id="${escId(note._id)}"]`) as HTMLElement | null)
@@ -121,36 +135,65 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
       // AABB centre is rotation-invariant; offset size is the true card box.
       const cardW = el.offsetWidth || live.width;
       const cardH = el.offsetHeight || live.height;
+      const syT = Math.max(0.05, cardH / H0);
       target = {
         x: live.left + live.width / 2 - window.innerWidth / 2,
-        y: live.top + live.height / 2 - window.innerHeight / 2,
+        // origin sits at 34% vertically, so scaling contracts the sheet toward
+        // its top edge; this term keeps the shrinking page centred on the card.
+        y: live.top + live.height / 2 - window.innerHeight / 2 + 0.16 * H0 * (1 - syT),
         sx: Math.max(0.05, cardW / W0),
-        sy: Math.max(0.05, cardH / H0),
+        sy: syT,
         rotate: parseFloat(getComputedStyle(el).rotate) || 0,
       };
     } else {
       target = { x: start.x, y: start.y, sx: start.scale, sy: start.scale, rotate: 0 };
     }
 
-    const t = { duration: CLOSE_MS / 1000, ease: CLOSE_EASE } as const;
-    // One tween, one clock — position, both scales and rotation land together.
-    const done = Promise.all([
-      animate(x, target.x, t),
-      animate(y, target.y, t),
-      animate(sx, target.sx, t),
-      // sy dips a hair past target then settles — the paper compressing shut.
-      animate(sy, [sy.get(), target.sy * 0.985, target.sy], { ...t, times: [0, 0.72, 1] }),
-      animate(rotate, target.rotate, t),
-    ]);
-    // A brief bend early on, released back flat — reads as a fold, not a spin.
-    animate(skewX, [0, -2.4, -0.7, 0], {
-      duration: CLOSE_MS / 1000,
-      times: [0, 0.26, 0.62, 1],
-      ease: "easeInOut",
-    });
-    // Backdrop clears on the same clock; the page itself never fades.
-    animate(scrim, 0, { duration: (CLOSE_MS / 1000) * 0.92 });
-    done.then(then);
+    const run = async () => {
+      // Stage 1 — fold initiation.
+      await Promise.all([
+        animate(y, y.get() - 7, { duration: 0.13, ease: [0.3, 0, 0.3, 1] }),
+        animate(sx, 1 - (1 - target.sx) * 0.08, { duration: 0.15, ease: "easeOut" }),
+        animate(sy, 1 - (1 - target.sy) * 0.12, { duration: 0.15, ease: "easeOut" }),
+        animate(skewX, -1.6, { duration: 0.15, ease: "easeOut" }),
+        animate(rotateX, 7, { duration: 0.15, ease: "easeOut" }),
+        animate(depth, 1, { duration: 0.13 }),
+        animate(seam, 1, { duration: 0.15 }),
+      ]);
+
+      // Stage 2 — contraction + travel, everything on one clock.
+      const D = 0.42;
+      animate(rotateX, 0, { duration: D, ease: [0.4, 0, 0.2, 1] });
+      animate(depth, 0.12, { duration: D, ease: "easeOut" });
+      animate(seam, 0.18, { duration: D });
+      animate(skewX, [-1.6, 0.5, 0.1], { duration: D, ease: "easeInOut" });
+      animate(scrim, 0, { duration: D * 0.96 });
+      await Promise.all([
+        animate(x, target.x, { duration: D, ease: CLOSE_EASE }),
+        animate(y, target.y, { duration: D, ease: CLOSE_EASE }),
+        animate(sx, target.sx, { duration: D, ease: CLOSE_EASE }),
+        animate(sy, [sy.get(), target.sy * 0.985, target.sy], {
+          duration: D,
+          ease: CLOSE_EASE,
+          times: [0, 0.72, 1],
+        }),
+        animate(rotate, target.rotate, { duration: D, ease: CLOSE_EASE }),
+      ]);
+
+      // Stage 3 — placement + the card's "received" dip, then hand off.
+      if (el) {
+        el.setAttribute("data-received", "");
+        window.setTimeout(() => el.removeAttribute("data-received"), 320);
+      }
+      await Promise.all([
+        animate(skewX, 0, { duration: 0.13, ease: "easeOut" }),
+        animate(seam, 0, { duration: 0.13 }),
+        animate(depth, 0, { duration: 0.13 }),
+        animate(y, [target.y - 1.2, target.y], { duration: 0.15, ease: [0.34, 1.1, 0.64, 1] }),
+      ]);
+      then();
+    };
+    void run();
   };
 
   useEffect(() => {
@@ -198,8 +241,14 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
           scaleY: sy,
           skewX,
           rotate,
+          rotateX,
           opacity: pageOpacity,
-          transformOrigin: "center",
+          // Centre while opening; on close (transforms are at rest the instant
+          // `closing` flips, so no visual jump) the origin moves to the upper
+          // third and the sheet contracts toward its top edge.
+          transformOrigin: closing ? "50% 34%" : "center",
+          ["--depth" as string]: depth,
+          ["--seam" as string]: seam,
         }}
       >
         <span className="diary__binding" aria-hidden="true">

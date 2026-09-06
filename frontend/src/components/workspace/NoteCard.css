@@ -191,9 +191,27 @@
   }
 }
 
+/* The pile's tiny reaction as a folded-back page is placed onto it — lift to
+   meet the sheet, then settle. Set by NoteEditor at the end of its close fold. */
+.note-card[data-received] {
+  animation: note-card-received 0.32s var(--ease-standard);
+}
+@keyframes note-card-received {
+  0%,
+  100% {
+    transform: none;
+  }
+  40% {
+    transform: translateY(-1.6px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .note-card {
     rotate: 0deg !important;
     translate: none !important;
+  }
+  .note-card[data-received] {
+    animation: none;
   }
 }

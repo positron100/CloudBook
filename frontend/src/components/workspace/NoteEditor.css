@@ -6,6 +6,8 @@
   display: grid;
   place-items: center;
   padding: var(--space-5);
+  /* the close fold gives the page a small 3D bend */
+  perspective: 1400px;
   background-color: color-mix(in oklab, var(--scrim) calc(var(--scrim-o) * 100%), transparent);
   -webkit-backdrop-filter: blur(calc(var(--scrim-o) * 2px));
   backdrop-filter: blur(calc(var(--scrim-o) * 2px));
@@ -31,6 +33,33 @@
 .note-editor__page.diary__page {
   min-height: 0;
   padding-bottom: var(--space-4);
+  /* `--depth` (0..1) deepens on the pick-up, then winds down as the page folds
+     back to a resting card shadow. */
+  box-shadow:
+    0 calc(8px + var(--depth, 0) * 12px) calc(22px + var(--depth, 0) * 22px)
+      hsl(var(--shadow-hsl) / calc(0.12 + var(--depth, 0) * 0.07)),
+    0 calc(38px + var(--depth, 0) * 26px) calc(80px - var(--depth, 0) * 8px) -28px
+      hsl(var(--shadow-hsl) / calc(0.32 + var(--depth, 0) * 0.06)),
+    inset 0 1px 0 color-mix(in oklab, var(--key-light) 80%, transparent);
+}
+/* The fold seam — a faint crease across the upper third while the sheet folds. */
+.note-editor__page::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 34%;
+  height: 2px;
+  translate: 0 -1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(var(--shadow-hsl) / 0.18) 18%,
+    hsl(var(--shadow-hsl) / 0.18) 82%,
+    transparent
+  );
+  opacity: calc(var(--seam, 0) * 0.55);
+  pointer-events: none;
 }
 
 .note-editor__body {
