@@ -1,13 +1,14 @@
 .note-editor {
+  --scrim-o: 1;
   position: fixed;
   inset: 0;
   z-index: 900;
   display: grid;
   place-items: center;
   padding: var(--space-5);
-  background-color: var(--scrim);
-  -webkit-backdrop-filter: blur(2px);
-  backdrop-filter: blur(2px);
+  background-color: color-mix(in oklab, var(--scrim) calc(var(--scrim-o) * 100%), transparent);
+  -webkit-backdrop-filter: blur(calc(var(--scrim-o) * 2px));
+  backdrop-filter: blur(calc(var(--scrim-o) * 2px));
 }
 
 /* The page — the diary's own paper, at full size. `.diary__page` supplies the

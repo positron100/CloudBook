@@ -1,6 +1,6 @@
 import { useRef, useState, type MouseEvent } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui";
+import { Button, IconButton } from "@/components/ui";
 import { Magnetic } from "@/components/motion";
 import { useAuth } from "@/context/AuthContext";
 import { useRouteTransition } from "@/components/transitions/RouteTransition";
@@ -95,18 +95,22 @@ export function TopNav() {
         </nav>
 
         <div className="topnav__actions">
-          <ThemeToggle />
+          <Magnetic as="span" strength={NAV_MAGNET_STRENGTH} className="topnav__ctrl-magnet">
+            <ThemeToggle className="topnav__ctrl" onMouseMove={trackLight} />
+          </Magnetic>
           {isAuthenticated ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                logout();
-                transitionTo("/login");
-              }}
-            >
-              Sign out
-            </Button>
+            <Magnetic as="span" strength={NAV_MAGNET_STRENGTH} className="topnav__ctrl-magnet">
+              <IconButton
+                icon="logout"
+                label="Sign out"
+                className="topnav__ctrl"
+                onMouseMove={trackLight}
+                onClick={() => {
+                  logout();
+                  transitionTo("/login");
+                }}
+              />
+            </Magnetic>
           ) : (
             <>
               <Magnetic>

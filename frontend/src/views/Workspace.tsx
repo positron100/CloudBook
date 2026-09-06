@@ -138,13 +138,13 @@ export default function Workspace() {
     setEditState({ note, from });
   }, []);
 
+  // Optimistic edit — the card updates now; NoteEditor folds itself away after.
   const handleSave = useCallback(
     (id: string, title: string, description: string, tagValue: string) => {
       const { committed } = editNote(id, title, description, tagValue);
       committed.catch((err) =>
         toast.error(err instanceof Error ? err.message : "Couldn't save — your last change was kept"),
       );
-      setEditState(null);
     },
     [editNote, toast],
   );

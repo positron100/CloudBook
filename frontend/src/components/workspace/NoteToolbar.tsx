@@ -1,5 +1,5 @@
 import { type Ref } from "react";
-import { m } from "framer-motion";
+import { m, LayoutGroup } from "framer-motion";
 import { Field, Icon } from "@/components/ui";
 import { cn } from "@/utils/cn";
 import { useMagnetic } from "@/hooks/useMagnetic";
@@ -64,33 +64,40 @@ export function NoteToolbar({
   const filters = ["all", ...tags];
 
   return (
-    <div className="note-toolbar" role="search">
-      <label className="note-toolbar__search">
-        <Icon name="search" size={15} className="note-toolbar__search-icon" />
-        <Field
-          label="Search notes"
-          hideLabel
-          type="search"
-          placeholder="Search notes…"
-          value={search}
-          onChange={(e) => onSearch(e.target.value)}
-        />
-      </label>
+    <LayoutGroup>
+      <div className="note-toolbar" role="search">
+        <m.label className="note-toolbar__search" layout="position">
+          <Icon name="search" size={15} className="note-toolbar__search-icon" />
+          <Field
+            label="Search notes"
+            hideLabel
+            type="search"
+            placeholder="Search notes…"
+            value={search}
+            onChange={(e) => onSearch(e.target.value)}
+          />
+        </m.label>
 
-      {tags.length > 0 && (
-        <div className="note-toolbar__tags" role="group" aria-label="Filter by tag">
-          {filters.map((name) => (
-            <TagChip
-              key={name}
-              label={name === "all" ? "All" : name}
-              active={activeTag === name}
-              onClick={() => onTag(name)}
-            />
-          ))}
-        </div>
-      )}
+        {tags.length > 0 && (
+          <m.div
+            className="note-toolbar__tags"
+            role="group"
+            aria-label="Filter by tag"
+            layout="position"
+          >
+            {filters.map((name) => (
+              <TagChip
+                key={name}
+                label={name === "all" ? "All" : name}
+                active={activeTag === name}
+                onClick={() => onTag(name)}
+              />
+            ))}
+          </m.div>
+        )}
 
-      <SortMenu value={sort} onChange={onSort} />
-    </div>
+        <SortMenu value={sort} onChange={onSort} />
+      </div>
+    </LayoutGroup>
   );
 }

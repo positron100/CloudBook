@@ -89,10 +89,14 @@ export function SortMenu({ value, onChange }: SortMenuProps) {
         onMouseMove={magnetic.onMouseMove}
         onMouseLeave={magnetic.onMouseLeave}
         style={magnetic.style}
+        layout={reduce ? false : true}
+        transition={{ layout: { type: "spring", stiffness: 420, damping: 32, mass: 0.7 } }}
         whileTap={reduce ? undefined : { y: 1 }}
       >
         <Icon name="sort" size={15} />
-        <span className="sort-menu__value">{current.label}</span>
+        <m.span className="sort-menu__value" layout={reduce ? false : "position"}>
+          {current.label}
+        </m.span>
         <Icon name="chevron-down" size={14} className="sort-menu__caret" data-open={open || undefined} />
       </m.button>
 

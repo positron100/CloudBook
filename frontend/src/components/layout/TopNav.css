@@ -146,12 +146,55 @@
 .topnav__actions {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-1);
   flex-shrink: 0;
 }
-/* Theme toggle and Sign out / Log in share the link's liquid-glass hover so
-   every clickable control in the pill feels the same. */
-.topnav__actions .icon-btn:hover:not(:disabled),
+.topnav__ctrl-magnet {
+  display: inline-flex;
+}
+
+/* One liquid-glass control family for the pill's right side — theme toggle,
+   Sign out. Same size, radius, glass hover, cursor light and press as the
+   nav links; magnetic pull rides the wrapper. */
+.topnav__ctrl.icon-btn {
+  --mx: 50%;
+  --my: 50%;
+  --sz: 2.25rem;
+  position: relative;
+  isolation: isolate;
+  border-radius: var(--radius-pill);
+  color: var(--fg-muted);
+  transition:
+    color var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-base) var(--ease-standard),
+    box-shadow var(--dur-base) var(--ease-standard);
+}
+.topnav__ctrl.icon-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  opacity: 0;
+  background: radial-gradient(
+    3.5rem 3.5rem at var(--mx) var(--my),
+    color-mix(in oklab, var(--accent) 16%, transparent),
+    transparent 70%
+  );
+  transition: opacity var(--dur-base) var(--ease-standard);
+}
+.topnav__ctrl.icon-btn:hover:not(:disabled) {
+  color: var(--fg);
+  background-color: color-mix(in oklab, var(--float) 58%, transparent);
+  -webkit-backdrop-filter: blur(8px) saturate(1.3);
+  backdrop-filter: blur(8px) saturate(1.3);
+  box-shadow:
+    var(--elev-1),
+    inset 0 1px 0 color-mix(in oklab, var(--key-light) 42%, transparent);
+}
+.topnav__ctrl.icon-btn:hover:not(:disabled)::before {
+  opacity: 1;
+}
 .topnav__actions .btn--ghost:hover:not(:disabled) {
   background-color: color-mix(in oklab, var(--float) 58%, transparent);
   -webkit-backdrop-filter: blur(8px) saturate(1.3);
