@@ -19,6 +19,14 @@
   max-height: 78svh;
   transform-origin: center;
   cursor: auto;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+/* While folding back to the card, the page is in motion — no text selection,
+   no stray clicks landing on the shrinking inputs. */
+.note-editor[data-closing] .note-editor__page,
+.note-editor[data-closing] {
+  pointer-events: none;
 }
 .note-editor__page.diary__page {
   min-height: 0;

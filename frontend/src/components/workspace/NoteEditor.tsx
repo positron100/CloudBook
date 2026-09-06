@@ -13,11 +13,26 @@ interface NoteEditorProps {
   onSave: (id: string, title: string, description: string, tag: string) => void;
 }
 
+const escId = (v: string) =>
+  typeof window !== "undefined" && window.CSS?.escape ? window.CSS.escape(v) : v;
+
+/** The close fold — a single tuned tween so every geometry channel arrives at
+ *  the card in the same frame. Not a reversed open: soft in, controlled glide,
+ *  soft settle, no bounce. */
+const CLOSE_MS = 520;
+const CLOSE_EASE: [number, number, number, number] = [0.32, 0, 0.24, 1];
+
 /**
  * Opening a note does not summon a dialog — the little torn card *becomes* a
- * full notebook page. It unfolds out of the card's own rect (transform only),
- * lands as the same ruled paper the diary uses, and on Save or Discard folds
- * back down into that exact card position before it unmounts. Native inputs.
+ * full notebook page. It unfolds out of the card's own rect (transform only)
+ * and lands as the same ruled paper the diary uses.
+ *
+ * Closing is the true inverse: the same sheet contracts, folds and travels back
+ * onto the *live* card rect (re-measured now — an optimistic edit, a sort or a
+ * resize may have moved it) as one continuous transform. The page stays fully
+ * opaque the whole way; the real card is already sitting underneath, so when
+ * the page reaches card geometry and unmounts there is nothing to fade — the
+ * handoff is a no-op. Save / Discard / Close / Escape / scrim all run it.
  */
 export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
   const reduce = useReducedMotion();
@@ -26,14 +41,17 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
     description: note.description,
     tag: note.tag,
   });
+  const [closing, setClosing] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
   const closingRef = useRef(false);
 
   const invalid = form.title.trim().length < 3 || form.description.trim().length < 3;
   const dirty =
     form.title !== note.title || form.description !== note.description || form.tag !== note.tag;
 
-  // The transform that makes a centred page overlay a given card rect.
+  // The uniform transform that makes the centred page overlay a card rect — the
+  // open pose. (Close computes its own non-uniform pose against the live card.)
   const poseFor = (r: DOMRect) => {
     if (typeof window === "undefined" || r.width === 0) return { x: 0, y: 0, scale: 0.92 };
     const pageW = Math.min(640, window.innerWidth * 0.92);
@@ -47,11 +65,16 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
 
   const x = useMotionValue(reduce ? 0 : start.x);
   const y = useMotionValue(reduce ? 0 : start.y);
-  const scale = useMotionValue(reduce ? 1 : start.scale);
+  // scaleX / scaleY move independently on close so notebook-page proportions
+  // (tall) morph back into note-card proportions (short) as it shrinks.
+  const sx = useMotionValue(reduce ? 1 : start.scale);
+  const sy = useMotionValue(reduce ? 1 : start.scale);
+  const skewX = useMotionValue(0);
+  const rotate = useMotionValue(0);
   const pageOpacity = useMotionValue(reduce ? 0 : 0.55);
   const scrim = useMotionValue(0);
 
-  // Unfold on mount.
+  // Unfold on mount (unchanged — the open animation is not part of this task).
   useEffect(() => {
     if (reduce) {
       pageOpacity.set(1);
@@ -61,35 +84,73 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
     const spring = { type: "spring", stiffness: 300, damping: 30, mass: 0.9 } as const;
     animate(x, 0, spring);
     animate(y, 0, spring);
-    animate(scale, 1, spring);
+    animate(sx, 1, spring);
+    animate(sy, 1, spring);
     animate(pageOpacity, 1, { duration: 0.16 });
     animate(scrim, 1, { duration: 0.22 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Fold back onto the source card — re-measured now, since an optimistic edit
-  // may have moved it — and hold the page opaque until it is essentially on the
-  // card, so the card emerges rather than "takes over".
+  /**
+   * Fold the page back onto the card. `then` runs at the instant the geometry
+   * lands, which is also the instant the editor unmounts — the card underneath
+   * takes over with no fade and no swap frame.
+   */
   const foldAway = (then: () => void) => {
     if (closingRef.current) return;
     closingRef.current = true;
+    setClosing(true);
     if (reduce) {
       then();
       return;
     }
-    const live =
+
+    // Re-measure the live card *now* — the pile may have moved while the editor
+    // was open. Fall back to the open rect only if it has genuinely vanished.
+    const el =
       typeof document !== "undefined"
-        ? document
-            .querySelector(`[data-note-id="${(window.CSS?.escape ?? String)(note._id)}"]`)
-            ?.getBoundingClientRect()
-        : undefined;
-    const target = live && live.width > 0 ? poseFor(live) : start;
-    const spring = { type: "spring", stiffness: 340, damping: 34, mass: 0.85 } as const;
-    animate(x, target.x, spring);
-    animate(y, target.y, spring);
-    animate(scale, target.scale, spring);
-    animate(pageOpacity, 0, { duration: 0.12, delay: 0.24 });
-    animate(scrim, 0, { duration: 0.3 }).then(then);
+        ? (document.querySelector(`[data-note-id="${escId(note._id)}"]`) as HTMLElement | null)
+        : null;
+    const page = pageRef.current;
+    const W0 = page?.offsetWidth || Math.min(640, window.innerWidth * 0.92);
+    const H0 = page?.offsetHeight || W0 * 0.85;
+
+    let target: { x: number; y: number; sx: number; sy: number; rotate: number };
+    const live = el?.getBoundingClientRect();
+    if (el && live && live.width > 0) {
+      // AABB centre is rotation-invariant; offset size is the true card box.
+      const cardW = el.offsetWidth || live.width;
+      const cardH = el.offsetHeight || live.height;
+      target = {
+        x: live.left + live.width / 2 - window.innerWidth / 2,
+        y: live.top + live.height / 2 - window.innerHeight / 2,
+        sx: Math.max(0.05, cardW / W0),
+        sy: Math.max(0.05, cardH / H0),
+        rotate: parseFloat(getComputedStyle(el).rotate) || 0,
+      };
+    } else {
+      target = { x: start.x, y: start.y, sx: start.scale, sy: start.scale, rotate: 0 };
+    }
+
+    const t = { duration: CLOSE_MS / 1000, ease: CLOSE_EASE } as const;
+    // One tween, one clock — position, both scales and rotation land together.
+    const done = Promise.all([
+      animate(x, target.x, t),
+      animate(y, target.y, t),
+      animate(sx, target.sx, t),
+      // sy dips a hair past target then settles — the paper compressing shut.
+      animate(sy, [sy.get(), target.sy * 0.985, target.sy], { ...t, times: [0, 0.72, 1] }),
+      animate(rotate, target.rotate, t),
+    ]);
+    // A brief bend early on, released back flat — reads as a fold, not a spin.
+    animate(skewX, [0, -2.4, -0.7, 0], {
+      duration: CLOSE_MS / 1000,
+      times: [0, 0.26, 0.62, 1],
+      ease: "easeInOut",
+    });
+    // Backdrop clears on the same clock; the page itself never fades.
+    animate(scrim, 0, { duration: (CLOSE_MS / 1000) * 0.92 });
+    done.then(then);
   };
 
   useEffect(() => {
@@ -121,14 +182,25 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
       role="dialog"
       aria-modal="true"
       aria-label={`Edit note: ${note.title}`}
+      data-closing={closing || undefined}
       style={{ "--scrim-o": scrim } as React.CSSProperties}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) foldAway(onClose);
       }}
     >
       <m.div
+        ref={pageRef}
         className="note-editor__page diary__page"
-        style={{ x, y, scale, opacity: pageOpacity, transformOrigin: "center" }}
+        style={{
+          x,
+          y,
+          scaleX: sx,
+          scaleY: sy,
+          skewX,
+          rotate,
+          opacity: pageOpacity,
+          transformOrigin: "center",
+        }}
       >
         <span className="diary__binding" aria-hidden="true">
           {Array.from({ length: 9 }).map((_, i) => (
