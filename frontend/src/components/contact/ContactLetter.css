@@ -1,61 +1,32 @@
 .contact-letter {
+  position: relative;
+  width: 100%;
+  max-width: 32rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-4);
-  width: 100%;
-  max-width: 30rem;
+}
+.contact-letter__aside {
+  align-self: stretch;
 }
 
-/* The stage. One grid row carries "how far the letter has come out" — a fixed
-   envelope height when closed, content height when open — the one place a
-   height animates; the flap and sheet are transform + opacity. */
-.contact-letter__stage {
+/* The card — one element that becomes the paper, the envelope and the
+   confirmation. Same stationery as the notebook: warm paper, a bound feel,
+   a left margin rule. It shrinks to envelope size about its own centre. */
+.contact-letter__card {
   position: relative;
   width: 100%;
-  display: grid;
-  grid-template-rows: 6.5rem;
-  perspective: 1600px;
-  transition: grid-template-rows var(--dur-section) var(--ease-standard);
-}
-.contact-letter__stage[data-open="true"] {
-  grid-template-rows: 1fr;
-}
-
-/* Clipped to the grid row — a fixed envelope height when closed, the letter's
-   full height when open. */
-.contact-letter__well {
-  min-height: 0;
-  height: 100%;
   overflow: hidden;
-  border-radius: var(--radius-lg);
-}
-
-/* The letter — the desk's paper, faintly ruled, with its own soft elevation. */
-.contact-letter__sheet {
-  position: relative;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md) var(--radius-md) var(--radius-xs) var(--radius-xs);
   background-color: var(--sheet-raised);
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent calc(1.75rem - 1px),
-    var(--rule-line) calc(1.75rem - 1px),
-    var(--rule-line) 1.75rem
-  );
-  background-position: 0 3.4rem;
   border: 1px solid color-mix(in oklab, var(--border) 55%, transparent);
   box-shadow:
     0 3px 10px hsl(var(--shadow-hsl) / 0.08),
     0 22px 46px -22px hsl(var(--shadow-hsl) / 0.22),
-    inset 0 1px 0 color-mix(in oklab, var(--key-light) 75%, transparent);
+    inset 0 1px 0 color-mix(in oklab, var(--key-light) 78%, transparent);
 }
-.contact-letter__content {
-  padding: var(--space-6) var(--space-5) var(--space-5) 3.4rem;
-}
-/* A quiet margin rule down the left, like a real letter page. */
-.contact-letter__sheet::before {
-  content: "";
+.contact-letter__margin {
   position: absolute;
   inset: var(--space-4) auto var(--space-4) 2.4rem;
   width: 1px;
@@ -63,83 +34,378 @@
   pointer-events: none;
   z-index: 1;
 }
+
+.contact-letter__body {
+  position: relative;
+  padding: var(--space-6) var(--space-5) var(--space-5) 3.4rem;
+}
+.contact-letter__body[data-sealed] {
+  pointer-events: none;
+}
+
+.contact-letter__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
 .contact-letter__salutation {
-  margin: 0 0 var(--space-3);
+  margin: 0;
   font-family: var(--font-display);
   font-size: var(--text-h3);
   font-weight: var(--weight-semibold);
   letter-spacing: var(--tracking-tight);
   color: var(--fg);
 }
-.contact-letter__form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
+
+.contact-letter__stamp {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--fg-faint);
+}
+.contact-letter__stamp[data-complete] {
+  border-color: var(--accent);
+  background-color: var(--accent-soft);
+  color: var(--accent-strong);
+}
+:root[data-theme="dark"] .contact-letter__stamp[data-complete] {
+  color: var(--accent);
 }
 
-/* --- Envelope: shown while closed, fades once the sheet is clear of it. --- */
-.contact-letter__envelope {
+.contact-letter__lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin-top: var(--space-5);
+}
+
+/* --- Written lines: sentence lead-in + native control on a rule --------- */
+.written-line {
+  position: relative;
+}
+.written-line__lead {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: var(--text-meta);
+  color: var(--fg-muted);
+}
+.written-line__field {
+  position: relative;
+  margin-top: 2px;
+}
+.written-line__input {
+  width: 100%;
+  padding: 3px 2px;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  line-height: 1.5;
+  outline: none;
+}
+.written-line__input::placeholder {
+  color: transparent;
+}
+.written-line__input--body {
+  display: block;
+  resize: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 25px,
+    var(--rule-line) 25px,
+    var(--rule-line) 26px
+  );
+  background-attachment: local;
+  font-size: var(--text-body);
+}
+
+/* single-line rule + animated accent focus rule */
+.written-line__rule,
+.written-line__rule-focus {
   position: absolute;
-  inset: 0 0 auto 0;
-  height: 6.5rem;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+.written-line__rule {
+  height: 1px;
+  background-color: var(--rule-line);
+}
+.written-line__rule[data-error] {
+  background-color: color-mix(in oklab, var(--danger) 70%, transparent);
+}
+.written-line__rule-focus {
+  height: 2px;
+  background-color: var(--accent);
+  transform-origin: left center;
+}
+.written-line__rule-focus[data-error] {
+  background-color: var(--danger);
+}
+
+/* body: a soft wash around the whole writing area on focus, no single rule */
+.written-line__wash {
+  position: absolute;
+  inset: -6px -8px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  opacity: 0;
   pointer-events: none;
   transition: opacity var(--dur-base) var(--ease-standard);
 }
-.contact-letter__stage[data-open="true"] .contact-letter__envelope {
-  opacity: 0;
+.written-line__wash[data-on] {
+  opacity: 1;
+  border-color: color-mix(in oklab, var(--accent) 35%, transparent);
+  background-color: color-mix(in oklab, var(--accent) 5%, transparent);
 }
-.contact-letter__pocket {
+.written-line__wash[data-error] {
+  border-color: color-mix(in oklab, var(--danger) 45%, transparent);
+  background-color: color-mix(in oklab, var(--danger) 5%, transparent);
+}
+
+.written-line__preview {
   position: absolute;
-  inset: 0;
-  border-radius: var(--radius-lg);
-  background-color: var(--sheet);
+  top: 3px;
+  left: 2px;
+  pointer-events: none;
+  color: var(--fg-faint);
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  line-height: 1.5;
+}
+.written-line__input--body ~ .written-line__preview {
+  font-size: var(--text-body);
+}
+.written-line__caret {
+  display: inline-block;
+  width: 1px;
+  height: 1.05em;
+  margin-left: 1px;
+  translate: 0 2px;
+  background-color: var(--fg-faint);
+  animation: cl-blink 1s steps(1) infinite;
+}
+@keyframes cl-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.written-line__error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  overflow: hidden;
+  font-size: var(--text-meta);
+  color: var(--danger);
+}
+
+/* --- Closing line + send --------------------------------------------------- */
+.contact-letter__close {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: calc(26px - 4px);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--rule-line);
+  margin-left: -1rem;
+  padding-left: 1rem;
+}
+.contact-letter__regards {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-meta);
+  color: var(--fg-faint);
+}
+.contact-letter__send {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-5);
   border: 1px solid var(--border-strong);
-  box-shadow: 0 6px 16px -8px hsl(var(--shadow-hsl) / 0.22);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-base) var(--ease-standard),
+    color var(--dur-base) var(--ease-standard),
+    border-color var(--dur-base) var(--ease-standard);
 }
-/* The front V lip — drawn over the sheet so it emerges from behind it. */
-.contact-letter__lip {
+.contact-letter__send[data-ready] {
+  border-color: transparent;
+  background-image:
+    radial-gradient(140% 120% at 22% -25%, var(--accent-highlight) 0%, transparent 55%),
+    linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
+  background-color: var(--accent);
+  color: var(--accent-fg);
+  box-shadow: var(--elev-field), inset 0 1px 0 color-mix(in oklab, var(--accent-highlight) 55%, transparent);
+}
+.contact-letter__send:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.contact-letter__send:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.contact-letter__status {
+  min-height: 1.25rem;
+  margin-top: var(--space-3);
+  padding-left: 1rem;
+}
+.contact-letter__error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-meta);
+  color: var(--danger);
+}
+.contact-letter__error a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* --- Folding envelope --------------------------------------------------- */
+.contact-letter__envelope {
   position: absolute;
   inset: 0;
-  z-index: 3;
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-  background-color: color-mix(in oklab, var(--sheet) 92%, var(--fg));
-  clip-path: polygon(0 38%, 50% 100%, 100% 38%, 100% 100%, 0 100%);
+  pointer-events: none;
 }
-.contact-letter__flap {
+.contact-letter__env-inner {
+  position: absolute;
+  inset: 0;
+}
+.contact-letter__env-side {
+  position: absolute;
+  inset-block: 0;
+  width: 50%;
+  background-color: color-mix(in oklab, var(--accent) 9%, var(--sheet-raised));
+}
+.contact-letter__env-side--0 {
+  left: 0;
+  transform-origin: left center;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+.contact-letter__env-side--1 {
+  left: 50%;
+  transform-origin: right center;
+  clip-path: polygon(100% 0, 0 50%, 100% 100%);
+}
+.contact-letter__env-flap {
   position: absolute;
   inset-inline: 0;
   top: 0;
-  height: 3.4rem;
-  z-index: 2;
+  height: 58%;
   transform-origin: top center;
   transform-style: preserve-3d;
   backface-visibility: hidden;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  background-color: var(--sheet-raised);
-  border: 1px solid var(--border-strong);
-  border-bottom: none;
+  background-color: color-mix(in oklab, var(--sheet) 82%, var(--fg));
+  border-bottom: 1.5px solid color-mix(in oklab, var(--border-strong) 80%, transparent);
   clip-path: polygon(0 0, 100% 0, 50% 100%);
 }
-.contact-letter__seal {
+.contact-letter__env-seal {
   position: absolute;
-  top: 3rem;
+  top: 58%;
   left: 50%;
   translate: -50% -50%;
-  z-index: 4;
-  width: 1.6rem;
-  height: 1.6rem;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
   border-radius: var(--radius-pill);
   background:
     radial-gradient(120% 120% at 30% 25%, var(--accent-highlight), var(--accent) 55%, var(--accent-strong));
-  box-shadow: 0 2px 5px -1px color-mix(in oklab, var(--accent) 50%, transparent);
+  color: var(--accent-fg);
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: var(--weight-bold);
+  box-shadow: 0 2px 6px -1px color-mix(in oklab, var(--accent) 50%, transparent);
 }
 
-/* --- Other ways to reach us --- */
+.contact-letter__trail {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+.contact-letter__trail span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background-color: var(--accent);
+}
+
+/* --- Delivered -------------------------------------------------------------- */
+.contact-letter__delivered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-5);
+  color: var(--accent);
+}
+.contact-letter__delivered-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+  font-weight: var(--weight-semibold);
+  color: var(--fg);
+}
+.contact-letter__delivered-line {
+  margin: 0;
+  min-height: 2.4rem;
+  max-width: 22rem;
+  font-size: var(--text-label);
+  color: var(--fg-muted);
+}
+.contact-letter__again {
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-meta);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
+}
+.contact-letter__again:hover {
+  color: var(--fg);
+  border-color: var(--border-strong);
+}
+.contact-letter__again:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* --- Other ways to reach us --------------------------------------------- */
 .contact-letter__aside {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--space-2) var(--space-4);
+  gap: var(--space-1) var(--space-3);
 }
 .contact-letter__link {
   display: inline-flex;
@@ -154,9 +420,7 @@
   font-size: var(--text-label);
   text-decoration: none;
   cursor: pointer;
-  transition:
-    color var(--dur-fast) var(--ease-standard),
-    background-color var(--dur-fast) var(--ease-standard);
+  transition: color var(--dur-fast) var(--ease-standard), background-color var(--dur-fast) var(--ease-standard);
 }
 .contact-letter__link:hover {
   color: var(--fg);
@@ -170,35 +434,8 @@
   color: var(--fg-faint);
 }
 
-/* --- Toggle --- */
-.contact-letter__toggle {
-  padding: var(--space-2) var(--space-5);
-  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
-  border-radius: var(--radius-pill);
-  background-color: color-mix(in oklab, var(--float) 66%, transparent);
-  backdrop-filter: blur(12px) saturate(1.4);
-  -webkit-backdrop-filter: blur(12px) saturate(1.4);
-  color: var(--fg-muted);
-  font-family: var(--font-sans);
-  font-size: var(--text-label);
-  font-weight: var(--weight-medium);
-  cursor: pointer;
-  box-shadow: var(--elev-1), inset 0 1px 0 color-mix(in oklab, var(--key-light) 55%, transparent);
-  transition:
-    color var(--dur-fast) var(--ease-standard),
-    box-shadow var(--dur-fast) var(--ease-standard);
-}
-.contact-letter__toggle:hover {
-  color: var(--fg);
-  box-shadow: var(--elev-2), inset 0 1px 0 color-mix(in oklab, var(--key-light) 70%, transparent);
-}
-.contact-letter__toggle:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .contact-letter__stage {
-    transition: none;
+  .written-line__caret {
+    animation: none;
   }
 }

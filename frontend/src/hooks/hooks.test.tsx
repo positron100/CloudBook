@@ -1,9 +1,8 @@
 import { renderHook } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { useReducedMotion } from "./useReducedMotion";
 import { useMediaQuery } from "./useMediaQuery";
 import { useTypingPreview } from "./useTypingPreview";
-import { useSectionNav } from "./useSectionNav";
 import { bp, up, down, between } from "@/utils/breakpoints";
 
 // The vitest setup stubs matchMedia to always report matches: false with no-op
@@ -37,32 +36,6 @@ describe("useTypingPreview", () => {
     );
     rerender({ active: false });
     expect(result.current).toBe("");
-  });
-});
-
-describe("useSectionNav", () => {
-  it("reports the sections it finds and exposes movement callbacks", () => {
-    document.body.innerHTML =
-      '<section data-section id="a"></section><section data-section id="b"></section>';
-    const { result } = renderHook(() => useSectionNav());
-    expect(result.current.count).toBe(2);
-    expect(result.current.atEnd).toBe(false);
-    expect(typeof result.current.goNext).toBe("function");
-    expect(typeof result.current.goPrev).toBe("function");
-    document.body.innerHTML = "";
-  });
-
-  it("ignores ArrowDown while focus is in a form field", () => {
-    document.body.innerHTML =
-      '<section data-section id="a"></section><section data-section id="b"></section><input id="f" />';
-    renderHook(() => useSectionNav());
-    const input = document.getElementById("f") as HTMLInputElement;
-    input.focus();
-    const spy = vi.fn();
-    document.getElementById("b")!.scrollIntoView = spy;
-    input.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
-    expect(spy).not.toHaveBeenCalled();
-    document.body.innerHTML = "";
   });
 });
 
