@@ -36,7 +36,8 @@ export default function WorkspacePreview() {
   );
   const nextId = useRef(SAMPLE.length);
 
-  const addNote = useCallback(async (title: string, description: string, tag: string) => {
+  // Simulate a little network latency so the optimistic UI is exercised.
+  const addNote = useCallback((title: string, description: string, tag: string) => {
     const created: Note = {
       _id: `preview-${nextId.current++}`,
       user: "preview",
@@ -46,13 +47,15 @@ export default function WorkspacePreview() {
       date: new Date().toISOString(),
     };
     setNotes((p) => [...p, created]);
-    return created;
+    return { note: created, committed: new Promise<Note>((r) => setTimeout(() => r(created), 400)) };
   }, []);
-  const editNote = useCallback(async (id: string, title: string, description: string, tag: string) => {
+  const editNote = useCallback((id: string, title: string, description: string, tag: string) => {
     setNotes((p) => p.map((n) => (n._id === id ? { ...n, title, description, tag } : n)));
+    return { committed: new Promise<void>((r) => setTimeout(r, 300)) };
   }, []);
-  const deleteNote = useCallback(async (id: string) => {
+  const deleteNote = useCallback((id: string) => {
     setNotes((p) => p.filter((n) => n._id !== id));
+    return { committed: new Promise<void>((r) => setTimeout(r, 300)) };
   }, []);
 
   const value = useMemo<NotesContextValue>(
@@ -64,6 +67,7 @@ export default function WorkspacePreview() {
       addNote,
       editNote,
       deleteNote,
+      isPending: () => false,
     }),
     [notes, forced, addNote, editNote, deleteNote],
   );

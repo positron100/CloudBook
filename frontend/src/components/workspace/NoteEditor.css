@@ -1,0 +1,99 @@
+.note-editor {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: grid;
+  place-items: center;
+  padding: var(--space-5);
+  background-color: var(--scrim);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+/* The page — the diary's own paper, at full size. `.diary__page` supplies the
+   binding, rules, tag margin; these rules add the editor's size and footer. */
+.note-editor__page {
+  width: min(92vw, 40rem);
+  height: min(78svh, 34rem);
+  max-height: 78svh;
+  transform-origin: center;
+  cursor: auto;
+}
+.note-editor__page.diary__page {
+  min-height: 0;
+  padding-bottom: var(--space-4);
+}
+
+.note-editor__body {
+  flex: 1;
+  min-height: calc(var(--rule) * 6);
+  max-height: none;
+  resize: none;
+}
+
+.note-editor__foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  flex-wrap: wrap;
+}
+.note-editor__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.note-editor__cancel {
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+.note-editor__cancel:hover {
+  background-color: color-mix(in oklab, var(--fg) 6%, transparent);
+  color: var(--fg);
+}
+.note-editor__save {
+  padding: var(--space-2) var(--space-5);
+  border: 0;
+  border-radius: var(--radius-control);
+  background-image:
+    radial-gradient(140% 120% at 22% -25%, var(--accent-highlight) 0%, transparent 55%),
+    linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
+  background-color: var(--accent);
+  color: var(--accent-fg);
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  box-shadow: var(--elev-field), inset 0 1px 0 color-mix(in oklab, var(--accent-highlight) 55%, transparent);
+  transition: box-shadow var(--dur-fast) var(--ease-standard), translate var(--dur-fast) var(--ease-standard);
+}
+.note-editor__save:hover:not(:disabled) {
+  translate: 0 -1px;
+  box-shadow: var(--elev-field-focus), inset 0 1px 0 color-mix(in oklab, var(--accent-highlight) 88%, transparent);
+}
+.note-editor__save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.note-editor__cancel:focus-visible,
+.note-editor__save:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .note-editor__foot {
+    justify-content: flex-end;
+  }
+}

@@ -29,6 +29,8 @@
   /* --- Lines --- */
   --border: #e6e0d3;
   --border-strong: #d3cab9;
+  /* Ruled-paper line — visible on notebook + note surfaces in both themes. */
+  --rule-line: color-mix(in oklab, var(--border-strong) 78%, transparent);
 
   /* --- Accent: blue-violet ink. One accent family — tonal variation comes
      from light, not from new hues. --- */
@@ -105,20 +107,21 @@
      the nav hover pill without being a hard capsule. */
   --radius-control: 1.25rem;
 
+  /* One height for every control that sits on the workspace toolbar row, so
+     search / tag filters / sort share a baseline. */
+  --control-h: 2.375rem;
+
   --border-width: 1px;
 
-  /* --- Typography.
-     Fraunces (display) and Inter (UI/editor) are NOT loaded yet — P1.1 keeps
-     the current system-font rendering. The tokens carry real fallback stacks
-     so wiring the self-hosted subset fonts later is a one-line change. --- */
-  --font-display: "Fraunces", "Iowan Old Style", Georgia, "Times New Roman", serif;
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
+  /* --- Typography. One family — self-hosted Poppins (see styles/fonts.css) —
+     across the whole product. `--font-display` is the same family carried at a
+     heavier weight, not a separate typeface: the desk speaks in one voice.
+     Geometric fallback stack so pre-swap metrics track Poppins closely. --- */
+  --font-sans: "Poppins", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: var(--font-sans);
   --font-note: var(--font-sans);
+  --font-auth: var(--font-sans);
   --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
-  /* Authentication experience only — matches the reference recording. Fallback
-     stack is geometric so pre-swap metrics track Poppins. */
-  --font-auth: "Poppins", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
   --text-display: clamp(2.75rem, 1.8rem + 4.2vw, 4.25rem);
   --text-h1: clamp(2rem, 1.5rem + 2.2vw, 2.6rem);
@@ -129,9 +132,11 @@
   --text-meta: 0.8125rem;
   --text-editor: 1.0625rem;
 
-  --leading-tight: 1.12;
-  --leading-snug: 1.3;
-  --leading-normal: 1.6;
+  /* Poppins runs a touch taller and wider than Inter — leading eased in a
+     little, tracking pulled almost to zero (it needs no tightening). */
+  --leading-tight: 1.16;
+  --leading-snug: 1.36;
+  --leading-normal: 1.62;
   --leading-editor: 1.75;
 
   --weight-regular: 400;
@@ -139,8 +144,8 @@
   --weight-semibold: 600;
   --weight-bold: 700;
 
-  --tracking-tight: -0.011em;
-  --tracking-wide: 0.08em;
+  --tracking-tight: -0.005em;
+  --tracking-wide: 0.06em;
 
   --measure-editor: 68ch;
   --measure-prose: 62ch;
@@ -207,6 +212,8 @@
 
   --border: #2c2e37;
   --border-strong: #3c3f4b;
+  /* Brighter than the border — ruled lines must stay legible on the dark page. */
+  --rule-line: color-mix(in oklab, var(--fg) 15%, transparent);
 
   --accent: #8c84f1;
   --accent-strong: #a7a0f6;

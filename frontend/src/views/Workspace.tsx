@@ -11,16 +11,34 @@ import { Notebook } from "@/components/workspace/Notebook";
 import { NoteStack } from "@/components/workspace/NoteStack";
 import { NoteStackSkeleton } from "@/components/workspace/NoteStackSkeleton";
 import { TearSheet } from "@/components/workspace/TearSheet";
+import { ReturnSheet } from "@/components/workspace/ReturnSheet";
+import { NoteEditor } from "@/components/workspace/NoteEditor";
 import { WorkspaceState } from "@/components/workspace/WorkspaceState";
-import { NoteEditModal } from "@/components/workspace/NoteEditModal";
 import "./Workspace.css";
 
 const isSort = (v: string): v is SortKey => v === "newest" || v === "oldest" || v === "title";
+
+const rectOf = (sel: string): DOMRect | undefined => {
+  const r = document.querySelector(sel)?.getBoundingClientRect();
+  return r && r.width > 0 ? r : undefined;
+};
+const esc = (v: string) =>
+  typeof CSS !== "undefined" && CSS.escape ? CSS.escape(v) : v.replace(/"/g, '\\"');
+const noteRect = (id: string) => rectOf(`[data-note-id="${esc(id)}"]`);
 
 interface TearState {
   from: DOMRect;
   note: Note;
   to: DOMRect;
+}
+interface ReturnState {
+  from: DOMRect;
+  to: DOMRect;
+  note: Note;
+}
+interface EditState {
+  note: Note;
+  from: DOMRect;
 }
 
 export default function Workspace() {
@@ -36,10 +54,11 @@ export default function Workspace() {
   const deferredSearch = useDeferredValue(search);
   const [sort, setSort] = usePersistentState<SortKey>("cloudbook:notes-sort", "newest", isSort);
   const [tag, setTag] = useState("all");
-  const [editing, setEditing] = useState<Note | null>(null);
+  const [editState, setEditState] = useState<EditState | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [tear, setTear] = useState<TearState | null>(null);
+  const [ret, setRet] = useState<ReturnState | null>(null);
   const [hiddenId, setHiddenId] = useState<string | null>(null);
   const [arrivedId, setArrivedId] = useState<string | null>(null);
 
@@ -57,7 +76,6 @@ export default function Workspace() {
 
   const focusComposer = () => document.getElementById("composer-title")?.focus();
 
-  // Close an open note on Escape.
   useEffect(() => {
     if (!openId) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpenId(null);
@@ -65,29 +83,20 @@ export default function Workspace() {
     return () => window.removeEventListener("keydown", onKey);
   }, [openId]);
 
+  // --- Create: optimistic. The note is already in the list; play the tear. ---
   const handleCreated = useCallback(
     (note: Note, fromRect: DOMRect) => {
-      const canAnimate = !reduce && fromRect.width > 0 && fromRect.height > 0;
-      if (!canAnimate) {
-        toast.success("Note added to your desk");
-        return;
-      }
+      if (reduce || fromRect.width === 0) return;
       setHiddenId(note._id);
-      // Let the suppressed slot render, then measure where it landed.
-      requestAnimationFrame(() => {
+      requestAnimationFrame(() =>
         requestAnimationFrame(() => {
-          const el = document.querySelector<HTMLElement>(`[data-note-id="${note._id}"]`);
-          const to = el?.getBoundingClientRect();
-          if (to && to.width > 0) {
-            setTear({ from: fromRect, note, to });
-          } else {
-            setHiddenId(null);
-            toast.success("Note added to your desk");
-          }
-        });
-      });
+          const to = noteRect(note._id);
+          if (to) setTear({ from: fromRect, note, to });
+          else setHiddenId(null);
+        }),
+      );
     },
-    [reduce, toast],
+    [reduce],
   );
 
   const handleTearDone = useCallback(() => {
@@ -95,32 +104,50 @@ export default function Workspace() {
     setTear(null);
     setHiddenId(null);
     setArrivedId(id);
-    toast.success("Note added to your desk");
     window.setTimeout(() => setArrivedId((cur) => (cur === id ? null : cur)), 500);
-  }, [tear, toast]);
+  }, [tear]);
 
-  const handleDelete = async (note: Note) => {
-    setDeletingId(note._id);
-    if (openId === note._id) setOpenId(null);
-    try {
-      await deleteNote(note._id);
-      toast.warning("Note removed from your desk");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not delete note");
-    } finally {
-      setDeletingId(null);
-    }
-  };
+  // --- Delete: optimistic. Fly the page back into the diary, remove now. ---
+  const handleDelete = useCallback(
+    (note: Note) => {
+      const from = noteRect(note._id);
+      const to = rectOf(".diary__written");
+      if (openId === note._id) setOpenId(null);
 
-  const handleSave = async (id: string, title: string, description: string, tagValue: string) => {
-    try {
-      await editNote(id, title, description, tagValue);
-      setEditing(null);
-      toast.success("Note updated");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not update note");
-    }
-  };
+      if (!reduce && from && to) {
+        setDeletingId(note._id);
+        setRet({ from, to, note });
+      }
+
+      const { committed } = deleteNote(note._id);
+      committed.catch((err) =>
+        toast.error(err instanceof Error ? err.message : "Couldn't delete — the note is back"),
+      );
+    },
+    [reduce, openId, deleteNote, toast],
+  );
+
+  const handleReturnDone = useCallback(() => {
+    setRet(null);
+    setDeletingId(null);
+  }, []);
+
+  // --- Edit: the card unfolds into a full notebook page. ---
+  const openEditor = useCallback((note: Note) => {
+    const from = noteRect(note._id) ?? new DOMRect(0, 0, 0, 0);
+    setEditState({ note, from });
+  }, []);
+
+  const handleSave = useCallback(
+    (id: string, title: string, description: string, tagValue: string) => {
+      const { committed } = editNote(id, title, description, tagValue);
+      committed.catch((err) =>
+        toast.error(err instanceof Error ? err.message : "Couldn't save — your last change was kept"),
+      );
+      setEditState(null);
+    },
+    [editNote, toast],
+  );
 
   const loading = status === "loading" && notes.length === 0;
   const loadError = status === "error" && notes.length === 0;
@@ -183,7 +210,7 @@ export default function Workspace() {
               notes={visible}
               openId={openId}
               onToggle={(id) => setOpenId((cur) => (cur === id ? null : id))}
-              onEdit={setEditing}
+              onEdit={openEditor}
               onDelete={handleDelete}
               deletingId={deletingId}
               hiddenId={hiddenId}
@@ -194,16 +221,21 @@ export default function Workspace() {
       </div>
 
       {tear && (
-        <TearSheet
-          from={tear.from}
-          to={tear.to}
-          title={tear.note.title}
-          body={tear.note.description}
-          onDone={handleTearDone}
-        />
+        <TearSheet from={tear.from} to={tear.to} note={tear.note} onDone={handleTearDone} />
       )}
 
-      <NoteEditModal note={editing} onClose={() => setEditing(null)} onSave={handleSave} />
+      {ret && (
+        <ReturnSheet from={ret.from} to={ret.to} note={ret.note} onDone={handleReturnDone} />
+      )}
+
+      {editState && (
+        <NoteEditor
+          note={editState.note}
+          from={editState.from}
+          onClose={() => setEditState(null)}
+          onSave={handleSave}
+        />
+      )}
     </div>
   );
 }

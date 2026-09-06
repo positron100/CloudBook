@@ -35,8 +35,28 @@
     0 28px 56px -20px hsl(var(--shadow-hsl) / 0.28),
     inset 0 1px 0 color-mix(in oklab, var(--key-light) 90%, transparent);
 }
-.diary__page[data-submitting] {
-  transition: none;
+/* The page gives a little as its top sheet is torn away, then settles. */
+.diary__page[data-tearing] {
+  animation: diary-give 0.42s var(--ease-standard);
+}
+@keyframes diary-give {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  22% {
+    transform: translateY(-3px) rotate(-0.25deg);
+  }
+  60% {
+    transform: translateY(1px) rotate(0.12deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .diary__page[data-tearing] {
+    animation: none;
+  }
 }
 
 .diary__binding {
@@ -58,6 +78,13 @@
     color-mix(in oklab, var(--fg-faint) 28%, transparent)
   );
   box-shadow: inset 0 -2px 2px hsl(var(--shadow-hsl) / 0.25);
+}
+
+.diary__written {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .diary__title {
@@ -94,8 +121,8 @@
     to bottom,
     transparent 0,
     transparent calc(var(--rule) - 1px),
-    color-mix(in oklab, var(--border) 42%, transparent) calc(var(--rule) - 1px),
-    color-mix(in oklab, var(--border) 42%, transparent) var(--rule)
+    var(--rule-line) calc(var(--rule) - 1px),
+    var(--rule-line) var(--rule)
   );
   background-attachment: local;
   color: var(--fg);

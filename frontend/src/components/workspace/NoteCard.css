@@ -141,8 +141,8 @@
     to bottom,
     transparent 0,
     transparent calc(1.55em - 1px),
-    color-mix(in oklab, var(--border) 45%, transparent) calc(1.55em - 1px),
-    color-mix(in oklab, var(--border) 45%, transparent) 1.55em
+    var(--rule-line) calc(1.55em - 1px),
+    var(--rule-line) 1.55em
   );
 }
 

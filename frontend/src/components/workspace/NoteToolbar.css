@@ -1,3 +1,5 @@
+/* Search · tag filters · sort — one row, one baseline. Every control is
+   var(--control-h) tall and vertically centred; nothing is a boxed toolbar. */
 .note-toolbar {
   display: flex;
   align-items: center;
@@ -9,6 +11,7 @@
   position: relative;
   flex: 0 1 15rem;
   min-width: 9rem;
+  height: var(--control-h);
 }
 .note-toolbar__search-icon {
   position: absolute;
@@ -19,8 +22,13 @@
   pointer-events: none;
   z-index: 1;
 }
+.note-toolbar__search .field,
+.note-toolbar__search .field__control-wrap {
+  height: 100%;
+}
 .note-toolbar__search .field__control {
-  min-height: 2.5rem;
+  height: 100%;
+  min-height: 0;
   padding-left: 2.25rem;
   border-radius: var(--radius-pill);
   border-color: color-mix(in oklab, var(--border) 60%, transparent);
@@ -33,17 +41,22 @@
   background-color: var(--sheet);
 }
 
+/* Tags wrap rather than scroll, so a magnetic chip is never clipped by an
+   overflow container. The row reserves a little vertical room for the drift. */
 .note-toolbar__tags {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
-  flex: 1 1 auto;
+  padding-block: 3px;
   min-width: 0;
-  overflow-x: auto;
 }
 .note-toolbar__tag {
   flex: none;
-  padding: 5px var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0 var(--space-3);
   border: 1px solid transparent;
   border-radius: var(--radius-pill);
   background-color: color-mix(in oklab, var(--fg) 4%, transparent);
@@ -75,12 +88,16 @@
 }
 
 @media (max-width: 767px) {
+  .note-toolbar {
+    width: 100%;
+  }
   .note-toolbar__search {
     flex-basis: 100%;
     order: -1;
   }
   .note-toolbar__tags {
-    flex-basis: 100%;
-    order: 1;
+    flex: 1 1 auto;
+    order: 0;
+    justify-content: flex-start;
   }
 }

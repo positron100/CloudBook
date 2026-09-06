@@ -93,8 +93,11 @@
   display: inline-flex;
 }
 .topnav__link {
+  --mx: 50%;
+  --my: 50%;
   position: relative;
   z-index: 1;
+  isolation: isolate;
   display: inline-flex;
   align-items: center;
   height: 2rem;
@@ -104,10 +107,32 @@
   font-weight: var(--weight-medium);
   color: var(--fg-muted);
   text-decoration: none;
-  transition: color var(--dur-fast) var(--ease-standard);
+  transition:
+    color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-base) var(--ease-standard);
+}
+/* Cursor-tracking accent highlight — the same liquid-glass cue as the sort
+   control and (in TextUtils) the primary nav. */
+.topnav__link::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  opacity: 0;
+  background: radial-gradient(
+    4rem 4rem at var(--mx) var(--my),
+    color-mix(in oklab, var(--accent) 16%, transparent),
+    transparent 70%
+  );
+  transition: opacity var(--dur-base) var(--ease-standard);
 }
 .topnav__link:hover {
   color: var(--fg);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--key-light) 30%, transparent);
+}
+.topnav__link:hover::before {
+  opacity: 1;
 }
 .topnav__link[aria-current="page"] {
   color: var(--fg);
@@ -123,6 +148,17 @@
   align-items: center;
   gap: var(--space-2);
   flex-shrink: 0;
+}
+/* Theme toggle and Sign out / Log in share the link's liquid-glass hover so
+   every clickable control in the pill feels the same. */
+.topnav__actions .icon-btn:hover:not(:disabled),
+.topnav__actions .btn--ghost:hover:not(:disabled) {
+  background-color: color-mix(in oklab, var(--float) 58%, transparent);
+  -webkit-backdrop-filter: blur(8px) saturate(1.3);
+  backdrop-filter: blur(8px) saturate(1.3);
+  box-shadow:
+    var(--elev-1),
+    inset 0 1px 0 color-mix(in oklab, var(--key-light) 42%, transparent);
 }
 
 /* Below md the primary nav moves to <BottomNav>; the pill keeps just the brand

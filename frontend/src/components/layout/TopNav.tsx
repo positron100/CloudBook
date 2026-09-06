@@ -17,6 +17,15 @@ function isPlainClick(e: MouseEvent) {
   return e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
 }
 
+/** Cursor-tracking glass highlight — the TextUtils nav idiom. Written straight
+ *  to the node, no React state per move. */
+function trackLight(e: MouseEvent<HTMLElement>) {
+  const el = e.currentTarget;
+  const r = el.getBoundingClientRect();
+  el.style.setProperty("--mx", `${((e.clientX - r.left) / r.width) * 100}%`);
+  el.style.setProperty("--my", `${((e.clientY - r.top) / r.height) * 100}%`);
+}
+
 /** Persistent desktop / tablet navigation: a floating liquid-glass pill.
  * Mobile uses <BottomNav>. */
 export function TopNav() {
@@ -72,6 +81,7 @@ export function TopNav() {
                     className="topnav__link"
                     data-halo={link.to === haloKey ? "true" : undefined}
                     onClick={go(link.to)}
+                    onMouseMove={trackLight}
                     onMouseEnter={() => setHovered(link.to)}
                     onFocus={() => setHovered(link.to)}
                     onBlur={() => setHovered(null)}

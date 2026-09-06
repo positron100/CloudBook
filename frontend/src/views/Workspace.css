@@ -15,14 +15,30 @@
 .workspace__head {
   flex: none;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  gap: var(--space-5);
+  gap: var(--space-4) var(--space-6);
   flex-wrap: wrap;
 }
+.workspace__head .ws-header {
+  flex: none;
+}
 .workspace__head .note-toolbar {
-  flex: 1 1 26rem;
+  flex: 1 1 30rem;
   justify-content: flex-end;
+}
+.workspace__head .note-toolbar__tags {
+  flex: 0 1 auto;
+  justify-content: flex-end;
+}
+
+@media (max-width: 767px) {
+  .workspace__head {
+    align-items: stretch;
+  }
+  .workspace__head .note-toolbar {
+    flex-basis: 100%;
+  }
 }
 
 .workspace__desk {
@@ -44,6 +60,8 @@
    surface — the pages float on the desk, with room to the side to grow. */
 .workspace__board {
   position: relative;
+  /* Contain the pile's z-index layering so it never fights overlays. */
+  isolation: isolate;
   min-width: 0;
   min-height: 0;
   border-radius: var(--radius-lg);
