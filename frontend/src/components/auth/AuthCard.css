@@ -203,7 +203,7 @@
 }
 .auth-stage__cta-press {
   display: inline-flex;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-control);
 }
 .btn.btn--panel {
   margin-top: 0;

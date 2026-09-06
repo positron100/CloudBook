@@ -100,6 +100,10 @@
   --radius-xl: 28px;
   --radius-pill: 999px;
   --radius-sheet: 14px;
+  /* Interactive controls — buttons, fields, selects, the auth switch. Soft and
+     pill-adjacent (~half a standard 44px control height), the same family as
+     the nav hover pill without being a hard capsule. */
+  --radius-control: 1.25rem;
 
   --border-width: 1px;
 

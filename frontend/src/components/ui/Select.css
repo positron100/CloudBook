@@ -19,7 +19,7 @@
   min-height: 2.25rem;
   padding: 0 2rem 0 var(--space-3);
   border: var(--border-width) solid var(--border-strong);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
   background-color: var(--sheet);
   color: var(--fg);
   font-family: var(--font-sans);

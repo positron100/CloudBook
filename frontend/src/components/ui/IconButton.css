@@ -5,7 +5,7 @@
   width: var(--sz);
   height: var(--sz);
   border: var(--border-width) solid transparent;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-control);
   background-color: transparent;
   color: var(--fg-muted);
   cursor: pointer;
@@ -16,7 +16,6 @@
 }
 .icon-btn--sm {
   --sz: 2.25rem;
-  border-radius: var(--radius-sm);
 }
 .icon-btn:disabled {
   opacity: 0.5;

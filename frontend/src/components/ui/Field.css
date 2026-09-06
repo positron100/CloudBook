@@ -67,7 +67,7 @@
   min-height: 2.75rem;
   padding: var(--space-3) var(--space-4);
   border: var(--border-width) solid var(--border-strong);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-control);
   background-color: var(--sheet);
   color: var(--fg);
   font-family: var(--font-sans);
@@ -117,7 +117,7 @@
   display: block;
 }
 .field--lift .field__control-wrap {
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-control);
   /* `translate` (not `transform`) so the lift composes cleanly with the
      magnetic drift that framer writes to .field__lift. */
   transition:

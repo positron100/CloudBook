@@ -8,7 +8,7 @@
   min-height: var(--btn-h);
   padding-inline: var(--btn-px);
   border: var(--border-width) solid transparent;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-control);
   font-family: var(--font-sans);
   font-size: var(--text-label);
   font-weight: var(--weight-semibold);
