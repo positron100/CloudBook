@@ -193,18 +193,46 @@
   color: color-mix(in oklab, var(--accent-fg) 90%, transparent);
 }
 
-/* Outlined button that lives on the accent curtain. */
-.btn.btn--panel {
+/* The mode-switch control — a small piece of lit glass on the accent curtain.
+   Faint frost + an inner top-light even at rest; hover deepens the frost, the
+   edge catches light, and a soft neutral shadow drops. It does not just
+   brighten. Magnetism + Z-lift + press ride the wrappers (AuthSwitchButton). */
+.auth-stage__cta-magnet {
+  display: inline-flex;
   margin-top: var(--space-6);
-  background-color: transparent;
-  border-color: color-mix(in oklab, var(--accent-fg) 65%, transparent);
+}
+.auth-stage__cta-press {
+  display: inline-flex;
+  border-radius: var(--radius-md);
+}
+.btn.btn--panel {
+  margin-top: 0;
+  background-color: color-mix(in oklab, var(--accent-fg) 7%, transparent);
+  border-color: color-mix(in oklab, var(--accent-fg) 52%, transparent);
   color: var(--accent-fg);
-  box-shadow: none;
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--accent-fg) 24%, transparent);
   font-weight: 500;
+  transition:
+    background-color var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
 }
 .btn.btn--panel:hover {
-  background-color: color-mix(in oklab, var(--accent-fg) 14%, transparent);
-  border-color: var(--accent-fg);
+  background-color: color-mix(in oklab, var(--accent-fg) 16%, transparent);
+  border-color: color-mix(in oklab, var(--accent-fg) 88%, transparent);
+  box-shadow:
+    0 10px 24px -12px hsl(var(--shadow-neutral-hsl) / 0.45),
+    inset 0 1px 0 color-mix(in oklab, var(--accent-fg) 48%, transparent),
+    inset 0 -12px 22px -14px color-mix(in oklab, var(--accent-fg) 16%, transparent);
+}
+.btn.btn--panel:active {
+  box-shadow:
+    inset 0 1px 3px hsl(var(--shadow-neutral-hsl) / 0.3),
+    inset 0 1px 0 color-mix(in oklab, var(--accent-fg) 30%, transparent);
+}
+.btn.btn--panel:focus-visible {
+  outline: 2px solid var(--accent-fg);
+  outline-offset: 3px;
 }
 
 /* --- Mobile: the curtain sweeps vertically (top band <-> bottom band); the
@@ -263,7 +291,7 @@
   .auth-stage__sub {
     display: none;
   }
-  .btn.btn--panel {
+  .auth-stage__cta-magnet {
     margin-top: var(--space-4);
   }
 }

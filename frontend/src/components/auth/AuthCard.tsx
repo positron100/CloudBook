@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
 import { LoginForm } from "./LoginForm";
 import { RegisterForm } from "./RegisterForm";
+import { AuthSwitchButton } from "./AuthSwitchButton";
 import "./AuthCard.css";
 
 export type AuthMode = "login" | "register";
@@ -90,9 +90,7 @@ export function AuthCard({ mode }: { mode: AuthMode }) {
               <span className="auth-stage__wordmark">cloudbook</span>
               <h2 className="auth-stage__heading">{COPY[side].heading}</h2>
               <p className="auth-stage__sub">{COPY[side].sub}</p>
-              <Link to={COPY[side].ctaTo} className="btn btn--panel auth-stage__cta">
-                {COPY[side].ctaLabel}
-              </Link>
+              <AuthSwitchButton to={COPY[side].ctaTo}>{COPY[side].ctaLabel}</AuthSwitchButton>
             </div>
           ))}
         </div>
