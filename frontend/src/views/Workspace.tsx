@@ -32,6 +32,7 @@ export default function Workspace() {
   const [view, setView] = usePersistentState<ViewMode>("cloudbook:notes-view", "grid", isView);
   const [editing, setEditing] = useState<Note | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [composing, setComposing] = useState(false);
 
   const tags = useMemo(() => deriveTags(notes), [notes]);
   const visible = useMemo(
@@ -45,7 +46,7 @@ export default function Workspace() {
     setTag("all");
   };
 
-  const focusComposer = () => document.getElementById("composer-title")?.focus();
+  const focusComposer = () => setComposing(true);
 
   const handleDelete = async (note: Note) => {
     setDeletingId(note._id);
@@ -69,17 +70,22 @@ export default function Workspace() {
     }
   };
 
-  // Persistent load error with nothing to show.
+  // Persistent load error with nothing to show — keep the desk chrome around it.
   if (status === "error" && notes.length === 0) {
     return (
       <div className="workspace">
-        <WorkspaceState
-          icon="alert-triangle"
-          tone="error"
-          title="Couldn't reach your notes"
-          body="Something went wrong loading your desk. Check your connection and try again."
-          action={{ label: "Try again", onClick: () => void getNotes() }}
-        />
+        <header className="ws-header">
+          <h1 className="ws-header__title">Your desk</h1>
+        </header>
+        <div className="workspace__desk">
+          <WorkspaceState
+            icon="alert-triangle"
+            tone="error"
+            title="Couldn't reach your notes"
+            body="Something went wrong loading your desk. Check your connection and try again."
+            action={{ label: "Try again", onClick: () => void getNotes() }}
+          />
+        </div>
       </div>
     );
   }
@@ -90,58 +96,54 @@ export default function Workspace() {
     <div className="workspace">
       <WorkspaceHeader total={notes.length} shown={visible.length} filtered={isFiltering} />
 
-      <div className="workspace__layout">
-        <div className="workspace__rail">
-          <NoteComposer />
-        </div>
+      <NoteComposer open={composing} onOpenChange={setComposing} />
 
-        <div className="workspace__main">
-          {notes.length > 0 && (
-            <NoteToolbar
-              search={search}
-              onSearch={setSearch}
-              sort={sort}
-              onSort={setSort}
-              tags={tags}
-              activeTag={tag}
-              onTag={setTag}
+      {notes.length > 0 && (
+        <NoteToolbar
+          search={search}
+          onSearch={setSearch}
+          sort={sort}
+          onSort={setSort}
+          tags={tags}
+          activeTag={tag}
+          onTag={setTag}
+          view={view}
+          onView={setView}
+        />
+      )}
+
+      <div className="workspace__desk">
+        {loading && <NoteSkeletonGrid view={view} />}
+
+        {!loading && status === "ready" && notes.length === 0 && (
+          <WorkspaceState
+            icon="note"
+            title="Your desk is clear"
+            body="Nothing here yet. Write the first thing on your mind and it lands right here."
+            action={{ label: "Write your first note", onClick: focusComposer }}
+          />
+        )}
+
+        {!loading && notes.length > 0 && visible.length === 0 && (
+          <WorkspaceState
+            icon="search"
+            title="No notes match"
+            body="Nothing on your desk fits that search or tag. Try a different term, or clear the filters."
+            action={{ label: "Clear filters", onClick: clearFilters }}
+          />
+        )}
+
+        {visible.length > 0 && (
+          <FadePresence transitionKey={`${view}-${sort}-${tag}`} y={6}>
+            <NoteCollection
+              notes={visible}
               view={view}
-              onView={setView}
+              onEdit={setEditing}
+              onDelete={handleDelete}
+              deletingId={deletingId}
             />
-          )}
-
-          {loading && <NoteSkeletonGrid view={view} />}
-
-          {!loading && status === "ready" && notes.length === 0 && (
-            <WorkspaceState
-              icon="note"
-              title="Your desk is clear"
-              body="Nothing here yet. Jot down the first thing on your mind and it'll appear right here."
-              action={{ label: "Write your first note", onClick: focusComposer }}
-            />
-          )}
-
-          {!loading && notes.length > 0 && visible.length === 0 && (
-            <WorkspaceState
-              icon="search"
-              title="No notes match"
-              body="Nothing on your desk fits that search or tag. Try a different term, or clear the filters."
-              action={{ label: "Clear filters", onClick: clearFilters }}
-            />
-          )}
-
-          {visible.length > 0 && (
-            <FadePresence transitionKey={`${view}-${sort}-${tag}`} y={6}>
-              <NoteCollection
-                notes={visible}
-                view={view}
-                onEdit={setEditing}
-                onDelete={handleDelete}
-                deletingId={deletingId}
-              />
-            </FadePresence>
-          )}
-        </div>
+          </FadePresence>
+        )}
       </div>
 
       <NoteEditModal note={editing} onClose={() => setEditing(null)} onSave={handleSave} />

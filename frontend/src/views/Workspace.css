@@ -1,38 +1,27 @@
+/* Single centred column — the note collection is the hero, not a left-side
+   form. header · compose · toolbar · desk stack vertically at every width. */
 .workspace {
   width: 100%;
+  max-width: min(100%, 80rem);
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
 }
 
-.workspace__layout {
-  display: grid;
-  gap: var(--space-6);
+/* The desk the collection rests on — a faint surface so one note and twenty
+   both read as intentional, never as an unfinished page. */
+.workspace__desk {
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  background-color: color-mix(in oklab, var(--fg) 2.5%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--key-light) 55%, transparent);
 }
 
-.workspace__main {
-  min-width: 0;
-}
-
-/* Two-column desk from lg up: a fixed creation rail, the collection fills the
-   rest so the canvas is never mostly empty. */
-@media (min-width: 1024px) {
-  .workspace__layout {
-    grid-template-columns: minmax(0, 19rem) minmax(0, 1fr);
-    gap: var(--space-7);
-    align-items: start;
-  }
-  .workspace__rail {
-    position: sticky;
-    top: calc(var(--nav-height) + var(--space-5));
-  }
-}
-@media (min-width: 1440px) {
-  .workspace__layout {
-    grid-template-columns: minmax(0, 21rem) minmax(0, 1fr);
-    gap: var(--space-8);
-  }
-}
-
-@media (max-width: 1023px) {
-  .workspace__rail {
-    max-width: 34rem;
+@media (max-width: 640px) {
+  .workspace__desk {
+    padding: var(--space-3) 0 0;
+    background: none;
+    box-shadow: none;
   }
 }

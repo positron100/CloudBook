@@ -13,20 +13,31 @@
   gap: var(--space-3);
   padding: var(--space-4);
   background-color: var(--sheet);
+  border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
   border-radius: var(--radius-md);
-  box-shadow: var(--elev-1);
+  box-shadow:
+    var(--elev-1),
+    inset 0 1px 0 color-mix(in oklab, var(--key-light) 50%, transparent);
   transition:
     box-shadow var(--dur-fast) var(--ease-standard),
-    background-color var(--dur-fast) var(--ease-standard);
+    background-color var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard),
+    translate var(--dur-fast) var(--ease-standard);
 }
 .note-card:hover .note-card__sheet {
-  box-shadow: var(--elev-2);
+  border-color: var(--border-strong);
+  box-shadow:
+    var(--elev-2),
+    inset 0 1px 0 color-mix(in oklab, var(--key-light) 65%, transparent);
+  translate: 0 -2px;
 }
 .note-card[data-open] .note-card__sheet {
   background-color: var(--sheet-raised);
+  border-color: transparent;
   box-shadow:
     var(--elev-3),
-    inset 0 0 0 1.5px var(--accent-soft);
+    inset 3px 0 0 var(--accent);
+  translate: 0 -2px;
 }
 
 /* Dog-ear: the top-right corner reads as folded away — a small triangle of
@@ -64,8 +75,9 @@
 .note-card__title {
   margin: 0 0 var(--space-2);
   padding-right: 12px;
-  font-size: 1.0625rem;
+  font-size: 1.125rem;
   font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
   line-height: var(--leading-snug);
   color: var(--fg);
   overflow: hidden;
@@ -116,10 +128,18 @@
   gap: 2px;
   flex-shrink: 0;
   color: var(--fg-faint);
+  opacity: 0.5;
+  transition: opacity var(--dur-fast) var(--ease-standard);
 }
 .note-card:hover .note-card__icons,
 .note-card:focus-within .note-card__icons {
   color: var(--fg-muted);
+  opacity: 1;
+}
+@media (hover: none) {
+  .note-card__icons {
+    opacity: 1;
+  }
 }
 
 /* --- List view: one dense row --------------------------------------------- */

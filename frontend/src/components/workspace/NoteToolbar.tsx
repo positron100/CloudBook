@@ -17,6 +17,8 @@ interface NoteToolbarProps {
   onView: (value: ViewMode) => void;
 }
 
+/** One glass control group: search · tag filters · sort · view, with hairline
+ *  separators. Wraps to rows on narrow screens. */
 export function NoteToolbar({
   search,
   onSearch,
@@ -28,20 +30,43 @@ export function NoteToolbar({
   view,
   onView,
 }: NoteToolbarProps) {
+  const filters = ["all", ...tags];
+
   return (
     <div className="note-toolbar" role="search">
-      <div className="note-toolbar__row">
+      <div className="note-toolbar__bar">
         <div className="note-toolbar__search">
           <Icon name="search" size={16} className="note-toolbar__search-icon" />
           <Field
             label="Search notes"
             hideLabel
             type="search"
-            placeholder="Search your notes…"
+            placeholder="Search notes…"
             value={search}
             onChange={(e) => onSearch(e.target.value)}
           />
         </div>
+
+        {tags.length > 0 && (
+          <>
+            <span className="note-toolbar__sep" aria-hidden="true" />
+            <div className="note-toolbar__tags" role="group" aria-label="Filter by tag">
+              {filters.map((name) => (
+                <button
+                  key={name}
+                  type="button"
+                  className={cn("note-toolbar__tag", activeTag === name && "is-active")}
+                  aria-pressed={activeTag === name}
+                  onClick={() => onTag(name)}
+                >
+                  {name === "all" ? "All" : name}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        <span className="note-toolbar__sep note-toolbar__sep--end" aria-hidden="true" />
 
         <Select
           label="Sort"
@@ -61,30 +86,6 @@ export function NoteToolbar({
           ]}
         />
       </div>
-
-      {tags.length > 0 && (
-        <div className="note-toolbar__tags" role="group" aria-label="Filter by tag">
-          <button
-            type="button"
-            className={cn("note-toolbar__tag", activeTag === "all" && "is-active")}
-            aria-pressed={activeTag === "all"}
-            onClick={() => onTag("all")}
-          >
-            All
-          </button>
-          {tags.map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              className={cn("note-toolbar__tag", activeTag === tag && "is-active")}
-              aria-pressed={activeTag === tag}
-              onClick={() => onTag(tag)}
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

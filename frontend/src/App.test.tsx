@@ -105,6 +105,7 @@ describe("notes CRUD", () => {
     render(<App />);
     await screen.findByRole("heading", { name: /your desk is clear/i });
 
+    await userEvent.click(screen.getByRole("button", { name: /write your first note/i }));
     await userEvent.type(screen.getByLabelText(/^title$/i), "Groceries");
     await userEvent.type(screen.getByLabelText(/^note$/i), "milk eggs");
     await userEvent.click(screen.getByRole("button", { name: /add note/i }));

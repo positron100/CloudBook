@@ -1,8 +1,49 @@
+/* --- Collapsed: a liquid-glass trigger bar ------------------------------- */
+.composer-trigger__magnet {
+  width: 100%;
+}
+.composer-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  border-radius: var(--radius-control);
+  background-color: color-mix(in oklab, var(--float) 68%, transparent);
+  backdrop-filter: blur(12px) saturate(1.4);
+  box-shadow:
+    var(--elev-1),
+    inset 0 1px 0 color-mix(in oklab, var(--key-light) 55%, transparent);
+  color: var(--fg-faint);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  text-align: left;
+  cursor: text;
+  transition:
+    box-shadow var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
+}
+.composer-trigger:hover {
+  border-color: var(--border-strong);
+  color: var(--fg-muted);
+  box-shadow:
+    var(--elev-2),
+    inset 0 1px 0 color-mix(in oklab, var(--key-light) 70%, transparent);
+}
+.composer-trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.composer-trigger__icon {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* --- Open: the paper writing sheet -------------------------------------- */
 .composer {
   padding: var(--space-5);
-}
-.composer__open {
-  gap: var(--space-2);
 }
 .composer__head {
   display: flex;
@@ -34,6 +75,9 @@
   background: transparent;
   color: var(--fg-faint);
   cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
 }
 .composer__collapse:hover {
   background-color: var(--surface);
@@ -44,8 +88,25 @@
   flex-direction: column;
   gap: var(--space-4);
 }
+/* Title reads like the note's heading typed straight onto the sheet — no box. */
+.composer__form > .field:first-child .field__control {
+  padding-inline: 0;
+  border-color: transparent;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: var(--text-h2);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+}
+.composer__form > .field:first-child .field__control:focus-visible {
+  box-shadow: none;
+  border-bottom-color: var(--accent);
+}
+/* The body is the main writing area. */
 .composer__form textarea.field__control {
-  min-height: 5rem;
+  min-height: 7rem;
+  font-size: var(--text-editor);
+  line-height: var(--leading-editor);
 }
 .composer__actions {
   display: flex;
