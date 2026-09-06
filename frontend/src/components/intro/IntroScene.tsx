@@ -63,7 +63,7 @@ export function IntroScene({ destination, onDone }: IntroSceneProps) {
   const bookY = useMotionValue(10);
   const bookScale = useMotionValue(0.9);
   const bookFade = useMotionValue(0);
-  const coverRot = useMotionValue(-4);
+  const coverRot = useMotionValue(-2);
   const pf0 = useMotionValue(0);
   const pf1 = useMotionValue(0);
   const pf2 = useMotionValue(0);
@@ -153,64 +153,97 @@ export function IntroScene({ destination, onDone }: IntroSceneProps) {
       const sX = t.width / page.width;
       const sY = t.height / page.height;
 
-      // --- the journal drops in and opens ---
-      animate(bookFade, 1, { duration: TS * 0.16 });
+      // Reference (a signing loop): every move has anticipation, the visible
+      // result trails the physical driver, and there is a real pause on the
+      // finished state before anything else happens. Applied here as: rest →
+      // open → flip·settle·flip·settle → select·hold → tension → release →
+      // flight → the page comes to rest as the destination → THEN the reveal.
+
+      // 1 — REST. The journal lands closed and holds still. "A physical book."
+      animate(bookFade, 1, { duration: TS * 0.14 });
       await Promise.all([
-        animate(bookScale, 1, { duration: TS * 0.34, ease: ease.entrance }),
-        animate(bookY, -4, { duration: TS * 0.34, ease: ease.entrance }),
-        animate(coverRot, -150, { duration: TS * 0.42, ease: ease.entrance }),
+        animate(bookScale, [0.9, 1.015, 1], {
+          duration: TS * 0.4,
+          times: [0, 0.72, 1],
+          ease: ease.entrance,
+        }),
+        animate(bookY, [10, -6, -4], {
+          duration: TS * 0.4,
+          times: [0, 0.72, 1],
+          ease: ease.entrance,
+        }),
       ]);
       if (cancelled) return;
+      await nap(90);
 
-      // --- pages flip: staggered, each a little different ---
-      animate(pf0, -164, { duration: TS * 0.3, ease: [0.4, 0, 0.3, 1] });
-      await nap(85);
-      animate(pf1, -171, { duration: TS * 0.27, ease: [0.4, 0, 0.3, 1] });
-      await nap(80);
-      animate(pf2, -166, { duration: TS * 0.31, ease: [0.4, 0, 0.3, 1] });
-      await nap(150);
+      // 2 — OPEN. The cover moves first; the pages become visible as a result.
+      await animate(coverRot, -158, { duration: TS * 0.38, ease: ease.entrance });
+      if (cancelled) return;
+      await nap(45);
+
+      // 3 — FLIP · SETTLE · FLIP · SETTLE · FLIP. Each page turns, drops flat
+      //     with a small settle, then rests before the next.
+      const flip = async (mv: typeof pf0, deg: number) => {
+        await animate(mv, deg, { duration: TS * 0.2, ease: [0.45, 0, 0.28, 1] });
+        await animate(mv, deg + 2, { duration: TS * 0.09, ease: "easeOut" });
+        await nap(58);
+      };
+      await flip(pf0, -166);
+      if (cancelled) return;
+      await flip(pf1, -172);
+      if (cancelled) return;
+      await flip(pf2, -168);
       if (cancelled) return;
 
-      // --- one page is chosen: it lifts off the stack and catches the light ---
+      // 4 — SELECT. The chosen page rises (past, then settles), catches light,
+      //     and holds. "This is the page that is about to leave."
       await Promise.all([
-        animate(chosenLift, 1, { duration: TS * 0.16, ease: "easeOut" }),
-        animate(chosenGlow, 1, { duration: TS * 0.16 }),
+        animate(chosenLift, [0, 1.12, 1], {
+          duration: TS * 0.22,
+          times: [0, 0.7, 1],
+          ease: "easeOut",
+        }),
+        animate(chosenGlow, 1, { duration: TS * 0.2 }),
       ]);
-      await nap(70);
       if (cancelled) return;
+      await nap(105);
 
       // hand the chosen page to the flyer — same paper, same place, same frame
       fOpacity.set(1);
 
-      // --- binding tension ---
+      // 5 — TENSION. Pull against the binding; the holes stretch; only the
+      //     spine end of the perforation opens. Nothing has left yet.
       await Promise.all([
-        animate(fy, 4, { duration: TS * 0.08, ease: "easeOut" }),
-        animate(fsy, 1.02, { duration: TS * 0.08, ease: "easeOut" }),
-        animate(fskew, -1.3, { duration: TS * 0.08, ease: "easeOut" }),
-        animate(fclip, EDGE_NICK, { duration: TS * 0.08 }),
-        animate(bindT, 1, { duration: TS * 0.09 }),
-        animate(flift, 0.3, { duration: TS * 0.08 }),
+        animate(fy, 4, { duration: TS * 0.09, ease: "easeOut" }),
+        animate(fsy, 1.02, { duration: TS * 0.09, ease: "easeOut" }),
+        animate(fskew, -1.4, { duration: TS * 0.09, ease: "easeOut" }),
+        animate(fclip, EDGE_NICK, { duration: TS * 0.09 }),
+        animate(bindT, 1, { duration: TS * 0.1 }),
+        animate(flift, 0.35, { duration: TS * 0.09 }),
       ]);
       if (cancelled) return;
 
-      // --- release: the rip runs across, the page lifts, accelerating ---
+      // 6 — RELEASE. The rip runs across the edge while the page is already
+      //     lifting — accelerating, so the flight inherits the release speed.
       animate(fclip, [EDGE_NICK, EDGE_HALF, EDGE_TORN], {
-        duration: 0.1,
+        duration: TS * 0.11,
         times: [0, 0.55, 1],
         ease: [0.3, 0, 0.4, 1],
       });
       animate(fsy, 1, { duration: TS * 0.12, ease: "easeOut" });
-      animate(fy, -14, { duration: TS * 0.14, ease: [0.4, 0, 0.65, 1] });
-      animate(frot, -2.4, { duration: TS * 0.14, ease: [0.4, 0, 0.65, 1] });
-      animate(flift, 1, { duration: TS * 0.14, ease: "easeOut" });
-      await nap(75);
+      animate(fy, -15, { duration: TS * 0.15, ease: [0.4, 0, 0.68, 1] });
+      animate(frot, -2.6, { duration: TS * 0.15, ease: [0.4, 0, 0.68, 1] });
+      animate(flift, 1, { duration: TS * 0.15, ease: "easeOut" });
+      await nap(80);
       if (cancelled) return;
 
-      // --- flight: hand-carry to the destination, reforming to its geometry ---
-      const D = 0.5 * TS;
+      // 7 — FLIGHT. Carry to the destination: momentum, a subtle arc, a little
+      //     rotational inertia, and the page reforming toward the real rect —
+      //     recognisable as the same page for most of the trip.
+      const D = 0.44 * TS;
       const yFrom = fy.get();
       animate(fskew, [fskew.get(), 0.5, 0], { duration: D, ease: "easeInOut" });
-      animate(flift, [1, 0.5, 0], { duration: D, ease: "easeInOut" });
+      animate(flift, [1, 0.5, 0.12], { duration: D, ease: "easeInOut" });
       animate(bindT, 0, { duration: D * 0.6, ease: "easeOut" });
       animate(fclip, [EDGE_TORN, EDGE_SETTLE, EDGE_FLAT], {
         duration: D * 0.7,
@@ -224,33 +257,43 @@ export function IntroScene({ destination, onDone }: IntroSceneProps) {
           times: [0, 0.52, 1],
           ease: ["easeOut", "easeInOut"],
         }),
-        animate(frot, [frot.get(), 1, 0.2, 0], {
+        animate(frot, [frot.get(), 1, 0.25, 0], {
           duration: D,
           times: [0, 0.42, 0.78, 1],
           ease: "easeInOut",
         }),
-        animate(fsx, [1, 1, lerp(1, sX, 0.7), sX], {
+        animate(fsx, [1, 1, lerp(1, sX, 0.72), sX], {
           duration: D,
-          times: [0, 0.24, 0.68, 1],
+          times: [0, 0.22, 0.7, 1],
           ease: [0.3, 0, 0.3, 1],
         }),
-        animate(fsy, [1, 1, lerp(1, sY, 0.7), sY], {
+        animate(fsy, [1, 1, lerp(1, sY, 0.72), sY], {
           duration: D,
-          times: [0, 0.24, 0.68, 1],
+          times: [0, 0.22, 0.7, 1],
           ease: [0.3, 0, 0.3, 1],
         }),
       ]);
       if (cancelled) return;
 
-      // --- circular reveal: a hole opens over the destination and spreads to
-      //     the desk, then the nav at the edges. The mask only exists during
-      //     this phase — before it, the scene is a plain opaque layer. ---
+      // 8 — SETTLE. The page has become the destination geometry; it comes to
+      //     rest. This pause is what sells "the destination emerged from the
+      //     page" rather than "page vanished, UI appeared".
+      await Promise.all([
+        animate(frot, 0, { duration: TS * 0.12, ease: "easeOut" }),
+        animate(flift, 0, { duration: TS * 0.16, ease: "easeOut" }),
+        animate(fy, [dy - 1.2, dy], { duration: TS * 0.16, ease: [0.34, 1.1, 0.64, 1] }),
+      ]);
+      if (cancelled) return;
+      await nap(110);
+
+      // 9 — REVEAL. A hole opens over the destination and spreads out to the
+      //     desk, then the nav at the edges. Mask only exists in this phase.
       const startR = Math.min(t.width, t.height) * 0.35;
       revealR.set(startR);
       setRevealing(true);
       await nap(16);
       const maxR = Math.hypot(vw, vh) * 1.05;
-      await animate(revealR, maxR, { duration: TS * 0.44, ease: [0.65, 0, 0.35, 1] });
+      await animate(revealR, maxR, { duration: TS * 0.4, ease: [0.6, 0, 0.35, 1] });
       finish();
     };
 

@@ -50,10 +50,15 @@
 /* --- the journal ------------------------------------------------------------ */
 .intro-book {
   position: relative;
-  width: clamp(184px, 44vw, 284px);
+  width: clamp(196px, 46vw, 300px);
   aspect-ratio: 3 / 3.85;
   transform-style: preserve-3d;
   transform: rotateX(6deg) rotateZ(-0.6deg);
+}
+@media (max-width: 400px) {
+  .intro-book {
+    width: 72vw;
+  }
 }
 .intro-book__base,
 .intro-book__page,
