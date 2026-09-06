@@ -19,11 +19,25 @@ export function ThemeToggle({ className, onMouseMove }: ThemeToggleProps) {
       className={className}
       onMouseMove={onMouseMove}
       onClick={(e) => {
-        const r = e.currentTarget.getBoundingClientRect();
-        toggleTheme({
-          x: e.clientX || r.left + r.width / 2,
-          y: e.clientY || r.top + r.height / 2,
-        });
+        // Always start the reveal from the control's own centre — not the
+        // pointer's click point. The button also rides a magnetic wrapper
+        // (Magnetic as="span"), so back out that drift to reach its resting
+        // centre.
+        const el = e.currentTarget;
+        const r = el.getBoundingClientRect();
+        let x = r.left + r.width / 2;
+        let y = r.top + r.height / 2;
+        const parent = el.parentElement;
+        if (parent && typeof DOMMatrixReadOnly === "function") {
+          try {
+            const m = new DOMMatrixReadOnly(getComputedStyle(parent).transform);
+            x -= m.m41;
+            y -= m.m42;
+          } catch {
+            /* transform unparseable — the resting centre is close enough */
+          }
+        }
+        toggleTheme({ x, y });
       }}
     />
   );
