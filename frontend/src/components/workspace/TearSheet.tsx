@@ -24,6 +24,10 @@ const EDGE_HALF =
   "polygon(0% 2.6%, 13% 0.5%, 27% 3.3%, 41% 1.0%, 55% 2.8%, 69% 0.7%, 82% 1.2%, 100% 0.4%, 100% 100%, 0% 100%)";
 const EDGE_TORN =
   "polygon(0% 2.6%, 13% 0.5%, 27% 3.4%, 41% 1.1%, 55% 2.8%, 69% 0.7%, 82% 3.6%, 100% 1.5%, 100% 100%, 0% 100%)";
+// The ragged edge relaxes in flight, ending close to flat so it matches the
+// resting card (whose raggedness is the .note-card__tear strip, not a clip).
+const EDGE_SETTLE =
+  "polygon(0% 1.3%, 13% 0.4%, 27% 1.7%, 41% 0.5%, 55% 1.4%, 69% 0.4%, 82% 1.8%, 100% 0.7%, 100% 100%, 0% 100%)";
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -68,61 +72,80 @@ export function TearSheet({ from, to, note, onDone }: TearSheetProps) {
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
-      // 1 — tension against the perforation: a small pull, the binding holes
-      // stretch, the first bite of the tear opens at the spine.
+      // 1 — resistance (~85ms). The page pulls against the binding: it dips,
+      // the sheet bows, the holes stretch, the shadow lifts a little, and only
+      // the spine end of the perforation has opened. Nothing has left yet.
       await Promise.all([
-        animate(y, 3, { duration: 0.09, ease: "easeOut" }),
-        animate(scaleY, upY * 1.015, { duration: 0.09, ease: "easeOut" }),
-        animate(skewX, -1.1, { duration: 0.09, ease: "easeOut" }),
-        animate(clipPath, EDGE_NICK, { duration: 0.09, ease: "easeOut" }),
-        animate(bindTension, 0.85, { duration: 0.1, ease: "easeOut" }),
+        animate(y, 4, { duration: 0.085, ease: "easeOut" }),
+        animate(scaleY, upY * 1.02, { duration: 0.085, ease: "easeOut" }),
+        animate(skewX, -1.4, { duration: 0.085, ease: "easeOut" }),
+        animate(clipPath, EDGE_NICK, { duration: 0.085, ease: "easeOut" }),
+        animate(bindTension, 1, { duration: 0.09, ease: "easeOut" }),
+        animate(lift, 0.3, { duration: 0.085, ease: "easeOut" }),
       ]);
       if (cancelled) return;
 
-      // 2 — the rip runs across the edge; the sheet starts to lift and twist.
+      // 2 — release (~80ms). The rip runs across the rest of the edge and, a
+      // beat in, the sheet lifts — accelerating, so the carry inherits its
+      // speed rather than starting from rest.
       animate(clipPath, [EDGE_NICK, EDGE_HALF, EDGE_TORN], {
-        duration: 0.28,
-        times: [0, 0.5, 1],
-        ease: [0.3, 0, 0.3, 1],
+        duration: 0.1,
+        times: [0, 0.55, 1],
+        ease: [0.3, 0, 0.4, 1],
       });
-      animate(y, -11, { duration: 0.16, ease: "easeOut" });
-      animate(rotate, -2.2, { duration: 0.16, ease: "easeOut" });
-      animate(scaleY, upY, { duration: 0.14, ease: "easeOut" });
-      animate(lift, 1, { duration: 0.16, ease: "easeOut" });
-      // flight begins before the tear finishes
-      await sleep(105);
+      animate(scaleY, upY, { duration: 0.12, ease: "easeOut" });
+      animate(y, -13, { duration: 0.14, ease: [0.4, 0, 0.65, 1] });
+      animate(rotate, -2.4, { duration: 0.14, ease: [0.4, 0, 0.65, 1] });
+      animate(lift, 1, { duration: 0.14, ease: "easeOut" });
+      await sleep(80);
       if (cancelled) return;
 
-      // 3 — hand-carry. One duration for every channel → they land together.
-      const D = 0.45;
+      // 3 — uninterrupted flight (~460ms). Carries from the release velocity;
+      // the ragged edge relaxes as the sheet flies free; every channel lands
+      // on the card's exact pose in the same frame. The pile takes the page
+      // with a 1px dip just before the handoff.
+      const D = 0.46;
       const yFrom = y.get();
-      animate(skewX, [skewX.get(), 0.7, 0], { duration: D, ease: "easeInOut" });
-      animate(lift, [1, 0.6, 0], { duration: D, ease: "easeInOut" });
-      // holes relax to the resting note's look as the page flies free
-      animate(bindTension, 0, { duration: D * 0.7, ease: "easeOut" });
+      animate(skewX, [skewX.get(), 0.6, 0], { duration: D, ease: "easeInOut" });
+      animate(lift, [1, 0.55, 0], { duration: D, ease: "easeInOut" });
+      animate(bindTension, 0, { duration: D * 0.6, ease: "easeOut" });
+      animate(clipPath, [EDGE_TORN, EDGE_SETTLE, EDGE_FLAT], {
+        duration: D * 0.72,
+        times: [0, 0.45, 1],
+        ease: "easeOut",
+      });
+      window.setTimeout(() => {
+        if (cancelled) return;
+        const esc = window.CSS?.escape ?? String;
+        const card = document.querySelector(`[data-note-id="${esc(note._id)}"]`);
+        if (card) {
+          card.setAttribute("data-received", "");
+          window.setTimeout(() => card.removeAttribute("data-received"), 320);
+        }
+      }, D * 1000 - 70);
       await Promise.all([
-        animate(x, dx, { duration: D, ease: [0.25, 0.5, 0.3, 1] }),
-        // arc — rise past the line, then ease down onto the pile
-        animate(y, [yFrom, dy - 24, dy + 3, dy], {
+        animate(x, dx, { duration: D, ease: [0.22, 0.55, 0.3, 1] }),
+        // rise toward the line, then settle straight onto the pile — no overshoot
+        animate(y, [yFrom, dy - 22, dy], {
           duration: D,
-          times: [0, 0.5, 0.86, 1],
+          times: [0, 0.52, 1],
+          ease: ["easeOut", "easeInOut"],
+        }),
+        // rotational inertia — swings the other way, settles flat
+        animate(rotate, [rotate.get(), 1.1, 0.2, 0], {
+          duration: D,
+          times: [0, 0.42, 0.78, 1],
           ease: "easeInOut",
         }),
-        // rotational inertia — swings back through the arc, settles flat
-        animate(rotate, [-2.2, 1.3, 0.3, 0], {
+        // page-sized for most of the trip, converges late and gently
+        animate(scaleX, [upX, upX * 0.985, lerp(upX, 1, 0.72), 1], {
           duration: D,
-          times: [0, 0.45, 0.8, 1],
-          ease: "easeInOut",
-        }),
-        // stays page-sized through most of the trip, converges near the end
-        animate(scaleX, [upX, upX * 0.99, lerp(upX, 1, 0.6), 1], {
-          duration: D,
-          times: [0, 0.28, 0.62, 1],
+          times: [0, 0.3, 0.72, 1],
           ease: [0.3, 0, 0.3, 1],
         }),
-        animate(scaleY, [upY, upY * 0.99, lerp(upY, 1, 0.6), 1], {
+        animate(scaleY, [upY, upY * 0.985, lerp(upY, 1, 0.72), 1], {
           duration: D,
-          times: [0, 0.28, 0.62, 1],
+          times: [0, 0.3, 0.72, 1],
           ease: [0.3, 0, 0.3, 1],
         }),
       ]);

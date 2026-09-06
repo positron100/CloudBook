@@ -61,24 +61,49 @@
   opacity: calc(var(--bind-morph, 0) * 0.46);
 }
 
-/* The fold seam — a faint crease across the upper third while the sheet folds. */
+/* Fold crease — a hairline plus the soft shadow the upper flap casts as the
+   two halves fold toward each other. It rides upward (`--seam-y`, %) through
+   the close and fades out by stage 3. */
 .note-editor__page::after {
   content: "";
   position: absolute;
   left: 0;
   right: 0;
-  top: 34%;
-  height: 2px;
-  translate: 0 -1px;
+  top: calc(var(--seam-y, 34) * 1%);
+  height: 1.5px;
+  translate: 0 -0.75px;
   background: linear-gradient(
     90deg,
     transparent,
-    hsl(var(--shadow-hsl) / 0.18) 18%,
-    hsl(var(--shadow-hsl) / 0.18) 82%,
+    hsl(var(--shadow-hsl) / 0.26) 14%,
+    hsl(var(--shadow-hsl) / 0.26) 86%,
     transparent
   );
-  opacity: calc(var(--seam, 0) * 0.55);
+  opacity: var(--seam, 0);
   pointer-events: none;
+}
+.note-editor__page::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--seam-y, 34) * 1%);
+  height: 40px;
+  translate: 0 -40px;
+  background: linear-gradient(to bottom, transparent, hsl(var(--shadow-hsl) / 0.13));
+  opacity: var(--seam, 0);
+  pointer-events: none;
+}
+
+/* The printed matter rides more stably than the paper — it counters the paper's
+   non-uniform squash and most of the skew (set inline from motion values), so
+   text stays readable and upright while the sheet folds. */
+.note-editor__content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
 }
 
 .note-editor__body {

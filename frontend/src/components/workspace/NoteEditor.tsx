@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
-import { m, useMotionValue, animate } from "framer-motion";
+import { m, useMotionValue, useTransform, animate } from "framer-motion";
 import type { Note } from "@shared/types";
 import { Icon } from "@/components/ui";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -74,12 +74,24 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
   const rotateX = useMotionValue(0);
   const depth = useMotionValue(0);
   const seam = useMotionValue(0);
+  // The fold crease's vertical position (%). It rides upward as the lower half
+  // folds under the top during the close.
+  const seamY = useMotionValue(50);
   // 0 = the diary's full spiral binding (open / at rest); 1 = the torn page's
   // punched-hole trace. Cross-faded as the page folds back to a card so the
   // binding detail *reforms* rather than popping in at the handoff.
   const bindMorph = useMotionValue(0);
   const pageOpacity = useMotionValue(reduce ? 0 : 0.55);
   const scrim = useMotionValue(0);
+
+  // The paper deforms; the content rides more stably. Content counters the
+  // paper's non-uniform squash (so text scales uniformly, never stretched) and
+  // leans back against most of the skew — it reads as printed matter on a sheet
+  // that is folding, not a scaled rectangle.
+  const contentScaleY = useTransform([sx, sy] as [typeof sx, typeof sy], ([a, b]: number[]) =>
+    b > 0.02 ? Math.min(1.3, 1 + (a / b - 1) * 0.5) : 1,
+  );
+  const contentSkew = useTransform(skewX, (v) => -v * 0.55);
 
   // Unfold on mount (unchanged — the open animation is not part of this task).
   useEffect(() => {
@@ -154,22 +166,32 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
     }
 
     const run = async () => {
-      // Stage 1 — fold initiation.
+      // Stage 1 — establish the fold plane (~150ms). Barely smaller: a small
+      // lift, a 3D bend, the shadow deepens, the crease appears near mid-height.
       await Promise.all([
         animate(y, y.get() - 7, { duration: 0.13, ease: [0.3, 0, 0.3, 1] }),
-        animate(sx, 1 - (1 - target.sx) * 0.08, { duration: 0.15, ease: "easeOut" }),
-        animate(sy, 1 - (1 - target.sy) * 0.12, { duration: 0.15, ease: "easeOut" }),
+        animate(sx, 1 - (1 - target.sx) * 0.07, { duration: 0.15, ease: "easeOut" }),
+        animate(sy, 1 - (1 - target.sy) * 0.13, { duration: 0.15, ease: "easeOut" }),
         animate(skewX, -1.6, { duration: 0.15, ease: "easeOut" }),
-        animate(rotateX, 7, { duration: 0.15, ease: "easeOut" }),
+        animate(rotateX, 8, { duration: 0.15, ease: "easeOut" }),
         animate(depth, 1, { duration: 0.13 }),
-        animate(seam, 1, { duration: 0.15 }),
+        animate(seam, 0.9, { duration: 0.14 }),
+        animate(seamY, 43, { duration: 0.15, ease: "easeOut" }),
       ]);
 
-      // Stage 2 — contraction + travel, everything on one clock.
-      const D = 0.42;
-      animate(rotateX, 0, { duration: D, ease: [0.4, 0, 0.2, 1] });
+      // Stage 2 — contract around the fold while travelling (~430ms). The two
+      // halves compress toward the crease (rotateX tents up then flattens, the
+      // seam rides upward), geometry resolves on one shared ease, and the
+      // crease fades out by the end so stage 3 has nothing left to do.
+      const D = 0.43;
+      animate(rotateX, [rotateX.get(), 11, 0], {
+        duration: D,
+        times: [0, 0.32, 1],
+        ease: [0.4, 0, 0.2, 1],
+      });
       animate(depth, 0.12, { duration: D, ease: "easeOut" });
-      animate(seam, 0.18, { duration: D });
+      animate(seam, [seam.get(), 1, 0], { duration: D, times: [0, 0.42, 1], ease: "easeInOut" });
+      animate(seamY, 26, { duration: D, ease: "easeInOut" });
       animate(skewX, [-1.6, 0.5, 0.1], { duration: D, ease: "easeInOut" });
       animate(bindMorph, 1, { duration: D, ease: "easeOut" });
       animate(scrim, 0, { duration: D * 0.96 });
@@ -185,16 +207,18 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
         animate(rotate, target.rotate, { duration: D, ease: CLOSE_EASE }),
       ]);
 
-      // Stage 3 — placement + the card's "received" dip, then hand off.
+      // Stage 3 — the boring last 15%. The page is already the card's exact
+      // size, rotation and position; it just settles. The destination card
+      // gives a 1px "received" dip. Then the editor unmounts.
       if (el) {
         el.setAttribute("data-received", "");
         window.setTimeout(() => el.removeAttribute("data-received"), 320);
       }
       await Promise.all([
-        animate(skewX, 0, { duration: 0.13, ease: "easeOut" }),
-        animate(seam, 0, { duration: 0.13 }),
-        animate(depth, 0, { duration: 0.13 }),
-        animate(y, [target.y - 1.2, target.y], { duration: 0.15, ease: [0.34, 1.1, 0.64, 1] }),
+        animate(skewX, 0, { duration: 0.14, ease: "easeOut" }),
+        animate(seam, 0, { duration: 0.1 }),
+        animate(depth, 0, { duration: 0.14 }),
+        animate(y, target.y, { duration: 0.14, ease: "easeOut" }),
       ]);
       then();
     };
@@ -254,6 +278,7 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
           transformOrigin: closing ? "50% 34%" : "center",
           ["--depth" as string]: depth,
           ["--seam" as string]: seam,
+          ["--seam-y" as string]: seamY,
           ["--bind-morph" as string]: bindMorph,
           ["--sx" as string]: sx,
           ["--sy" as string]: sy,
@@ -268,63 +293,68 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
         <span className="note-card__tear" aria-hidden="true" />
         <span className="note-card__binding" aria-hidden="true" />
 
-        <label className="sr-only" htmlFor="editor-title">
-          Title
-        </label>
-        <input
-          ref={titleRef}
-          id="editor-title"
-          name="title"
-          className="diary__title"
-          placeholder="Untitled"
-          value={form.title}
-          onChange={onChange}
-          autoComplete="off"
-        />
+        <m.div
+          className="note-editor__content"
+          style={{ scaleY: contentScaleY, skewX: contentSkew, transformOrigin: "top center" }}
+        >
+          <label className="sr-only" htmlFor="editor-title">
+            Title
+          </label>
+          <input
+            ref={titleRef}
+            id="editor-title"
+            name="title"
+            className="diary__title"
+            placeholder="Untitled"
+            value={form.title}
+            onChange={onChange}
+            autoComplete="off"
+          />
 
-        <label className="sr-only" htmlFor="editor-body">
-          Note
-        </label>
-        <textarea
-          id="editor-body"
-          name="description"
-          className="diary__body note-editor__body"
-          placeholder="Write it down…"
-          value={form.description}
-          onChange={onChange}
-        />
+          <label className="sr-only" htmlFor="editor-body">
+            Note
+          </label>
+          <textarea
+            id="editor-body"
+            name="description"
+            className="diary__body note-editor__body"
+            placeholder="Write it down…"
+            value={form.description}
+            onChange={onChange}
+          />
 
-        <div className="note-editor__foot">
-          <span className="diary__tag-field">
-            <Icon name="sparkle" size={13} className="diary__tag-icon" />
-            <label className="sr-only" htmlFor="editor-tag">
-              Tag
-            </label>
-            <input
-              id="editor-tag"
-              name="tag"
-              className="diary__tag-input"
-              placeholder="Add a tag"
-              value={form.tag}
-              onChange={onChange}
-              autoComplete="off"
-            />
-          </span>
+          <div className="note-editor__foot">
+            <span className="diary__tag-field">
+              <Icon name="sparkle" size={13} className="diary__tag-icon" />
+              <label className="sr-only" htmlFor="editor-tag">
+                Tag
+              </label>
+              <input
+                id="editor-tag"
+                name="tag"
+                className="diary__tag-input"
+                placeholder="Add a tag"
+                value={form.tag}
+                onChange={onChange}
+                autoComplete="off"
+              />
+            </span>
 
-          <span className="note-editor__actions">
-            <button type="button" className="note-editor__cancel" onClick={() => foldAway(onClose)}>
-              {dirty ? "Discard" : "Close"}
-            </button>
-            <button
-              type="button"
-              className="note-editor__save"
-              onClick={save}
-              disabled={invalid || !dirty}
-            >
-              Save changes
-            </button>
-          </span>
-        </div>
+            <span className="note-editor__actions">
+              <button type="button" className="note-editor__cancel" onClick={() => foldAway(onClose)}>
+                {dirty ? "Discard" : "Close"}
+              </button>
+              <button
+                type="button"
+                className="note-editor__save"
+                onClick={save}
+                disabled={invalid || !dirty}
+              >
+                Save changes
+              </button>
+            </span>
+          </div>
+        </m.div>
       </m.div>
     </m.div>
   );

@@ -217,18 +217,19 @@
   }
 }
 
-/* The pile's tiny reaction as a folded-back page is placed onto it — lift to
-   meet the sheet, then settle. Set by NoteEditor at the end of its close fold. */
+/* The pile's tiny reaction as a page is placed onto it — takes the weight
+   (a ~1.4px give + a hair of compression), then settles. Set by NoteEditor at
+   the end of the close fold and by TearSheet just before the create handoff. */
 .note-card[data-received] {
-  animation: note-card-received 0.32s var(--ease-standard);
+  animation: note-card-received 0.34s var(--ease-standard);
 }
 @keyframes note-card-received {
   0%,
   100% {
     transform: none;
   }
-  40% {
-    transform: translateY(-1.6px);
+  38% {
+    transform: translateY(1.4px) scaleY(0.99);
   }
 }
 
