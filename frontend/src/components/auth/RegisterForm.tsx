@@ -1,11 +1,12 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button, Field } from "@/components/ui";
-import { AuthLayout } from "@/components/auth/AuthLayout";
+import { Magnetic } from "@/components/motion";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
+import "./AuthForm.css";
 
-export default function Signup() {
+export function RegisterForm() {
   const navigate = useNavigate();
   const { signup } = useAuth();
   const toast = useToast();
@@ -36,57 +37,63 @@ export default function Signup() {
     setForm({ ...form, [e.target.name]: e.target.value });
 
   return (
-    <AuthLayout
-      pitch="Start your cloud desk."
-      pitchSub="One account keeps every note in sync — write on your laptop, read on your phone."
-    >
-      <h2 className="auth__title">Create your account</h2>
-      <form className="auth__form" aria-label="Sign up" onSubmit={handleSubmit}>
+    <div className="auth-form">
+      <h1 className="auth-form__title">Create account</h1>
+      <form className="auth-form__body" aria-label="Sign up" onSubmit={handleSubmit}>
         <Field
           label="Name"
           name="name"
+          icon="user"
           autoComplete="name"
           minLength={3}
           value={form.name}
           onChange={onChange}
+          lift
+          previewText="Ada Lovelace"
           required
         />
         <Field
           label="Email address"
           type="email"
           name="email"
+          icon="mail"
           autoComplete="email"
           value={form.email}
           onChange={onChange}
+          lift
+          previewText="you@example.com"
           required
         />
         <Field
           label="Password"
           type="password"
           name="password"
+          icon="lock"
           autoComplete="new-password"
           minLength={5}
           value={form.password}
           onChange={onChange}
+          lift
           required
         />
         <Field
           label="Confirm password"
           type="password"
           name="cPassword"
+          icon="lock"
           autoComplete="new-password"
           value={form.cPassword}
           onChange={onChange}
           error={mismatch ? "Passwords don't match" : undefined}
+          lift
           required
         />
-        <Button type="submit" variant="primary" block loading={submitting} disabled={mismatch}>
-          {submitting ? "Creating account…" : "Sign up"}
-        </Button>
+        <Magnetic strength={6} className="auth-form__cta">
+          <Button type="submit" variant="primary" block lift loading={submitting} disabled={mismatch}>
+            {submitting ? "Creating account…" : "Sign up"}
+          </Button>
+        </Magnetic>
       </form>
-      <p className="auth__alt">
-        Already have an account? <Link to="/login">Log in</Link>
-      </p>
-    </AuthLayout>
+    </div>
   );
 }

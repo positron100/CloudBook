@@ -41,15 +41,32 @@
   width: 100%;
 }
 
-/* Primary — the one CTA per screen. */
+/* Primary — the one CTA per screen. A small tactile glass object: it catches
+   light on the top edge and lifts on its shadow, it does not just brighten. */
 .btn--primary {
   background-color: var(--accent);
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--accent-highlight) 45%, transparent),
+    transparent 46%
+  );
   color: var(--accent-fg);
-  box-shadow: var(--elev-1);
+  box-shadow:
+    var(--elev-field),
+    inset 0 1px 0 color-mix(in oklab, var(--accent-highlight) 55%, transparent);
+  transition:
+    box-shadow var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
 }
 .btn--primary:hover {
-  background-color: var(--accent-strong);
-  box-shadow: var(--elev-2);
+  box-shadow:
+    var(--elev-field-focus),
+    inset 0 1px 0 color-mix(in oklab, var(--accent-highlight) 80%, transparent);
+}
+.btn--primary:active {
+  box-shadow:
+    var(--elev-field),
+    inset 0 1px 2px color-mix(in oklab, var(--accent-shade) 45%, transparent);
 }
 
 /* Secondary — bordered, sits on a surface. */

@@ -30,11 +30,27 @@
   --border: #e6e0d3;
   --border-strong: #d3cab9;
 
-  /* --- Accent: blue-violet ink. One accent only. --- */
+  /* --- Accent: blue-violet ink. One accent family — tonal variation comes
+     from light, not from new hues. --- */
   --accent: #5b53d6;
   --accent-strong: #4a42c4;
   --accent-soft: #ecebfb;
   --accent-fg: #ffffff;
+  /* Lighting tones for the accent as glass: reflected top-light, its own
+     shade, a translucent glass fill, a faint reflected bleed. */
+  --accent-highlight: #7c74e6;
+  --accent-shade: #423bb0;
+  --accent-glass: color-mix(in oklab, var(--accent) 16%, transparent);
+  --accent-reflect: color-mix(in oklab, var(--accent) 7%, transparent);
+
+  /* Neutral (graphite) shadow — no warm or blue cast, no hard black edge.
+     For depth that must read as plain physical elevation: focused fields,
+     glass CTAs. */
+  --shadow-neutral-hsl: 32 7% 12%;
+  --elev-field: 0 1px 2px hsl(var(--shadow-neutral-hsl) / 0.05),
+    0 6px 16px -6px hsl(var(--shadow-neutral-hsl) / 0.11);
+  --elev-field-focus: 0 2px 4px hsl(var(--shadow-neutral-hsl) / 0.07),
+    0 12px 26px -8px hsl(var(--shadow-neutral-hsl) / 0.16);
 
   /* --- Semantic, tuned warm so they sit inside the palette --- */
   --ok: #3f7d55;
@@ -96,6 +112,9 @@
     Arial, sans-serif;
   --font-note: var(--font-sans);
   --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  /* Authentication experience only — matches the reference recording. Fallback
+     stack is geometric so pre-swap metrics track Poppins. */
+  --font-auth: "Poppins", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
   --text-display: clamp(2.75rem, 1.8rem + 4.2vw, 4.25rem);
   --text-h1: clamp(2rem, 1.5rem + 2.2vw, 2.6rem);
@@ -171,10 +190,12 @@
    inverted.
    =========================================================================== */
 :root[data-theme="dark"] {
-  --surface: #15161a;
-  --sheet: #1e2027;
+  /* Deeper graphite so the blue-violet accent separates from its surround
+     instead of blending into it. */
+  --surface: #121317;
+  --sheet: #1c1e25;
   --sheet-raised: #262932;
-  --float: #23252d;
+  --float: #21232b;
 
   --fg: #ece7dd;
   --fg-muted: #a49d90;
@@ -187,6 +208,16 @@
   --accent-strong: #a7a0f6;
   --accent-soft: #211f33;
   --accent-fg: #0d0b1a;
+  --accent-highlight: #a49df7;
+  --accent-shade: #5850c8;
+  --accent-glass: color-mix(in oklab, var(--accent) 24%, transparent);
+  --accent-reflect: color-mix(in oklab, var(--accent) 13%, transparent);
+
+  --shadow-neutral-hsl: 240 14% 2%;
+  --elev-field: 0 1px 2px hsl(var(--shadow-neutral-hsl) / 0.5),
+    0 6px 16px -6px hsl(var(--shadow-neutral-hsl) / 0.62);
+  --elev-field-focus: 0 2px 6px hsl(var(--shadow-neutral-hsl) / 0.55),
+    0 14px 30px -8px hsl(var(--shadow-neutral-hsl) / 0.72);
 
   --ok: #6fae83;
   --ok-soft: #17251b;

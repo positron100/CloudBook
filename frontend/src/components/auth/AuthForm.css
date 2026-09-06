@@ -1,0 +1,38 @@
+.auth-form {
+  width: 100%;
+  max-width: 22rem;
+}
+.auth-form__title {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-auth);
+  font-size: clamp(1.6rem, 1.3rem + 1.2vw, 2rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+/* The heading only carries a tabindex while focus is being moved to it on a
+   mode change (announces the new context to screen readers). Sighted users
+   didn't navigate here, so no ring — but keyboard focus on real controls is
+   untouched. */
+.auth-form__title[tabindex]:focus {
+  outline: none;
+}
+.auth-form__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+/* Magnetic wrapper around the submit button — must fill the column so the
+   block button keeps its full width. */
+.auth-form__cta {
+  width: 100%;
+  margin-top: var(--space-1);
+}
+
+@media (max-width: 767px) {
+  .auth-form__title {
+    margin-bottom: var(--space-3);
+  }
+  .auth-form__body {
+    gap: var(--space-3);
+  }
+}

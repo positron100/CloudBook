@@ -1,0 +1,29 @@
+/* The auth page fills exactly the space under the floating nav and centres the
+   card — no extra scroll range when the card fits. Scoped: the rest of the
+   site scrolls normally. */
+.auth-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* nav pill height + its float padding, nothing else. svh keeps it stable
+     while a mobile URL bar shows/hides. */
+  min-height: calc(100svh - var(--nav-height) - 2 * var(--space-3));
+  padding-block: var(--space-5);
+}
+
+/* Kill the shell's main padding on the auth route so the two paddings don't
+   stack into an overflow. */
+.app-shell__main:has(.auth-page) {
+  padding-block: 0;
+}
+
+@media (max-width: 767px) {
+  .auth-page {
+    /* below the pill, above the bottom nav */
+    min-height: calc(
+      100svh - var(--nav-height) - var(--bottom-nav-height) - env(safe-area-inset-bottom) -
+        2 * var(--space-3)
+    );
+    padding-block: var(--space-4);
+  }
+}

@@ -15,6 +15,53 @@
   color: var(--danger);
 }
 
+.field__control-wrap {
+  position: relative;
+  display: flex;
+}
+.field__icon {
+  position: absolute;
+  right: var(--space-3);
+  top: 50%;
+  translate: 0 -50%;
+  color: var(--fg-faint);
+  pointer-events: none;
+}
+.field__control--has-icon {
+  padding-right: 2.5rem;
+}
+
+/* Ghost example text typed over an empty field. Visual only. */
+.field__preview {
+  position: absolute;
+  left: var(--space-4);
+  top: 50%;
+  translate: 0 -50%;
+  display: inline-flex;
+  align-items: center;
+  max-width: calc(100% - var(--space-4) - 2.75rem);
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--fg-faint);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: 1;
+  pointer-events: none;
+}
+.field__preview-caret {
+  display: inline-block;
+  width: 1px;
+  height: 1.1em;
+  margin-left: 1px;
+  background-color: var(--fg-faint);
+  animation: field-preview-blink 1s steps(1, end) infinite;
+}
+@keyframes field-preview-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
 .field__control {
   width: 100%;
   min-height: 2.75rem;
@@ -53,6 +100,60 @@
 }
 .field--invalid .field__control:focus-visible {
   box-shadow: 0 0 0 3px var(--danger-soft);
+}
+
+/* --- lift: tactile auth-field treatment ------------------------------------
+   Focus reads as depth, not a coloured ring. The whole control rises a few px
+   and picks up an elevation shadow; the border stays restrained. Keyboard
+   focus adds an unmistakable outline on top. Magnetism (a ~3px pointer drift)
+   rides the .field__lift wrapper. */
+.field--lift {
+  position: relative;
+}
+.field--lift:focus-within {
+  z-index: 2;
+}
+.field__lift {
+  display: block;
+}
+.field--lift .field__control-wrap {
+  border-radius: var(--radius-md);
+  /* `translate` (not `transform`) so the lift composes cleanly with the
+     magnetic drift that framer writes to .field__lift. */
+  transition:
+    translate var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
+}
+.field--lift .field__control-wrap:focus-within {
+  translate: 0 -3px;
+  box-shadow: var(--elev-field-focus);
+}
+/* Mouse focus: no ring, no glow, no accent tint — the lift + a slightly firmer
+   neutral border is the whole affordance. (A text input always matches
+   :focus-visible, so both are neutralised here and the keyboard ring is
+   re-added by the data attr below.) */
+.field--lift .field__control:focus,
+.field--lift .field__control:focus-visible {
+  outline: none;
+  border-color: color-mix(in oklab, var(--fg-faint) 50%, var(--border-strong));
+  box-shadow: none;
+}
+/* Keyboard focus: an unmistakable ring, set only when a key (Tab/arrows) put
+   focus here — see the focus-origin tracker in Field.tsx. */
+.field--lift .field__control[data-kbd-focus="true"]:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.field--lift.field--invalid .field__control-wrap:focus-within {
+  box-shadow:
+    var(--elev-field-focus),
+    0 0 0 1px var(--danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field--lift .field__control-wrap:focus-within {
+    translate: none;
+  }
 }
 
 textarea.field__control {

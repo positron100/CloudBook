@@ -1,16 +1,17 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button, Field } from "@/components/ui";
-import { AuthLayout } from "@/components/auth/AuthLayout";
+import { Magnetic } from "@/components/motion";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
+import "./AuthForm.css";
 
-export default function Login() {
+export function LoginForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
   const toast = useToast();
-  const [credentials, setCredentials] = useState({ email: "", password: "" });
+  const [creds, setCreds] = useState({ email: "", password: "" });
   const [submitting, setSubmitting] = useState(false);
 
   const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? "/";
@@ -19,7 +20,7 @@ export default function Login() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await login(credentials.email, credentials.password);
+      await login(creds.email, creds.password);
       toast.success("Welcome back");
       navigate(from, { replace: true });
     } catch (err) {
@@ -30,40 +31,41 @@ export default function Login() {
   };
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) =>
-    setCredentials({ ...credentials, [e.target.name]: e.target.value });
+    setCreds({ ...creds, [e.target.name]: e.target.value });
 
   return (
-    <AuthLayout
-      pitch="Pick up where you left off."
-      pitchSub="Your notes, kept on the cloud and ready on every device — a calm place to collect your thoughts."
-    >
-      <h2 className="auth__title">Log in</h2>
-      <form className="auth__form" aria-label="Log in" onSubmit={handleSubmit}>
+    <div className="auth-form">
+      <h1 className="auth-form__title">Log in</h1>
+      <form className="auth-form__body" aria-label="Log in" onSubmit={handleSubmit}>
         <Field
           label="Email address"
           type="email"
           name="email"
+          icon="mail"
           autoComplete="email"
-          value={credentials.email}
+          value={creds.email}
           onChange={onChange}
+          lift
+          previewText="you@example.com"
           required
         />
         <Field
           label="Password"
           type="password"
           name="password"
+          icon="lock"
           autoComplete="current-password"
-          value={credentials.password}
+          value={creds.password}
           onChange={onChange}
+          lift
           required
         />
-        <Button type="submit" variant="primary" block loading={submitting}>
-          {submitting ? "Logging in…" : "Log in"}
-        </Button>
+        <Magnetic strength={6} className="auth-form__cta">
+          <Button type="submit" variant="primary" block lift loading={submitting}>
+            {submitting ? "Logging in…" : "Log in"}
+          </Button>
+        </Magnetic>
       </form>
-      <p className="auth__alt">
-        New to CloudBook? <Link to="/register">Create an account</Link>
-      </p>
-    </AuthLayout>
+    </div>
   );
 }

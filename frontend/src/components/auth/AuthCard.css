@@ -1,0 +1,269 @@
+/* The authentication stage — a fixed-size clipping viewport. The outer box
+   MUST NOT resize between login and register; only the inner layers move, and
+   only on transforms. `data-mode` on .auth-stage drives the whole choreography;
+   the reduced-motion backstop in global.css collapses it to an instant swap.
+
+   THE TRANSITION IS A CURTAIN SWEEP:
+   the full-width accent curtain rests half off one edge, then slides all the
+   way across to the opposite edge — fully covering the card at the midpoint —
+   while the welcome copy travels through the blue field and the forms cross
+   underneath. */
+
+.auth-stage {
+  --auth-h: 37rem;
+  --bulge: clamp(2.5rem, 8vw, 6rem);
+  /* Auth-local, slightly longer than --dur-section so the curtain has room to
+     breathe. Mirrors authCurtain in utils/motion.ts. */
+  --dur-curtain: 720ms;
+  /* Mirrors authCurtain.easing in utils/motion.ts. A symmetric in-out — the
+     reference sweep has no bounce and no lopsided deceleration. */
+  --ease-curtain: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Curtain rest positions (full-width element, half shown). */
+  --curtain-login: translateX(-50%);
+  --curtain-register: translateX(50%);
+  /* Welcome copy: outgoing exits one side, incoming waits off the other. */
+  --copy-exit: translateX(-150%);
+  --copy-enter-from: translateX(150%);
+  /* Forms: a small directional drift; the curtain hides the crossfade. */
+  --form-old-exit: translateX(10%);
+  --form-new-from: translateX(-10%);
+  /* Organic bulge on the curtain's card-facing edge. */
+  --bulge-login: 0 var(--bulge) var(--bulge) 0;
+  --bulge-register: var(--bulge) 0 0 var(--bulge);
+
+  width: 100%;
+  max-width: 60rem;
+  margin-inline: auto;
+  font-family: var(--font-auth);
+}
+
+/* Poppins for everything inside the stage (matches the reference). */
+.auth-stage input,
+.auth-stage button,
+.auth-stage select,
+.auth-stage textarea {
+  font-family: var(--font-auth);
+}
+
+.auth-stage__viewport {
+  position: relative;
+  height: var(--auth-h);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  background-color: var(--sheet);
+  box-shadow: var(--elev-4);
+  isolation: isolate;
+}
+
+/* --- Form layers (z1) — both mounted; inactive fades + drifts, is covered by
+   the curtain, and is set `inert`. --- */
+.auth-stage__form {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 50%;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  padding: var(--space-5) clamp(var(--space-5), 4vw, var(--space-7));
+  overflow-y: auto;
+  transition:
+    transform var(--dur-curtain) var(--ease-curtain),
+    opacity var(--dur-curtain) var(--ease-curtain);
+}
+.auth-stage__form--register {
+  left: 0;
+  transform: var(--form-new-from);
+  opacity: 0;
+}
+.auth-stage__form--login {
+  right: 0;
+  transform: none;
+  opacity: 1;
+}
+.auth-stage[data-mode="register"] .auth-stage__form--register {
+  transform: none;
+  opacity: 1;
+}
+.auth-stage[data-mode="register"] .auth-stage__form--login {
+  transform: var(--form-old-exit);
+  opacity: 0;
+}
+
+/* --- The curtain (z3) — full-width accent surface, half shown at rest, sweeps
+   the whole card on a mode change. --- */
+.auth-stage__curtain {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  z-index: 3;
+  background-color: var(--accent);
+  /* Lit acrylic, not a flat block: a soft key-light bloom top-left, and a
+     diagonal highlight→shade sweep across the accent's own tonal range. */
+  background-image:
+    radial-gradient(
+      120% 90% at 20% 15%,
+      color-mix(in oklab, var(--key-light) 22%, transparent),
+      transparent 60%
+    ),
+    linear-gradient(
+      158deg,
+      color-mix(in oklab, var(--accent-highlight) 42%, transparent),
+      transparent 42%,
+      color-mix(in oklab, var(--accent-shade) 30%, transparent)
+    );
+  border-radius: var(--bulge-login);
+  transform: var(--curtain-login);
+  transition:
+    transform var(--dur-curtain) var(--ease-curtain),
+    border-radius var(--dur-curtain) var(--ease-curtain);
+  will-change: transform;
+}
+.auth-stage[data-mode="register"] .auth-stage__curtain {
+  transform: var(--curtain-register);
+  border-radius: var(--bulge-register);
+}
+
+/* --- Welcome copy layer (z4, above the curtain) — the text rides through the
+   blue field. --- */
+.auth-stage__welcome {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  overflow: hidden;
+  pointer-events: none;
+}
+.auth-stage__copy {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 50%;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  padding: var(--space-7) var(--space-6);
+  text-align: center;
+  color: var(--accent-fg);
+  pointer-events: auto;
+  transition:
+    transform var(--dur-curtain) var(--ease-curtain),
+    opacity var(--dur-curtain) var(--ease-curtain);
+}
+.auth-stage__copy--login {
+  left: 0;
+  transform: none;
+  opacity: 1;
+}
+.auth-stage__copy--register {
+  left: 50%;
+  transform: var(--copy-enter-from);
+  opacity: 0;
+}
+.auth-stage[data-mode="register"] .auth-stage__copy--login {
+  transform: var(--copy-exit);
+  opacity: 0;
+}
+.auth-stage[data-mode="register"] .auth-stage__copy--register {
+  transform: none;
+  opacity: 1;
+}
+
+.auth-stage__wordmark {
+  font-weight: 600;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+  opacity: 0.9;
+}
+.auth-stage__heading {
+  margin: var(--space-5) 0 0;
+  font-family: var(--font-auth);
+  font-weight: 600;
+  font-size: clamp(1.9rem, 1.3rem + 2.3vw, 2.6rem);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.auth-stage__sub {
+  margin: var(--space-3) auto 0;
+  max-width: 20rem;
+  font-size: var(--text-label);
+  font-weight: 400;
+  line-height: var(--leading-normal);
+  color: color-mix(in oklab, var(--accent-fg) 90%, transparent);
+}
+
+/* Outlined button that lives on the accent curtain. */
+.btn.btn--panel {
+  margin-top: var(--space-6);
+  background-color: transparent;
+  border-color: color-mix(in oklab, var(--accent-fg) 65%, transparent);
+  color: var(--accent-fg);
+  box-shadow: none;
+  font-weight: 500;
+}
+.btn.btn--panel:hover {
+  background-color: color-mix(in oklab, var(--accent-fg) 14%, transparent);
+  border-color: var(--accent-fg);
+}
+
+/* --- Mobile: the curtain sweeps vertically (top band <-> bottom band); the
+   card height stays fixed (sized for register) so signup's extra fields never
+   grow the box. --- */
+@media (max-width: 767px) {
+  .auth-stage {
+    --auth-h: 45rem;
+    --bulge: clamp(2rem, 11vw, 3.5rem);
+    --curtain-login: translateY(-72%);
+    --curtain-register: translateY(72%);
+    --copy-exit: translateY(-150%);
+    --copy-enter-from: translateY(150%);
+    --form-old-exit: translateY(10%);
+    --form-new-from: translateY(-10%);
+    --bulge-login: 0 0 var(--bulge) var(--bulge);
+    --bulge-register: var(--bulge) var(--bulge) 0 0;
+    max-width: 27rem;
+  }
+
+  .auth-stage__form {
+    width: 100%;
+    height: 100%;
+    left: 0;
+    right: auto;
+    place-items: start stretch;
+    align-content: start;
+    padding: var(--space-5);
+  }
+  /* Clear the curtain's resting band (~28% of the card). */
+  .auth-stage__form--login {
+    padding-top: calc(0.3 * var(--auth-h));
+  }
+  .auth-stage__form--register {
+    padding-bottom: calc(0.3 * var(--auth-h));
+  }
+
+  .auth-stage__copy {
+    width: 100%;
+    height: 30%;
+    left: 0;
+    padding: var(--space-4) var(--space-5);
+  }
+  .auth-stage__copy--login {
+    top: 0;
+  }
+  .auth-stage__copy--register {
+    top: auto;
+    bottom: 0;
+    left: 0;
+  }
+  .auth-stage__heading {
+    margin-top: var(--space-3);
+    font-size: 1.5rem;
+  }
+  .auth-stage__sub {
+    display: none;
+  }
+  .btn.btn--panel {
+    margin-top: var(--space-4);
+  }
+}

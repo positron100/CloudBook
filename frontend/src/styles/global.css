@@ -17,6 +17,25 @@ html {
   /* Painted here as well as on body so a future theme reveal has a ground
      colour of its own; identical value, nothing changes at rest. */
   background-color: var(--surface);
+  /* Section scroll (anchors, scrollIntoView, the arrow-key nav) clears the
+     floating pill instead of tucking content under it. */
+  scroll-padding-top: calc(var(--nav-height) + 2 * var(--space-3));
+}
+
+/* Scrollbar is visually hidden site-wide — scrolling itself is untouched
+   (wheel / trackpad / touch / keyboard / the section affordance all still
+   work). Never paired with `overflow: hidden`. */
+html,
+body,
+* {
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 :root[data-theme="dark"] {

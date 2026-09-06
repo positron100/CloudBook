@@ -1,0 +1,35 @@
+.page-curtain-root {
+  position: fixed;
+  inset: 0;
+  z-index: 900; /* above nav + modal, below toasts */
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.page-curtain {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  transform: translateX(-105%);
+  background-color: var(--accent);
+  /* Same lit-acrylic treatment as the auth curtain. */
+  background-image:
+    radial-gradient(
+      120% 90% at 20% 15%,
+      color-mix(in oklab, var(--key-light) 22%, transparent),
+      transparent 60%
+    ),
+    linear-gradient(
+      158deg,
+      color-mix(in oklab, var(--accent-highlight) 42%, transparent),
+      transparent 42%,
+      color-mix(in oklab, var(--accent-shade) 30%, transparent)
+    );
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-curtain {
+    display: none;
+  }
+}

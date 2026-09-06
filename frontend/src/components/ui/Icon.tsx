@@ -30,7 +30,9 @@ export type IconName =
   | "filter"
   | "sort"
   | "note"
-  | "sparkle";
+  | "sparkle"
+  | "mail"
+  | "lock";
 
 const PATHS: Record<IconName, string> = {
   plus: "M12 5v14M5 12h14",
@@ -57,6 +59,8 @@ const PATHS: Record<IconName, string> = {
   sort: "M11 5h10M11 9h7M11 13h4M3 17l3 3 3-3M6 18V4",
   note: "M4 4a2 2 0 0 1 2-2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4zM14 2v6h6M9 13h6M9 17h4",
   sparkle: "M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z",
+  mail: "M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm18 2-10 7L2 6",
+  lock: "M5 11h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zm2 0V7a5 5 0 0 1 10 0v4",
 };
 
 interface IconProps extends Omit<SVGProps<SVGSVGElement>, "name"> {

@@ -34,6 +34,13 @@ describe("auth gating", () => {
     expect(await screen.findByRole("heading", { name: /^log in$/i })).toBeInTheDocument();
   });
 
+  it("renders no footer landmark on the public shell", async () => {
+    window.history.pushState({}, "", "/about");
+    render(<App />);
+    await screen.findByRole("heading", { name: /calm place to keep your notes/i });
+    expect(screen.queryByRole("contentinfo")).toBeNull();
+  });
+
   it("accepts a session stored under the legacy 'Token' key and promotes it", async () => {
     localStorage.setItem("Token", "legacy.jwt");
     vi.mocked(api.fetchNotes).mockResolvedValue([note()]);
@@ -52,9 +59,10 @@ describe("login flow", () => {
     window.history.pushState({}, "", "/login");
     render(<App />);
 
-    await userEvent.type(screen.getByLabelText(/email address/i), "m@example.com");
-    await userEvent.type(screen.getByLabelText(/^password$/i), "secret");
-    await userEvent.click(within(screen.getByRole("form", { name: /log in/i })).getByRole("button", { name: /^log in$/i }));
+    const loginForm = within(screen.getByRole("form", { name: /log in/i }));
+    await userEvent.type(loginForm.getByLabelText(/email address/i), "m@example.com");
+    await userEvent.type(loginForm.getByLabelText(/^password$/i), "secret");
+    await userEvent.click(loginForm.getByRole("button", { name: /^log in$/i }));
 
     await waitFor(() => expect(localStorage.getItem("token")).toBe("new.jwt"));
     expect(localStorage.getItem("Token")).toBeNull();
@@ -67,9 +75,10 @@ describe("login flow", () => {
     window.history.pushState({}, "", "/login");
     render(<App />);
 
-    await userEvent.type(screen.getByLabelText(/email address/i), "x@example.com");
-    await userEvent.type(screen.getByLabelText(/^password$/i), "wrong");
-    await userEvent.click(within(screen.getByRole("form", { name: /log in/i })).getByRole("button", { name: /^log in$/i }));
+    const loginForm = within(screen.getByRole("form", { name: /log in/i }));
+    await userEvent.type(loginForm.getByLabelText(/email address/i), "x@example.com");
+    await userEvent.type(loginForm.getByLabelText(/^password$/i), "wrong");
+    await userEvent.click(loginForm.getByRole("button", { name: /^log in$/i }));
 
     expect(await screen.findByText(/correct credentials/i)).toBeInTheDocument();
     expect(localStorage.getItem("token")).toBeNull();
@@ -80,7 +89,7 @@ describe("routing", () => {
   it("redirects /signup to /register", async () => {
     window.history.pushState({}, "", "/signup");
     render(<App />);
-    expect(await screen.findByRole("heading", { name: /create your account/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /create account/i })).toBeInTheDocument();
     expect(window.location.pathname).toBe("/register");
   });
 });
@@ -123,11 +132,12 @@ describe("signup flow", () => {
     window.history.pushState({}, "", "/register");
     render(<App />);
 
-    await userEvent.type(screen.getByLabelText(/^name$/i), "New User");
-    await userEvent.type(screen.getByLabelText(/email address/i), "new@example.com");
-    await userEvent.type(screen.getByLabelText(/^password$/i), "secret");
-    await userEvent.type(screen.getByLabelText(/confirm password/i), "different");
-    await userEvent.click(within(screen.getByRole("form", { name: /sign up/i })).getByRole("button", { name: /^sign up$/i }));
+    const form = within(screen.getByRole("form", { name: /sign up/i }));
+    await userEvent.type(form.getByLabelText(/^name$/i), "New User");
+    await userEvent.type(form.getByLabelText(/email address/i), "new@example.com");
+    await userEvent.type(form.getByLabelText(/^password$/i), "secret");
+    await userEvent.type(form.getByLabelText(/confirm password/i), "different");
+    await userEvent.click(form.getByRole("button", { name: /^sign up$/i }));
 
     expect(await screen.findByText(/don't match/i)).toBeInTheDocument();
     expect(api.signup).not.toHaveBeenCalled();
@@ -138,11 +148,12 @@ describe("signup flow", () => {
     window.history.pushState({}, "", "/register");
     render(<App />);
 
-    await userEvent.type(screen.getByLabelText(/^name$/i), "New User");
-    await userEvent.type(screen.getByLabelText(/email address/i), "new@example.com");
-    await userEvent.type(screen.getByLabelText(/^password$/i), "secret");
-    await userEvent.type(screen.getByLabelText(/confirm password/i), "secret");
-    await userEvent.click(within(screen.getByRole("form", { name: /sign up/i })).getByRole("button", { name: /^sign up$/i }));
+    const form = within(screen.getByRole("form", { name: /sign up/i }));
+    await userEvent.type(form.getByLabelText(/^name$/i), "New User");
+    await userEvent.type(form.getByLabelText(/email address/i), "new@example.com");
+    await userEvent.type(form.getByLabelText(/^password$/i), "secret");
+    await userEvent.type(form.getByLabelText(/confirm password/i), "secret");
+    await userEvent.click(form.getByRole("button", { name: /^sign up$/i }));
 
     await waitFor(() =>
       expect(api.signup).toHaveBeenCalledWith({

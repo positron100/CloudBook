@@ -1,0 +1,119 @@
+.contact-letter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 26rem;
+}
+
+/* The stage: a small closed envelope, growing to release the sheet. The grid
+   row is the "how far the letter has come out" value — brief-sanctioned
+   clip/height for a genuine fold, everything else is transform + clip-path. */
+.contact-letter__stage {
+  position: relative;
+  width: 100%;
+  perspective: 1400px;
+  display: grid;
+  grid-template-rows: 5.5rem;
+  transition: grid-template-rows var(--dur-section) var(--ease-standard);
+}
+.contact-letter__stage[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+
+.contact-letter__paper {
+  overflow: hidden;
+  min-height: 0;
+  border-radius: var(--radius-lg);
+  background-color: var(--sheet-raised);
+  box-shadow: var(--elev-field);
+}
+.contact-letter__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  transform-origin: top center;
+  transform: translateY(-14%);
+  opacity: 0;
+  clip-path: inset(0 0 100% 0);
+  transition:
+    transform var(--dur-section) var(--ease-standard),
+    opacity var(--dur-fast) var(--ease-standard),
+    clip-path var(--dur-section) var(--ease-standard);
+}
+.contact-letter__stage[data-open="true"] .contact-letter__form {
+  transform: translateY(0);
+  opacity: 1;
+  clip-path: inset(0 0 0 0);
+}
+.contact-letter__salutation {
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+  color: var(--fg);
+}
+
+/* --- Envelope (visible while closed, folds away as the sheet rises) --- */
+.contact-letter__pocket,
+.contact-letter__flap {
+  position: absolute;
+  inset-inline: 0;
+  pointer-events: none;
+  transition:
+    transform var(--dur-section) var(--ease-standard),
+    opacity var(--dur-fast) var(--ease-standard);
+}
+.contact-letter__pocket {
+  top: 0;
+  height: 5.5rem;
+  border-radius: var(--radius-lg);
+  background-color: var(--sheet);
+  border: var(--border-width) solid var(--border-strong);
+  box-shadow: var(--elev-field);
+  /* the front pocket edge */
+  clip-path: polygon(0 42%, 50% 100%, 100% 42%, 100% 100%, 0 100%);
+}
+.contact-letter__flap {
+  top: 0;
+  height: 3rem;
+  transform-origin: top center;
+  background-color: var(--sheet-raised);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+.contact-letter__stage[data-open="true"] .contact-letter__pocket {
+  transform: translateY(30%);
+  opacity: 0;
+}
+.contact-letter__stage[data-open="true"] .contact-letter__flap {
+  transform: rotateX(-158deg);
+  opacity: 0;
+}
+
+/* --- Toggle --- */
+.contact-letter__toggle {
+  padding: var(--space-2) var(--space-4);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background-color: var(--sheet);
+  color: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  box-shadow: var(--elev-field);
+  transition:
+    color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
+}
+.contact-letter__toggle:hover {
+  color: var(--fg);
+  box-shadow: var(--elev-field-focus);
+}
+.contact-letter__toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}

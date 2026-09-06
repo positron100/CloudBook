@@ -1,13 +1,38 @@
 import {
   forwardRef,
   useId,
+  useState,
+  type FocusEvent,
   type InputHTMLAttributes,
+  type MouseEvent,
   type ReactNode,
+  type Ref,
   type TextareaHTMLAttributes,
 } from "react";
+import { m } from "framer-motion";
 import { cn } from "@/utils/cn";
-import { Icon } from "./Icon";
+import { useMagnetic } from "@/hooks/useMagnetic";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useTypingPreview } from "@/hooks/useTypingPreview";
+import { Icon, type IconName } from "./Icon";
 import "./Field.css";
+
+/**
+ * Focus-origin tracker. Text inputs always match `:focus-visible` (you have to
+ * see where you type), so it cannot tell a mouse click from a Tab. This does:
+ * a keyboard event just before focus means the accent ring shows; a pointer
+ * press means the lift alone carries it.
+ */
+let lastInputWasKeyboard = false;
+if (typeof window !== "undefined") {
+  const KEYS = new Set(["Tab", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End"]);
+  window.addEventListener("keydown", (e) => {
+    if (KEYS.has(e.key)) lastInputWasKeyboard = true;
+  }, true);
+  window.addEventListener("pointerdown", () => {
+    lastInputWasKeyboard = false;
+  }, true);
+}
 
 interface CommonProps {
   label: string;
@@ -17,6 +42,21 @@ interface CommonProps {
   error?: ReactNode;
   required?: boolean;
   className?: string;
+  /** Decorative icon shown inside the control, trailing edge. */
+  icon?: IconName;
+  /**
+   * Tactile treatment for the auth screens: a very small pointer magnetism on
+   * the control and a focus Z-lift instead of a ring. Fine-pointer +
+   * non-reduced-motion only — completely inert otherwise, and it never touches
+   * layout or native input behaviour.
+   */
+  lift?: boolean;
+  /**
+   * Example text typed out as a ghost preview *over* the field while it is
+   * empty and hovered/focused. Purely illustrative — the real input value is
+   * never modified. Skipped under reduced motion.
+   */
+  previewText?: string;
 }
 
 type InputFieldProps = CommonProps &
@@ -29,11 +69,24 @@ type FieldProps = InputFieldProps | TextareaFieldProps;
 /**
  * Label + control + hint/error, wired for accessibility (ids, aria-describedby,
  * aria-invalid). The one form-control primitive — `as="textarea"` for
- * multi-line. States: default / focus (accent border + wash) / invalid /
- * disabled.
+ * multi-line. States: default / focus / invalid / disabled. With `lift`, the
+ * focus state communicates depth (a small rise) rather than a coloured ring.
  */
 export const Field = forwardRef<HTMLInputElement | HTMLTextAreaElement, FieldProps>(function Field(
-  { label, hideLabel, hint, error, required, className, as = "input", id: idProp, ...rest },
+  {
+    label,
+    hideLabel,
+    hint,
+    error,
+    required,
+    className,
+    icon,
+    lift = false,
+    previewText,
+    as = "input",
+    id: idProp,
+    ...rest
+  },
   ref,
 ) {
   const autoId = useId();
@@ -42,26 +95,84 @@ export const Field = forwardRef<HTMLInputElement | HTMLTextAreaElement, FieldPro
   const errorId = error ? `${id}-error` : undefined;
   const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
 
+  const reduce = useReducedMotion();
+  const magnetic = useMagnetic({ strength: 3, disabled: !lift });
+  const [focused, setFocused] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [kbFocus, setKbFocus] = useState(false);
+
+  const r = rest as InputHTMLAttributes<HTMLInputElement> & TextareaHTMLAttributes<HTMLTextAreaElement>;
+  const value = r.value;
+  const isEmpty = value == null || value === "";
+  const previewActive = Boolean(previewText) && isEmpty && !reduce && (focused || hovered);
+  const preview = useTypingPreview(previewText ?? "", previewActive);
+
+  const handleFocus = (event: FocusEvent<HTMLInputElement & HTMLTextAreaElement>) => {
+    setFocused(true);
+    setKbFocus(lastInputWasKeyboard);
+    r.onFocus?.(event);
+  };
+  const handleBlur = (event: FocusEvent<HTMLInputElement & HTMLTextAreaElement>) => {
+    setFocused(false);
+    setKbFocus(false);
+    r.onBlur?.(event);
+  };
+
   const controlProps = {
     id,
     ref: ref as never,
-    className: "field__control",
+    className: cn("field__control", icon && "field__control--has-icon"),
     "aria-describedby": describedBy,
     "aria-invalid": error ? true : undefined,
+    "data-kbd-focus": lift && kbFocus ? "true" : undefined,
     required,
     ...rest,
+    onFocus: handleFocus,
+    onBlur: handleBlur,
   };
 
+  const control =
+    as === "textarea" ? (
+      <textarea {...(controlProps as TextareaHTMLAttributes<HTMLTextAreaElement>)} />
+    ) : (
+      <input {...(controlProps as InputHTMLAttributes<HTMLInputElement>)} />
+    );
+
+  const wrapInner = (
+    <div className="field__control-wrap">
+      {control}
+      {icon && <Icon name={icon} size={18} className="field__icon" />}
+      {preview && (
+        <span className="field__preview" aria-hidden="true">
+          {preview}
+          <span className="field__preview-caret" />
+        </span>
+      )}
+    </div>
+  );
+
   return (
-    <div className={cn("field", required && "field--required", error && "field--invalid", className)}>
+    <div className={cn("field", required && "field--required", error && "field--invalid", lift && "field--lift", className)}>
       <label htmlFor={id} className={cn("field__label", hideLabel && "sr-only")}>
         {label}
       </label>
 
-      {as === "textarea" ? (
-        <textarea {...(controlProps as TextareaHTMLAttributes<HTMLTextAreaElement>)} />
+      {lift ? (
+        <m.div
+          ref={magnetic.ref as Ref<HTMLDivElement>}
+          className="field__lift"
+          style={magnetic.style}
+          onMouseMove={magnetic.onMouseMove as (e: MouseEvent<HTMLDivElement>) => void}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => {
+            setHovered(false);
+            magnetic.onMouseLeave();
+          }}
+        >
+          {wrapInner}
+        </m.div>
       ) : (
-        <input {...(controlProps as InputHTMLAttributes<HTMLInputElement>)} />
+        wrapInner
       )}
 
       {hint && !error && (

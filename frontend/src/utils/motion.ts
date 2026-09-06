@@ -38,6 +38,17 @@ export const reveal = {
 } as const;
 
 /**
+ * Authentication curtain sweep. The implementation is CSS (a `data-mode`
+ * toggle transition in components/auth/AuthCard.css — the reference recording's
+ * own technique); these are the values that CSS mirrors, kept here so the
+ * timing lives with the rest of the motion vocabulary.
+ */
+export const authCurtain = {
+  durationMs: 720,
+  easing: "cubic-bezier(0.65, 0, 0.35, 1)",
+} as const;
+
+/**
  * Interaction budget. IDLE almost still · HOVER subtle · POINTER restrained
  * parallax · DRAG 1:1 + spring return · TRANSITION stronger spatial move.
  */

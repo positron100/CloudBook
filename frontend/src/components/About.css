@@ -1,20 +1,56 @@
 .about {
+  width: 100%;
+}
+
+/* Full-viewport sections drive their own rhythm — drop the shell's centred
+   column + block padding on this route. */
+.app-shell__main:has(.about) {
+  max-width: none;
+  padding-block: 0;
+}
+
+.about__hero {
+  display: grid;
+  place-items: center;
+  min-height: calc(100svh - var(--nav-height) - 2 * var(--space-3));
+  padding-block: var(--space-7);
+}
+.about__hero-inner {
   max-width: var(--measure-prose);
   margin-inline: auto;
-  padding-block: var(--space-8) var(--space-6);
+}
+
+.about__eyebrow {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-meta);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
 }
 .about__title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--text-h1);
+  font-size: var(--text-display, var(--text-h1));
   font-weight: var(--weight-semibold);
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-tight);
   text-wrap: balance;
 }
 .about__lede {
-  margin: var(--space-4) 0 0;
-  font-size: 1.125rem;
+  margin: var(--space-5) 0 0;
+  max-width: 48ch;
+  font-size: 1.15rem;
   color: var(--fg-muted);
   line-height: var(--leading-normal);
+}
+
+@media (max-width: 767px) {
+  .about__hero {
+    min-height: calc(
+      100svh - var(--nav-height) - var(--bottom-nav-height) - env(safe-area-inset-bottom) -
+        2 * var(--space-3)
+    );
+    padding-block: var(--space-6);
+  }
 }

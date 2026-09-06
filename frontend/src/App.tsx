@@ -6,11 +6,11 @@ import { NotesProvider } from "@/context/NotesContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { ToastProvider } from "@/context/ToastContext";
 import { RequireAuth } from "@/routes/RequireAuth";
+import { PageCurtainProvider } from "@/components/transitions/PageCurtain";
 import { AppShell } from "@/components/layout/AppShell";
 import Home from "@/components/Home";
 import About from "@/components/About";
-import Login from "@/components/Login";
-import Signup from "@/components/Signup";
+import AuthPage from "@/views/AuthPage";
 import Profile from "@/components/Profile";
 
 // Dev-only visual harnesses — tree-shaken from production builds.
@@ -25,6 +25,7 @@ function App() {
           <AuthProvider>
             <NotesProvider>
               <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                <PageCurtainProvider>
                 <AppShell>
                   <Routes>
                     <Route
@@ -36,9 +37,15 @@ function App() {
                       }
                     />
                     <Route path="/about" element={<About />} />
-                    <Route path="/login" element={<Login />} />
-                    {/* /register is canonical (matches production); /signup redirects. */}
-                    <Route path="/register" element={<Signup />} />
+                    {/* AuthPage is the PARENT element, so it stays mounted across
+                        /login <-> /register (only the child match changes) and the
+                        split-panel animates between modes instead of remounting.
+                        The child `element` is a no-op that keeps React Router from
+                        warning about an element-less leaf route. */}
+                    <Route element={<AuthPage />}>
+                      <Route path="/login" element={<span hidden />} />
+                      <Route path="/register" element={<span hidden />} />
+                    </Route>
                     <Route path="/signup" element={<Navigate to="/register" replace />} />
                     <Route
                       path="/profile"
@@ -71,6 +78,7 @@ function App() {
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </AppShell>
+                </PageCurtainProvider>
               </Router>
             </NotesProvider>
           </AuthProvider>

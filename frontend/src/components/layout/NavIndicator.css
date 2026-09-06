@@ -10,5 +10,17 @@
   z-index: 0;
 }
 :root[data-theme="dark"] .nav-indicator {
-  background-color: var(--float);
+  background-color: color-mix(in oklab, var(--sheet-raised) 70%, transparent);
+}
+
+/* Hover halo — sits under the active marker, fainter, no elevation. It only
+   previews where a click would land, so it must never look like the active
+   state itself. */
+.nav-indicator--halo {
+  background-color: color-mix(in oklab, var(--fg) 6%, transparent);
+  box-shadow: none;
+  z-index: 0;
+}
+:root[data-theme="dark"] .nav-indicator--halo {
+  background-color: color-mix(in oklab, var(--fg) 9%, transparent);
 }
