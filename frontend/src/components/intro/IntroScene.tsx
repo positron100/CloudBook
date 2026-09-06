@@ -18,9 +18,9 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 /** Resting offsets for the flipping pages — a stack with a little character
  *  (framer owns the transform, so these can't live in CSS). */
 const PAGE_REST = [
-  { x: 2, y: 1, z: -1.5, rotateZ: -0.5 },
-  { x: 3.5, y: 2, z: -3, rotateZ: 0.4 },
-  { x: 5, y: 3, z: -4.5, rotateZ: -0.3 },
+  { x: 4, y: 2, z: -2, rotateZ: -0.8 },
+  { x: 8, y: 4, z: -4, rotateZ: 0.7 },
+  { x: 12, y: 6, z: -6, rotateZ: -0.5 },
 ] as const;
 
 interface Box {
@@ -84,6 +84,9 @@ export function IntroScene({ destination, onDone }: IntroSceneProps) {
   const fclip = useMotionValue(EDGE_FLAT);
   const flift = useMotionValue(0);
   const bindT = useMotionValue(0);
+  // The flyer's *paper* opacity — dissolves onto the real destination surface
+  // in the last part of the flight so the page becomes the UI with no swap.
+  const fPaper = useMotionValue(1);
 
   // Circular reveal
   const revealR = useMotionValue(0);
@@ -154,146 +157,133 @@ export function IntroScene({ destination, onDone }: IntroSceneProps) {
       const sY = t.height / page.height;
 
       // Reference (a signing loop): every move has anticipation, the visible
-      // result trails the physical driver, and there is a real pause on the
-      // finished state before anything else happens. Applied here as: rest →
-      // open → flip·settle·flip·settle → select·hold → tension → release →
-      // flight → the page comes to rest as the destination → THEN the reveal.
+      // result trails the physical driver, and there is one continuous motion
+      // — no reset between beats, no blank frame at the end. ~1.6s total.
 
-      // 1 — REST. The journal lands closed and holds still. "A physical book."
-      animate(bookFade, 1, { duration: TS * 0.14 });
+      // 1 — REST. The journal lands closed with a small settle and holds still.
+      animate(bookFade, 1, { duration: TS * 0.12 });
       await Promise.all([
-        animate(bookScale, [0.9, 1.015, 1], {
-          duration: TS * 0.4,
+        animate(bookScale, [0.92, 1.01, 1], {
+          duration: TS * 0.32,
           times: [0, 0.72, 1],
           ease: ease.entrance,
         }),
-        animate(bookY, [10, -6, -4], {
-          duration: TS * 0.4,
-          times: [0, 0.72, 1],
-          ease: ease.entrance,
-        }),
+        animate(bookY, [8, -5, -4], { duration: TS * 0.32, times: [0, 0.72, 1], ease: ease.entrance }),
       ]);
+      if (cancelled) return;
+      await nap(70);
+
+      // 2 — OPEN. The cover swings away; the pages become visible as a result.
+      await animate(coverRot, -160, { duration: TS * 0.32, ease: ease.entrance });
+      if (cancelled) return;
+
+      // 3 — FLIP · settle ×3. Each sheet turns from the binding, drops flat
+      //     with a tiny settle, then rests briefly — three distinct sheets.
+      const flip = async (mv: typeof pf0, deg: number) => {
+        await animate(mv, deg, { duration: TS * 0.17, ease: [0.4, 0, 0.3, 1] });
+        await animate(mv, deg + 2.5, { duration: TS * 0.07, ease: "easeOut" });
+        await nap(42);
+      };
+      await flip(pf0, -168);
+      if (cancelled) return;
+      await flip(pf1, -175);
+      if (cancelled) return;
+      await flip(pf2, -170);
+      if (cancelled) return;
+
+      // 4 — SELECT. The chosen page rises (past, then settles), catches light.
+      await animate(chosenLift, [0, 1.1, 1], {
+        duration: TS * 0.18,
+        times: [0, 0.7, 1],
+        ease: "easeOut",
+      });
+      animate(chosenGlow, 1, { duration: TS * 0.16 });
       if (cancelled) return;
       await nap(90);
-
-      // 2 — OPEN. The cover moves first; the pages become visible as a result.
-      await animate(coverRot, -158, { duration: TS * 0.38, ease: ease.entrance });
-      if (cancelled) return;
-      await nap(45);
-
-      // 3 — FLIP · SETTLE · FLIP · SETTLE · FLIP. Each page turns, drops flat
-      //     with a small settle, then rests before the next.
-      const flip = async (mv: typeof pf0, deg: number) => {
-        await animate(mv, deg, { duration: TS * 0.2, ease: [0.45, 0, 0.28, 1] });
-        await animate(mv, deg + 2, { duration: TS * 0.09, ease: "easeOut" });
-        await nap(58);
-      };
-      await flip(pf0, -166);
-      if (cancelled) return;
-      await flip(pf1, -172);
-      if (cancelled) return;
-      await flip(pf2, -168);
-      if (cancelled) return;
-
-      // 4 — SELECT. The chosen page rises (past, then settles), catches light,
-      //     and holds. "This is the page that is about to leave."
-      await Promise.all([
-        animate(chosenLift, [0, 1.12, 1], {
-          duration: TS * 0.22,
-          times: [0, 0.7, 1],
-          ease: "easeOut",
-        }),
-        animate(chosenGlow, 1, { duration: TS * 0.2 }),
-      ]);
-      if (cancelled) return;
-      await nap(105);
 
       // hand the chosen page to the flyer — same paper, same place, same frame
       fOpacity.set(1);
 
-      // 5 — TENSION. Pull against the binding; the holes stretch; only the
-      //     spine end of the perforation opens. Nothing has left yet.
+      // 5 — TENSION. Pull against the binding; the holes stretch.
       await Promise.all([
-        animate(fy, 4, { duration: TS * 0.09, ease: "easeOut" }),
-        animate(fsy, 1.02, { duration: TS * 0.09, ease: "easeOut" }),
-        animate(fskew, -1.4, { duration: TS * 0.09, ease: "easeOut" }),
-        animate(fclip, EDGE_NICK, { duration: TS * 0.09 }),
-        animate(bindT, 1, { duration: TS * 0.1 }),
-        animate(flift, 0.35, { duration: TS * 0.09 }),
+        animate(fy, 4, { duration: TS * 0.08, ease: "easeOut" }),
+        animate(fsy, 1.02, { duration: TS * 0.08, ease: "easeOut" }),
+        animate(fskew, -1.4, { duration: TS * 0.08, ease: "easeOut" }),
+        animate(fclip, EDGE_NICK, { duration: TS * 0.08 }),
+        animate(bindT, 1, { duration: TS * 0.09 }),
+        animate(flift, 0.35, { duration: TS * 0.08 }),
       ]);
       if (cancelled) return;
 
-      // 6 — RELEASE. The rip runs across the edge while the page is already
-      //     lifting — accelerating, so the flight inherits the release speed.
+      // 6 — RELEASE. The rip runs across while the page is already lifting.
       animate(fclip, [EDGE_NICK, EDGE_HALF, EDGE_TORN], {
-        duration: TS * 0.11,
+        duration: TS * 0.1,
         times: [0, 0.55, 1],
         ease: [0.3, 0, 0.4, 1],
       });
-      animate(fsy, 1, { duration: TS * 0.12, ease: "easeOut" });
-      animate(fy, -15, { duration: TS * 0.15, ease: [0.4, 0, 0.68, 1] });
-      animate(frot, -2.6, { duration: TS * 0.15, ease: [0.4, 0, 0.68, 1] });
-      animate(flift, 1, { duration: TS * 0.15, ease: "easeOut" });
-      await nap(80);
+      animate(fsy, 1, { duration: TS * 0.1, ease: "easeOut" });
+      animate(fy, -14, { duration: TS * 0.13, ease: [0.4, 0, 0.68, 1] });
+      animate(frot, -2.6, { duration: TS * 0.13, ease: [0.4, 0, 0.68, 1] });
+      animate(flift, 1, { duration: TS * 0.13, ease: "easeOut" });
+      await nap(60);
       if (cancelled) return;
 
-      // 7 — FLIGHT. Carry to the destination: momentum, a subtle arc, a little
-      //     rotational inertia, and the page reforming toward the real rect —
-      //     recognisable as the same page for most of the trip.
+      // 7 — FLIGHT + BECOME. One continuous move: the page carries to the
+      //     destination rect and, in its last third, its paper dissolves onto
+      //     the real destination surface (already rendered underneath) while
+      //     the reveal — starting already over the destination — grows out.
+      //     There is never a frame with no destination visible.
       const D = 0.44 * TS;
       const yFrom = fy.get();
-      animate(fskew, [fskew.get(), 0.5, 0], { duration: D, ease: "easeInOut" });
-      animate(flift, [1, 0.5, 0.12], { duration: D, ease: "easeInOut" });
-      animate(bindT, 0, { duration: D * 0.6, ease: "easeOut" });
+      const maxR = Math.hypot(vw, vh) * 1.05;
+      animate(fskew, [fskew.get(), 0.4, 0], { duration: D, ease: "easeInOut" });
+      animate(flift, [1, 0.4, 0], { duration: D, ease: "easeInOut" });
+      animate(bindT, 0, { duration: D * 0.55, ease: "easeOut" });
       animate(fclip, [EDGE_TORN, EDGE_SETTLE, EDGE_FLAT], {
         duration: D * 0.7,
         times: [0, 0.45, 1],
         ease: "easeOut",
       });
+
+      // the reveal opens over the destination, and the flyer's paper dissolves
+      // onto it, both starting ~58% through the flight
+      revealR.set((Math.hypot(t.width, t.height) / 2) * 1.14);
+      window.setTimeout(() => {
+        if (cancelled) return;
+        setRevealing(true);
+        animate(fPaper, 0, { duration: D * 0.36, ease: "easeIn" });
+      }, D * 580);
+
       await Promise.all([
         animate(fx, dx, { duration: D, ease: [0.22, 0.55, 0.3, 1] }),
-        animate(fy, [yFrom, dy - 20, dy], {
+        animate(fy, [yFrom, dy - 18, dy], {
           duration: D,
           times: [0, 0.52, 1],
           ease: ["easeOut", "easeInOut"],
         }),
-        animate(frot, [frot.get(), 1, 0.25, 0], {
+        animate(frot, [frot.get(), 1, 0.2, 0], {
           duration: D,
           times: [0, 0.42, 0.78, 1],
           ease: "easeInOut",
         }),
-        animate(fsx, [1, 1, lerp(1, sX, 0.72), sX], {
+        animate(fsx, [1, 1, lerp(1, sX, 0.74), sX], {
           duration: D,
-          times: [0, 0.22, 0.7, 1],
+          times: [0, 0.2, 0.72, 1],
           ease: [0.3, 0, 0.3, 1],
         }),
-        animate(fsy, [1, 1, lerp(1, sY, 0.72), sY], {
+        animate(fsy, [1, 1, lerp(1, sY, 0.74), sY], {
           duration: D,
-          times: [0, 0.22, 0.7, 1],
+          times: [0, 0.2, 0.72, 1],
           ease: [0.3, 0, 0.3, 1],
         }),
       ]);
       if (cancelled) return;
 
-      // 8 — SETTLE. The page has become the destination geometry; it comes to
-      //     rest. This pause is what sells "the destination emerged from the
-      //     page" rather than "page vanished, UI appeared".
-      await Promise.all([
-        animate(frot, 0, { duration: TS * 0.12, ease: "easeOut" }),
-        animate(flift, 0, { duration: TS * 0.16, ease: "easeOut" }),
-        animate(fy, [dy - 1.2, dy], { duration: TS * 0.16, ease: [0.34, 1.1, 0.64, 1] }),
-      ]);
-      if (cancelled) return;
-      await nap(110);
-
-      // 9 — REVEAL. A hole opens over the destination and spreads out to the
-      //     desk, then the nav at the edges. Mask only exists in this phase.
-      const startR = Math.min(t.width, t.height) * 0.35;
-      revealR.set(startR);
-      setRevealing(true);
-      await nap(16);
-      const maxR = Math.hypot(vw, vh) * 1.05;
-      await animate(revealR, maxR, { duration: TS * 0.4, ease: [0.6, 0, 0.35, 1] });
+      // 8 — REVEAL OUT. The destination is established where the page landed;
+      //     the circle grows past it to the desk, then the nav at the edges.
+      fPaper.set(0);
+      await nap(60);
+      await animate(revealR, maxR, { duration: TS * 0.42, ease: [0.6, 0, 0.35, 1] });
       finish();
     };
 
@@ -319,48 +309,53 @@ export function IntroScene({ destination, onDone }: IntroSceneProps) {
   }, []);
 
   return (
-    <m.div
-      ref={sceneRef}
-      className="intro-scene"
-      role="presentation"
-      data-revealing={revealing || undefined}
-      style={{
-        ["--reveal-r" as string]: revealR,
-        ["--reveal-cx" as string]: center.x,
-        ["--reveal-cy" as string]: center.y,
-      }}
-    >
-      <span className="sr-only" role="status">
-        Opening CloudBook — {introDestinations[destination].label}
-      </span>
-
+    <>
       <m.div
-        className="intro-book"
-        style={{ y: bookY, scale: bookScale, opacity: bookFade, rotateX: 6, rotateZ: -0.6 }}
-        aria-hidden="true"
+        ref={sceneRef}
+        className="intro-scene"
+        role="presentation"
+        data-revealing={revealing || undefined}
+        style={{
+          ["--reveal-r" as string]: revealR,
+          ["--reveal-cx" as string]: center.x,
+          ["--reveal-cy" as string]: center.y,
+        }}
       >
-        <span className="intro-book__base" />
-        <m.span className="intro-book__page" style={{ ...PAGE_REST[0], rotateY: pf0 }} />
-        <m.span className="intro-book__page" style={{ ...PAGE_REST[1], rotateY: pf1 }} />
-        <m.span className="intro-book__page" style={{ ...PAGE_REST[2], rotateY: pf2 }} />
+        <span className="sr-only" role="status">
+          Opening CloudBook — {introDestinations[destination].label}
+        </span>
+
         <m.div
-          ref={chosenRef}
-          className="intro-book__page intro-book__page--chosen intro-page"
-          style={{ z: 0.5, y: chosenY, filter: chosenBright }}
+          className="intro-book"
+          style={{ y: bookY, scale: bookScale, opacity: bookFade, rotateX: 6, rotateZ: -0.6 }}
+          aria-hidden="true"
         >
-          <span className="intro-page__rules" />
-          <span className="intro-page__binding" />
-        </m.div>
-        <m.div className="intro-book__cover" style={{ rotateY: coverRot, z: 5 }}>
-          <span className="intro-book__mark">
-            <Icon name="book" size={32} />
-          </span>
+          <span className="intro-book__base" />
+          <m.span className="intro-book__page" style={{ ...PAGE_REST[0], rotateY: pf0 }} />
+          <m.span className="intro-book__page" style={{ ...PAGE_REST[1], rotateY: pf1 }} />
+          <m.span className="intro-book__page" style={{ ...PAGE_REST[2], rotateY: pf2 }} />
+          <m.div
+            ref={chosenRef}
+            className="intro-book__page intro-book__page--chosen intro-page"
+            style={{ z: 0.5, y: chosenY, filter: chosenBright }}
+          >
+            <span className="intro-page__rules" />
+            <span className="intro-page__binding" />
+          </m.div>
+          <m.div className="intro-book__cover" style={{ rotateY: coverRot, z: 5 }}>
+            <span className="intro-book__mark">
+              <Icon name="book" size={32} />
+            </span>
+          </m.div>
         </m.div>
       </m.div>
 
+      {/* The flyer sits ABOVE the scene, so the scene's reveal mask never clips
+          it. Its paper (`.intro-flyer__sheet`) dissolves onto the real
+          destination surface as it lands. */}
       {flyBox && (
         <m.div
-          className="intro-flyer intro-page"
+          className="intro-flyer"
           aria-hidden="true"
           style={{
             left: flyBox.left,
@@ -375,14 +370,21 @@ export function IntroScene({ destination, onDone }: IntroSceneProps) {
             rotate: frot,
             skewX: fskew,
             clipPath: fclip,
-            ["--lift" as string]: flift,
-            ["--bind-tension" as string]: bindT,
           }}
         >
-          <span className="intro-page__rules" />
-          <span className="intro-page__binding" />
+          <m.div
+            className="intro-flyer__sheet intro-page"
+            style={{
+              opacity: fPaper,
+              ["--lift" as string]: flift,
+              ["--bind-tension" as string]: bindT,
+            }}
+          >
+            <span className="intro-page__rules" />
+            <span className="intro-page__binding" />
+          </m.div>
         </m.div>
       )}
-    </m.div>
+    </>
   );
 }
