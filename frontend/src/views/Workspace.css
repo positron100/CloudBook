@@ -2,7 +2,7 @@
    form. header · compose · toolbar · desk stack vertically at every width. */
 .workspace {
   width: 100%;
-  max-width: min(100%, 80rem);
+  max-width: min(100%, 86rem);
   margin-inline: auto;
   display: flex;
   flex-direction: column;

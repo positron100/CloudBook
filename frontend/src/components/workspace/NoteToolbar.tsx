@@ -1,9 +1,7 @@
-import { Field, Icon, SegmentedControl, Select } from "@/components/ui";
+import { Field, Icon, Select } from "@/components/ui";
 import { cn } from "@/utils/cn";
 import { SORT_OPTIONS, type SortKey } from "@/lib/notesQuery";
 import "./NoteToolbar.css";
-
-export type ViewMode = "grid" | "list";
 
 interface NoteToolbarProps {
   search: string;
@@ -13,12 +11,10 @@ interface NoteToolbarProps {
   tags: string[];
   activeTag: string;
   onTag: (value: string) => void;
-  view: ViewMode;
-  onView: (value: ViewMode) => void;
 }
 
-/** One glass control group: search · tag filters · sort · view, with hairline
- *  separators. Wraps to rows on narrow screens. */
+/** A quiet glass strip above the stack: search · tag filters · sort. Kept
+ *  compact and secondary — the note stack is the hero. */
 export function NoteToolbar({
   search,
   onSearch,
@@ -27,8 +23,6 @@ export function NoteToolbar({
   tags,
   activeTag,
   onTag,
-  view,
-  onView,
 }: NoteToolbarProps) {
   const filters = ["all", ...tags];
 
@@ -74,16 +68,6 @@ export function NoteToolbar({
           value={sort}
           onChange={(e) => onSort(e.target.value as SortKey)}
           options={SORT_OPTIONS}
-        />
-
-        <SegmentedControl<ViewMode>
-          label="Layout"
-          value={view}
-          onChange={onView}
-          segments={[
-            { value: "grid", label: "Grid", icon: "grid" },
-            { value: "list", label: "List", icon: "list" },
-          ]}
         />
       </div>
     </div>

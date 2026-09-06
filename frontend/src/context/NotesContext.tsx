@@ -10,7 +10,8 @@ interface NotesContextValue {
   /** Last fetch/mutation error message, or null. */
   error: string | null;
   getNotes: () => Promise<void>;
-  addNote: (title: string, description: string, tag: string) => Promise<void>;
+  /** Resolves with the created note so callers can animate it into place. */
+  addNote: (title: string, description: string, tag: string) => Promise<Note>;
   editNote: (id: string, title: string, description: string, tag: string) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
 }
@@ -46,6 +47,7 @@ export function NotesProvider({ children }: { children: ReactNode }) {
   const addNote = useCallback(async (title: string, description: string, tag: string) => {
     const created = await api.addNote({ title, description, tag });
     setNotes((prev) => [...prev, created]);
+    return created;
   }, []);
 
   const editNote = useCallback(

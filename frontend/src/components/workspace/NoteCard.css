@@ -1,62 +1,84 @@
+/* A sheet of paper resting in the pile. The outer element carries the resting
+   pose (rotation + offset the stack hands it) and straightens when the sheet
+   is hovered or picked up. The inner .note-card__sheet is what Framer lifts
+   and tilts. */
 .note-card {
   position: relative;
-  border-radius: var(--radius-md);
-  transform-style: preserve-3d;
-  will-change: transform;
+  rotate: var(--rot, 0deg);
+  translate: var(--tx, 0px) 0;
+  z-index: var(--z, 1);
+  transition:
+    rotate var(--dur-fast) var(--ease-standard),
+    translate var(--dur-fast) var(--ease-standard);
+}
+.note-card:hover,
+.note-card:focus-within,
+.note-card[data-open] {
+  rotate: 0deg;
+  translate: 0 0;
+  z-index: 50;
 }
 
-/* The paper sheet. */
 .note-card__sheet {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  padding: var(--space-4);
+  padding: var(--space-5) var(--space-4) var(--space-3);
   background-color: var(--sheet);
-  border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+  border: 1px solid color-mix(in oklab, var(--border) 75%, transparent);
   border-radius: var(--radius-md);
+  /* Layered: a tight contact shadow on the desk + a soft ambient one, plus a
+     hairline of caught light along the top edge. Not one big drop shadow. */
   box-shadow:
-    var(--elev-1),
-    inset 0 1px 0 color-mix(in oklab, var(--key-light) 50%, transparent);
-  transition:
-    box-shadow var(--dur-fast) var(--ease-standard),
-    background-color var(--dur-fast) var(--ease-standard),
-    border-color var(--dur-fast) var(--ease-standard),
-    translate var(--dur-fast) var(--ease-standard);
+    0 1px 2px hsl(var(--shadow-hsl) / 0.07),
+    0 8px 20px -12px hsl(var(--shadow-hsl) / 0.22),
+    inset 0 1px 0 color-mix(in oklab, var(--key-light) 55%, transparent);
+  transform-style: preserve-3d;
 }
 .note-card:hover .note-card__sheet {
   border-color: var(--border-strong);
   box-shadow:
-    var(--elev-2),
-    inset 0 1px 0 color-mix(in oklab, var(--key-light) 65%, transparent);
-  translate: 0 -2px;
+    0 2px 6px hsl(var(--shadow-hsl) / 0.09),
+    0 18px 36px -14px hsl(var(--shadow-hsl) / 0.28),
+    inset 0 1px 0 color-mix(in oklab, var(--key-light) 72%, transparent);
 }
+/* Picked up off the desk. Dominant elevation, no accent ring. */
 .note-card[data-open] .note-card__sheet {
   background-color: var(--sheet-raised);
-  border-color: transparent;
+  border-color: color-mix(in oklab, var(--border) 40%, transparent);
   box-shadow:
-    var(--elev-3),
-    inset 3px 0 0 var(--accent);
-  translate: 0 -2px;
+    0 6px 16px hsl(var(--shadow-hsl) / 0.12),
+    0 40px 80px -24px hsl(var(--shadow-hsl) / 0.34),
+    inset 0 1px 0 color-mix(in oklab, var(--key-light) 85%, transparent);
 }
 
-/* Dog-ear: the top-right corner reads as folded away — a small triangle of
-   desk colour with a soft fold shadow. Drawn on the sheet so the card's own
-   elevation shadow and any focus ring are untouched. */
-.note-card__sheet::before {
-  content: "";
+/* Pointer light — a soft reflection travelling the paper. Warm desk light,
+   never the accent, never a spotlight. Fades in on hover only. */
+.note-card__light {
   position: absolute;
-  top: 0;
-  right: 0;
-  width: 15px;
-  height: 15px;
-  background: var(--surface);
-  clip-path: polygon(100% 0, 0 0, 100% 100%);
-  box-shadow: -1px 1px 2px hsl(var(--shadow-hsl) / 0.16);
-  border-top-right-radius: var(--radius-md);
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    16rem circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in oklab, var(--key-light) 42%, transparent),
+    transparent 60%
+  );
+  transition: opacity var(--dur-base) var(--ease-standard);
+}
+.note-card:hover .note-card__light {
+  opacity: 1;
+}
+:root[data-theme="dark"] .note-card__light {
+  background: radial-gradient(
+    16rem circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in oklab, var(--fg) 10%, transparent),
+    transparent 55%
+  );
 }
 
-/* The clickable read area (title + preview). */
 .note-card__reader {
   display: block;
   width: 100%;
@@ -69,26 +91,28 @@
 }
 .note-card__reader:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 3px;
+  outline-offset: 4px;
 }
 
 .note-card__title {
   margin: 0 0 var(--space-2);
-  padding-right: 12px;
-  font-size: 1.125rem;
+  font-family: var(--font-display);
+  font-size: 1.1875rem;
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-tight);
   line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-tight);
   color: var(--fg);
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 .note-card__preview {
   margin: 0;
   color: var(--fg-muted);
   font-size: var(--text-label);
-  line-height: var(--leading-snug);
+  line-height: var(--leading-normal);
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -105,8 +129,9 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
+  margin-top: var(--space-1);
   padding-top: var(--space-3);
-  border-top: var(--border-width) solid var(--border);
+  border-top: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
 }
 .note-card__meta {
   display: flex;
@@ -128,11 +153,12 @@
   gap: 2px;
   flex-shrink: 0;
   color: var(--fg-faint);
-  opacity: 0.5;
+  opacity: 0.45;
   transition: opacity var(--dur-fast) var(--ease-standard);
 }
 .note-card:hover .note-card__icons,
-.note-card:focus-within .note-card__icons {
+.note-card:focus-within .note-card__icons,
+.note-card[data-open] .note-card__icons {
   color: var(--fg-muted);
   opacity: 1;
 }
@@ -142,60 +168,9 @@
   }
 }
 
-/* --- List view: one dense row --------------------------------------------- */
-.note-card[data-view="list"] .note-card__sheet {
-  flex-direction: row;
-  align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-3) var(--space-4);
-}
-.note-card[data-view="list"] .note-card__sheet::before {
-  display: none;
-}
-.note-card[data-view="list"] .note-card__reader {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-3);
-}
-.note-card[data-view="list"] .note-card__title {
-  flex-shrink: 0;
-  max-width: 15rem;
-  margin: 0;
-  padding-right: 0;
-}
-.note-card[data-view="list"] .note-card__preview {
-  -webkit-line-clamp: 1;
-  flex: 1;
-}
-.note-card[data-view="list"] .note-card__preview[data-open] {
-  -webkit-line-clamp: 3;
-  display: -webkit-box;
-}
-.note-card[data-view="list"] .note-card__foot {
-  flex-shrink: 0;
-  padding-top: 0;
-  border-top: none;
-}
-
-@media (max-width: 640px) {
-  .note-card[data-view="list"] .note-card__sheet {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .note-card[data-view="list"] .note-card__reader {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-2);
-  }
-  .note-card[data-view="list"] .note-card__title {
-    max-width: none;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .note-card {
-    will-change: auto;
+    rotate: 0deg !important;
+    translate: none !important;
   }
 }

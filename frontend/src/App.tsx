@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter as Router, Navigate, Route, Routes } from "react-router-dom";
-import { domAnimation, LazyMotion } from "framer-motion";
+import { domMax, LazyMotion } from "framer-motion";
 import { AuthProvider } from "@/context/AuthContext";
 import { NotesProvider } from "@/context/NotesContext";
 import { ThemeProvider } from "@/context/ThemeContext";
@@ -19,7 +19,7 @@ const WorkspacePreview = import.meta.env.DEV ? lazy(() => import("@/views/Worksp
 
 function App() {
   return (
-    <LazyMotion features={domAnimation} strict>
+    <LazyMotion features={domMax} strict>
       <ThemeProvider>
         <ToastProvider>
           <AuthProvider>

@@ -1,0 +1,39 @@
+/* A pile of paper on the desk — columns of sheets that overlap at the edge so
+   each one tucks slightly under the sheet above it. Not a spreadsheet grid:
+   the overlap, the per-sheet rotation and the layered shadows carry the
+   "stack of physical notes" reading. */
+.note-stack {
+  --stack-overlap: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-5);
+  width: 100%;
+}
+
+.note-stack__col {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.note-stack__slot {
+  position: relative;
+}
+/* Each sheet after the first slides up under the one above. The overlap is
+   less than a card's own top padding, so no title or body ever collides. */
+.note-stack__slot + .note-stack__slot {
+  margin-top: calc(-1 * var(--stack-overlap));
+}
+
+@media (max-width: 767px) {
+  .note-stack {
+    --stack-overlap: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .note-stack {
+    --stack-overlap: 4px;
+  }
+}

@@ -1,0 +1,37 @@
+.tear-sheet {
+  pointer-events: none;
+  will-change: transform, clip-path;
+}
+.tear-sheet__page {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  padding: var(--space-4);
+  background-color: var(--sheet-raised);
+  border: 1px solid color-mix(in oklab, var(--border) 55%, transparent);
+  border-radius: var(--radius-md);
+  box-shadow:
+    0 8px 20px hsl(var(--shadow-hsl) / 0.14),
+    0 30px 60px -20px hsl(var(--shadow-hsl) / 0.3);
+}
+.tear-sheet__title {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tear-sheet__body {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: var(--text-label);
+  line-height: var(--leading-normal);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

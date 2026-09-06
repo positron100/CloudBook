@@ -32,15 +32,21 @@ export default function WorkspacePreview() {
   const [params] = useSearchParams();
   const forced = params.get("state");
   const [notes, setNotes] = useState<Note[]>(
-    forced === "empty" || forced === "error" ? [] : SAMPLE,
+    forced === "empty" || forced === "error" || forced === "loading" ? [] : SAMPLE,
   );
   const nextId = useRef(SAMPLE.length);
 
   const addNote = useCallback(async (title: string, description: string, tag: string) => {
-    setNotes((p) => [
-      ...p,
-      { _id: `preview-${nextId.current++}`, user: "preview", title, description, tag, date: new Date().toISOString() },
-    ]);
+    const created: Note = {
+      _id: `preview-${nextId.current++}`,
+      user: "preview",
+      title,
+      description,
+      tag,
+      date: new Date().toISOString(),
+    };
+    setNotes((p) => [...p, created]);
+    return created;
   }, []);
   const editNote = useCallback(async (id: string, title: string, description: string, tag: string) => {
     setNotes((p) => p.map((n) => (n._id === id ? { ...n, title, description, tag } : n)));
