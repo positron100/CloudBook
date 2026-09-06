@@ -25,7 +25,6 @@ const ROT = [-1, 0.8, -0.6, 1.1, -0.9, 0.5];
 const TX = [-4, 5, -3, 4, -5, 3];
 
 const ENTER_SPRING = { type: "spring", stiffness: 320, damping: 30, mass: 0.9 } as const;
-const SETTLE_SPRING = { type: "spring", stiffness: 240, damping: 24, mass: 0.8 } as const;
 
 /**
  * The clipboard — a horizontal pile of torn pages. Notes fill short columns
@@ -105,17 +104,15 @@ export function NoteStack({
                     }
                     initial={reduce ? { opacity: 0 } : { opacity: 0, y: 20, scale: 0.94 }}
                     animate={
-                      suppressed ? { opacity: 0, scale: 0.96 } : { opacity: 1, y: 0, scale: 1 }
+                      suppressed ? { opacity: 0, scale: 1 } : { opacity: 1, y: 0, scale: 1 }
                     }
                     exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.9, y: 8 }}
                     transition={
-                      suppressed
-                        ? { duration: 0 }
+                      suppressed || arrived
+                        ? { duration: 0 } // the flying sheet already did the motion — no swap flicker
                         : reduce
                           ? { duration: 0.15 }
-                          : arrived
-                            ? SETTLE_SPRING
-                            : ENTER_SPRING
+                          : ENTER_SPRING
                     }
                   >
                     <NoteCard

@@ -33,18 +33,17 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
   const dirty =
     form.title !== note.title || form.description !== note.description || form.tag !== note.tag;
 
-  // Pose that overlays the source card, scaled to its width.
-  const start = useMemo(() => {
-    if (typeof window === "undefined" || from.width === 0) {
-      return { x: 0, y: 0, scale: 0.92 };
-    }
+  // The transform that makes a centred page overlay a given card rect.
+  const poseFor = (r: DOMRect) => {
+    if (typeof window === "undefined" || r.width === 0) return { x: 0, y: 0, scale: 0.92 };
     const pageW = Math.min(640, window.innerWidth * 0.92);
     return {
-      x: from.left + from.width / 2 - window.innerWidth / 2,
-      y: from.top + from.height / 2 - window.innerHeight / 2,
-      scale: Math.max(0.18, from.width / pageW),
+      x: r.left + r.width / 2 - window.innerWidth / 2,
+      y: r.top + r.height / 2 - window.innerHeight / 2,
+      scale: Math.max(0.18, r.width / pageW),
     };
-  }, [from]);
+  };
+  const start = useMemo(() => poseFor(from), [from]);
 
   const x = useMotionValue(reduce ? 0 : start.x);
   const y = useMotionValue(reduce ? 0 : start.y);
@@ -68,7 +67,9 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Fold back into the source card, then hand off.
+  // Fold back onto the source card — re-measured now, since an optimistic edit
+  // may have moved it — and hold the page opaque until it is essentially on the
+  // card, so the card emerges rather than "takes over".
   const foldAway = (then: () => void) => {
     if (closingRef.current) return;
     closingRef.current = true;
@@ -76,12 +77,19 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
       then();
       return;
     }
-    const spring = { type: "spring", stiffness: 320, damping: 34, mass: 0.9 } as const;
-    animate(x, start.x, spring);
-    animate(y, start.y, spring);
-    animate(scale, start.scale, spring);
-    animate(pageOpacity, 0, { duration: 0.24, delay: 0.08 });
-    animate(scrim, 0, { duration: 0.28 }).then(then);
+    const live =
+      typeof document !== "undefined"
+        ? document
+            .querySelector(`[data-note-id="${(window.CSS?.escape ?? String)(note._id)}"]`)
+            ?.getBoundingClientRect()
+        : undefined;
+    const target = live && live.width > 0 ? poseFor(live) : start;
+    const spring = { type: "spring", stiffness: 340, damping: 34, mass: 0.85 } as const;
+    animate(x, target.x, spring);
+    animate(y, target.y, spring);
+    animate(scale, target.scale, spring);
+    animate(pageOpacity, 0, { duration: 0.12, delay: 0.24 });
+    animate(scrim, 0, { duration: 0.3 }).then(then);
   };
 
   useEffect(() => {

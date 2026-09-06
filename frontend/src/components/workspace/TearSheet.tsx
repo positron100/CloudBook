@@ -1,70 +1,69 @@
 import { useEffect } from "react";
-import { m, useMotionValue, useTransform, animate } from "framer-motion";
+import { m, useMotionValue, animate } from "framer-motion";
 import type { Note } from "@shared/types";
-import { Chip } from "@/components/ui";
-import { formatRelativeDate } from "@/utils/date";
+import { NoteFace } from "./NoteFace";
 import "./TearSheet.css";
 
 interface TearSheetProps {
+  /** The diary's written-area rect. */
   from: DOMRect;
+  /** The exact slot the new card occupies in the pile. */
   to: DOMRect;
   note: Note;
   onDone: () => void;
 }
 
-// Same vertex count both sides so the top edge interpolates from a clean cut
-// to a fine irregular tear — a few px of asymmetric texture, no SVG teeth.
 const EDGE_FLAT =
-  "polygon(0% 0.6%, 13% 0.2%, 27% 0.8%, 41% 0.1%, 55% 0.7%, 69% 0.2%, 82% 0.9%, 100% 0.4%, 100% 100%, 0% 100%)";
+  "polygon(0% 0.5%, 13% 0.2%, 27% 0.6%, 41% 0.1%, 55% 0.5%, 69% 0.2%, 82% 0.7%, 100% 0.3%, 100% 100%, 0% 100%)";
 const EDGE_TORN =
-  "polygon(0% 3.4%, 13% 0.6%, 27% 4.6%, 41% 1.4%, 55% 3.8%, 69% 0.9%, 82% 4.9%, 100% 2%, 100% 100%, 0% 100%)";
+  "polygon(0% 2.6%, 13% 0.5%, 27% 3.4%, 41% 1.1%, 55% 2.8%, 69% 0.7%, 82% 3.6%, 100% 1.5%, 100% 100%, 0% 100%)";
 
 /**
- * The signature create interaction. ONE sheet, one continuous move: it tears
- * from the notebook (a quick tension-and-release tween) and the carry is a
- * spring that *inherits that velocity* — Framer retargets from the current
- * value + speed, so there is no phase boundary to see. The written content is
- * counter-scaled off the same motion value, so the words stay crisp and just
- * clip as the sheet settles to card size. Runs off the optimistic note.
+ * The create interaction. The flying object is a NoteFace — pixel-identical to
+ * the real card — at the card's final size from the first frame. It lifts off
+ * the top of the written area (a quick tension-and-release), then one spring
+ * carries it to the exact slot, arriving already in the card's pose. The real
+ * card is revealed in the same commit the sheet unmounts, so there is nothing
+ * to see swap.
  */
 export function TearSheet({ from, to, note, onDone }: TearSheetProps) {
-  const dx = to.left - from.left;
-  const dy = to.top - from.top;
-  const sx = to.width / from.width;
-  const sy = to.height / from.height;
+  // Card-shaped, anchored at the top-left of what was written.
+  const startLeft = from.left;
+  const startTop = from.top;
+  const dx = to.left - startLeft;
+  const dy = to.top - startTop;
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const rotate = useMotionValue(0);
   const skewX = useMotionValue(0);
-  const scaleX = useMotionValue(1);
-  const scaleY = useMotionValue(1);
+  const scale = useMotionValue(1);
   const clipPath = useMotionValue(EDGE_FLAT);
-  const contentScaleY = useTransform(scaleY, (v) => (v > 0.001 ? 1 / v : 1));
+  const lift = useMotionValue(0);
 
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
-      // Tear — the sheet takes tension against the perforation, then releases.
+      // Tear — tension against the perforation, then release.
       await Promise.all([
-        animate(y, -13, { duration: 0.24, ease: [0.34, 0, 0.12, 1] }),
-        animate(rotate, -3.4, { duration: 0.24, ease: [0.34, 0, 0.12, 1] }),
-        animate(skewX, [0, -2.6, -1.4], { duration: 0.26, ease: "easeOut" }),
-        animate(scaleX, [1, 0.985, 1], { duration: 0.26, ease: "easeOut" }),
-        animate(clipPath, EDGE_TORN, { duration: 0.22, ease: [0.3, 0, 0.2, 1] }),
+        animate(y, -12, { duration: 0.22, ease: [0.34, 0, 0.1, 1] }),
+        animate(rotate, -3, { duration: 0.22, ease: [0.34, 0, 0.1, 1] }),
+        animate(skewX, [0, -2.4, -1.2], { duration: 0.24, ease: "easeOut" }),
+        animate(scale, [1, 1.018, 1.006], { duration: 0.24, ease: "easeOut" }),
+        animate(clipPath, EDGE_TORN, { duration: 0.2, ease: [0.3, 0, 0.2, 1] }),
+        animate(lift, 1, { duration: 0.22, ease: "easeOut" }),
       ]);
       if (cancelled) return;
-      // Carry — one spring, continuing from the tear's velocity. x is stiffer
-      // than y so the path bows: it moves out, then drops in — a natural arc,
-      // no keyframe seam.
-      const base = { type: "spring", mass: 1.05 } as const;
+      // Carry — springs continue from the tear's velocity. x stiffer than y so
+      // the path bows into an arc; every value lands on the card's exact pose.
+      const base = { type: "spring", mass: 1 } as const;
       await Promise.all([
-        animate(x, dx, { ...base, stiffness: 90, damping: 18 }),
-        animate(y, dy, { ...base, stiffness: 52, damping: 16 }),
-        animate(rotate, 1.5, { ...base, stiffness: 66, damping: 15 }),
-        animate(skewX, 0, { ...base, stiffness: 120, damping: 20 }),
-        animate(scaleX, sx, { ...base, stiffness: 80, damping: 18 }),
-        animate(scaleY, sy, { ...base, stiffness: 80, damping: 18 }),
+        animate(x, dx, { ...base, stiffness: 96, damping: 19 }),
+        animate(y, dy, { ...base, stiffness: 58, damping: 17 }),
+        animate(rotate, 0, { ...base, stiffness: 70, damping: 16 }),
+        animate(skewX, 0, { ...base, stiffness: 140, damping: 22 }),
+        animate(scale, 1, { ...base, stiffness: 90, damping: 20 }),
+        animate(lift, 0, { ...base, stiffness: 60, damping: 20 }),
       ]);
       if (!cancelled) onDone();
     };
@@ -81,33 +80,22 @@ export function TearSheet({ from, to, note, onDone }: TearSheetProps) {
       aria-hidden="true"
       style={{
         position: "fixed",
-        left: from.left,
-        top: from.top,
-        width: from.width,
-        height: from.height,
+        left: startLeft,
+        top: startTop,
+        width: to.width,
+        height: to.height,
         transformOrigin: "top left",
         zIndex: 850,
         x,
         y,
         rotate,
         skewX,
-        scaleX,
-        scaleY,
+        scale,
         clipPath,
+        ["--lift" as string]: lift,
       }}
     >
-      <m.div className="tear-sheet__page" style={{ transformOrigin: "top", scaleY: contentScaleY }}>
-        <h3 className="tear-sheet__title">{note.title}</h3>
-        <p className="tear-sheet__body">{note.description}</p>
-        <div className="tear-sheet__foot">
-          {note.tag && <Chip tone="accent">{note.tag}</Chip>}
-          {note.date && (
-            <time className="tear-sheet__date" dateTime={note.date}>
-              {formatRelativeDate(note.date)}
-            </time>
-          )}
-        </div>
-      </m.div>
+      <NoteFace note={note} />
     </m.div>
   );
 }
