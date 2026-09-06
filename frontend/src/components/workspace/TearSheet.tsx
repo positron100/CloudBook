@@ -15,18 +15,18 @@ interface TearSheetProps {
 
 // The torn top edge, drawn as a clip polygon (8 points across the top, 2 at the
 // bottom). The tear runs left→right: the spine bites first (NICK), the rip
-// crosses the middle (HALF), then the sheet is free (TORN).
-const EDGE_FLAT =
+// crosses the middle (HALF), then the sheet is free (TORN), and it relaxes back
+// toward flat in flight (SETTLE → FLAT). Exported so the opening intro's page
+// tears with the exact same edge language.
+export const EDGE_FLAT =
   "polygon(0% 0.5%, 13% 0.2%, 27% 0.6%, 41% 0.1%, 55% 0.5%, 69% 0.2%, 82% 0.7%, 100% 0.3%, 100% 100%, 0% 100%)";
-const EDGE_NICK =
+export const EDGE_NICK =
   "polygon(0% 2.6%, 13% 0.6%, 27% 2.9%, 41% 0.4%, 55% 0.5%, 69% 0.2%, 82% 0.7%, 100% 0.3%, 100% 100%, 0% 100%)";
-const EDGE_HALF =
+export const EDGE_HALF =
   "polygon(0% 2.6%, 13% 0.5%, 27% 3.3%, 41% 1.0%, 55% 2.8%, 69% 0.7%, 82% 1.2%, 100% 0.4%, 100% 100%, 0% 100%)";
-const EDGE_TORN =
+export const EDGE_TORN =
   "polygon(0% 2.6%, 13% 0.5%, 27% 3.4%, 41% 1.1%, 55% 2.8%, 69% 0.7%, 82% 3.6%, 100% 1.5%, 100% 100%, 0% 100%)";
-// The ragged edge relaxes in flight, ending close to flat so it matches the
-// resting card (whose raggedness is the .note-card__tear strip, not a clip).
-const EDGE_SETTLE =
+export const EDGE_SETTLE =
   "polygon(0% 1.3%, 13% 0.4%, 27% 1.7%, 41% 0.5%, 55% 1.4%, 69% 0.4%, 82% 1.8%, 100% 0.7%, 100% 100%, 0% 100%)";
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));

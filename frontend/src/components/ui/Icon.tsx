@@ -57,7 +57,9 @@ const PATHS: Record<IconName, string> = {
   "chevron-down": "m6 9 6 6 6-6",
   menu: "M4 12h16M4 6h16M4 18h16",
   home: "M3 12l2-2m0 0 7-7 7 7M5 10v10a1 1 0 0 0 1 1h3m10-11 2 2m-2-2v10a1 1 0 0 1-1 1h-3m-6 0a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1m-6 0h6",
-  book: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z",
+  // An open journal: two page leaves, a spine, a couple of rule lines. Reads
+  // as CloudBook — not a shelf/library glyph — and holds up at 18px.
+  book: "M12 6c-1.7-1.1-4.2-1.6-7-1.3v12.6c2.8-.3 5.3.2 7 1.4M12 6c1.7-1.1 4.2-1.6 7-1.3v12.6c-2.8-.3-5.3.2-7 1.4M12 6v12.7M6 8.7h3.3M6 11.2h3.3M14.7 8.7H18M14.7 11.2H18",
   info: "M12 16v-4M12 8h.01M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z",
   "alert-triangle": "M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0ZM12 9v4M12 17h.01",
   "alert-circle": "M12 8v4M12 16h.01M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z",

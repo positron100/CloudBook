@@ -50,5 +50,13 @@ if (typeof window !== "undefined" && !("IntersectionObserver" in window)) {
   (globalThis as unknown as { IntersectionObserver: unknown }).IntersectionObserver = IO;
 }
 
+// jsdom has no PointerEvent — framer-motion v11's keyboard press gesture
+// (Enter/Space on a `whileTap` element) constructs one. Alias it to MouseEvent
+// so the synthetic dispatch does not throw and abort the test run.
+const g = globalThis as unknown as { PointerEvent?: unknown; MouseEvent: unknown };
+if (typeof g.PointerEvent === "undefined") {
+  g.PointerEvent = g.MouseEvent;
+}
+
 // The app reads VITE_API_URL at module load; give tests a stable value.
 vi.stubEnv("VITE_API_URL", "http://test.local");

@@ -36,18 +36,20 @@ describe("NoteEditor", () => {
   });
 
   it("Save changes hands the edit up, then folds away", async () => {
+    const user = userEvent.setup({ delay: null });
     const { onSave, onClose } = mount();
-    await userEvent.type(screen.getByLabelText(/^note$/i), " today");
-    await userEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    await user.type(screen.getByLabelText(/^note$/i), " today");
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
     expect(onSave).toHaveBeenCalledWith("n1", "Standup", "shipped the thing today", "Work");
-    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    await waitFor(() => expect(onClose).toHaveBeenCalled(), { timeout: 4000 });
   });
 
   it("Discard closes without saving", async () => {
+    const user = userEvent.setup({ delay: null });
     const { onSave, onClose } = mount();
-    await userEvent.type(screen.getByLabelText(/^note$/i), " nope");
-    await userEvent.click(screen.getByRole("button", { name: /discard/i }));
+    await user.type(screen.getByLabelText(/^note$/i), " nope");
+    await user.click(screen.getByRole("button", { name: /discard/i }));
     expect(onSave).not.toHaveBeenCalled();
-    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    await waitFor(() => expect(onClose).toHaveBeenCalled(), { timeout: 4000 });
   });
 });

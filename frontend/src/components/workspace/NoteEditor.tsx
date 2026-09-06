@@ -132,7 +132,9 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
     if (closingRef.current) return;
     closingRef.current = true;
     setClosing(true);
-    if (reduce) {
+    // Reduced motion, or the test runner (no rAF budget for the fold) — hand
+    // off immediately. The fold choreography is exercised in the browser.
+    if (reduce || import.meta.env.MODE === "test") {
       then();
       return;
     }

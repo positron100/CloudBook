@@ -9,7 +9,7 @@ export default function Profile() {
   return (
     <Reveal as="div" onView={false} className="profile">
       <h1 className="profile__title">Profile</h1>
-      <Surface level={2} className="profile__card">
+      <Surface level={2} className="profile__card" data-intro-target="profile">
         {status === "loading" && <p className="profile__muted">Loading…</p>}
         {status !== "loading" && !user && <p className="profile__muted">Could not load your profile.</p>}
         {user && (

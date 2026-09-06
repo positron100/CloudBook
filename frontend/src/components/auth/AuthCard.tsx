@@ -68,6 +68,7 @@ export function AuthCard({ mode }: { mode: AuthMode }) {
       ref={rootRef}
       className="auth-stage"
       data-mode={mode}
+      data-intro-target="auth"
       aria-label={isRegister ? "Create an account" : "Log in"}
     >
       <div className="auth-stage__viewport">
