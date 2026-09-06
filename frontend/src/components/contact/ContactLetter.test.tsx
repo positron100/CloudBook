@@ -31,12 +31,13 @@ describe("ContactLetter", () => {
     expect(screen.queryByText(/a name, however short/i)).toBeNull();
   });
 
-  it("offers the direct address and the repo alongside the letter", () => {
+  it("offers the direct address below the letter, with a copy control", () => {
     render(wrap(<ContactLetter />));
-    expect(screen.getByRole("button", { name: /hello@cloudbook\.app/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /positron100\/CloudBook/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /mukuknegi2005@gmail\.com/i })).toHaveAttribute(
       "href",
-      "https://github.com/positron100/CloudBook",
+      "mailto:mukuknegi2005@gmail.com",
     );
+    expect(screen.getByRole("button", { name: /copy email address/i })).toBeInTheDocument();
+    expect(screen.queryByText(/github|positron100/i)).toBeNull();
   });
 });

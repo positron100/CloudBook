@@ -14,8 +14,7 @@ import { useTypingPreview } from "@/hooks/useTypingPreview";
 import { ease, spring } from "@/utils/motion";
 import "./ContactLetter.css";
 
-const CONTACT_EMAIL = "hello@cloudbook.app";
-const REPO_URL = "https://github.com/positron100/CloudBook";
+const CONTACT_EMAIL = "mukuknegi2005@gmail.com";
 
 /**
  * The Contact letter, choreographed after the ContactForm in the Portfolio
@@ -69,6 +68,7 @@ export function ContactLetter() {
   const [phase, setPhase] = useState<Phase>("writing");
   const [sending, setSending] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [reservedHeight, setReservedHeight] = useState<number | null>(null);
 
   const cardRef = useRef<HTMLDivElement>(null);
@@ -222,6 +222,8 @@ export function ContactLetter() {
   const copyEmail = async () => {
     try {
       await navigator.clipboard?.writeText(CONTACT_EMAIL);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
     } catch {
       /* mailto still works */
     }
@@ -334,17 +336,33 @@ export function ContactLetter() {
         <Envelope phase={phase} />
       </m.div>
 
-      <div className="contact-letter__aside">
-        <button type="button" className="contact-letter__link" onClick={copyEmail}>
+      <Magnetic as="div" strength={4} className="contact-letter__reach">
+        <a className="contact-letter__addr" href={`mailto:${CONTACT_EMAIL}`}>
           <Icon name="mail" size={15} />
           <span>{CONTACT_EMAIL}</span>
-          <Icon name="copy" size={12} className="contact-letter__link-hint" />
-        </button>
-        <a className="contact-letter__link" href={REPO_URL} target="_blank" rel="noreferrer noopener">
-          <Icon name="github" size={15} />
-          <span>positron100/CloudBook</span>
         </a>
-      </div>
+        <m.button
+          type="button"
+          className="contact-letter__copy"
+          onClick={copyEmail}
+          aria-label={copied ? "Email address copied" : "Copy email address"}
+          whileHover={reduce ? undefined : { y: -1 }}
+          whileTap={reduce ? undefined : { scale: 0.9 }}
+          transition={spring.snappy}
+        >
+          <AnimatePresence mode="wait" initial={false}>
+            <m.span
+              key={copied ? "done" : "copy"}
+              initial={reduce ? false : { opacity: 0, scale: 0.6 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.6 }}
+              transition={{ duration: 0.16 }}
+            >
+              <Icon name={copied ? "check" : "copy"} size={14} />
+            </m.span>
+          </AnimatePresence>
+        </m.button>
+      </Magnetic>
     </div>
   );
 }

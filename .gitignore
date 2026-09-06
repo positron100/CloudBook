@@ -23,6 +23,7 @@ frontend/dist
 graphify-out/
 **/graphify-out/
 .audit-artifacts/
+**/audit/
 .playwright-mcp/
 **/.playwright-mcp/
 

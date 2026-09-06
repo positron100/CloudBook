@@ -62,15 +62,23 @@ export function NoteToolbar({
   onTag,
 }: NoteToolbarProps) {
   const filters = ["all", ...tags];
+  const searchMagnet = useMagnetic({ strength: 3 });
 
   return (
     <LayoutGroup>
       <div className="note-toolbar" role="search">
-        <m.label className="note-toolbar__search" layout="position">
+        <m.label
+          ref={searchMagnet.ref as Ref<HTMLLabelElement>}
+          className="note-toolbar__search"
+          style={searchMagnet.style}
+          onMouseMove={searchMagnet.onMouseMove}
+          onMouseLeave={searchMagnet.onMouseLeave}
+        >
           <Icon name="search" size={15} className="note-toolbar__search-icon" />
           <Field
             label="Search notes"
             hideLabel
+            lift
             type="search"
             placeholder="Search notes…"
             value={search}

@@ -7,10 +7,6 @@
   align-items: center;
   gap: var(--space-4);
 }
-.contact-letter__aside {
-  align-self: stretch;
-}
-
 /* The card — one element that becomes the paper, the envelope and the
    confirmation. Same stationery as the notebook: warm paper, a bound feel,
    a left margin rule. It shrinks to envelope size about its own centre. */
@@ -401,37 +397,73 @@
   outline-offset: 2px;
 }
 
-/* --- Other ways to reach us --------------------------------------------- */
-.contact-letter__aside {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-3);
+/* --- Reach: the address + copy, one small tactile object -------------------- */
+.contact-letter__reach {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 3px 3px var(--space-2);
+  border: 1px solid color-mix(in oklab, var(--border) 55%, transparent);
+  border-radius: var(--radius-pill);
+  background-color: color-mix(in oklab, var(--float) 62%, transparent);
+  backdrop-filter: blur(12px) saturate(1.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  box-shadow:
+    var(--elev-1),
+    inset 0 1px 0 color-mix(in oklab, var(--key-light) 55%, transparent);
+  transition: box-shadow var(--dur-fast) var(--ease-standard);
+  will-change: transform;
 }
-.contact-letter__link {
+.contact-letter__reach:hover {
+  box-shadow:
+    var(--elev-2),
+    inset 0 1px 0 color-mix(in oklab, var(--key-light) 70%, transparent);
+}
+.contact-letter__addr {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  border: 0;
-  border-radius: var(--radius-control);
-  background: transparent;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
   color: var(--fg-muted);
   font-family: var(--font-sans);
   font-size: var(--text-label);
   text-decoration: none;
-  cursor: pointer;
-  transition: color var(--dur-fast) var(--ease-standard), background-color var(--dur-fast) var(--ease-standard);
+  transition: color var(--dur-fast) var(--ease-standard);
 }
-.contact-letter__link:hover {
+.contact-letter__addr:hover {
   color: var(--fg);
-  background-color: color-mix(in oklab, var(--fg) 5%, transparent);
 }
-.contact-letter__link:focus-visible {
+.contact-letter__addr:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-.contact-letter__link-hint {
+.contact-letter__copy {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
   color: var(--fg-faint);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
+}
+.contact-letter__copy:hover {
+  color: var(--fg-muted);
+  background-color: color-mix(in oklab, var(--fg) 7%, transparent);
+}
+.contact-letter__copy:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.contact-letter__copy:has(.check),
+.contact-letter__copy[aria-label*="copied"] {
+  color: var(--accent);
 }
 
 @media (prefers-reduced-motion: reduce) {
