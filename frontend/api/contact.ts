@@ -1,4 +1,4 @@
-import { handleContact, type ContactPayload } from "./_contact";
+import { handleContact, type ContactPayload } from "./_contact.js";
 
 /**
  * The deployed letter endpoint. Same shape as the Portfolio project's
