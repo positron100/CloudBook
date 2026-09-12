@@ -14,14 +14,22 @@ export interface Toast {
   id: string;
   type: ToastType;
   message: string;
+  /** Optional lead line, set bold above the message for a two-line hierarchy. */
+  title?: string;
 }
+
+interface ToastOptions {
+  title?: string;
+}
+
+type Notify = (message: string, opts?: ToastOptions) => string;
 
 interface ToastApi {
   toasts: Toast[];
-  success: (message: string) => string;
-  error: (message: string) => string;
-  info: (message: string) => string;
-  warning: (message: string) => string;
+  success: Notify;
+  error: Notify;
+  info: Notify;
+  warning: Notify;
   dismiss: (id: string) => void;
 }
 
@@ -49,9 +57,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const push = useCallback(
-    (type: ToastType, message: string) => {
+    (type: ToastType, message: string, opts?: ToastOptions) => {
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-      setToasts((prev) => [...prev, { id, type, message }].slice(-MAX_VISIBLE));
+      setToasts((prev) => [...prev, { id, type, message, title: opts?.title }].slice(-MAX_VISIBLE));
       timers.current.set(id, window.setTimeout(() => dismiss(id), DURATION[type]));
       return id;
     },
@@ -61,10 +69,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const value = useMemo<ToastApi>(
     () => ({
       toasts,
-      success: (m) => push("success", m),
-      error: (m) => push("error", m),
-      info: (m) => push("info", m),
-      warning: (m) => push("warning", m),
+      success: (m, o) => push("success", m, o),
+      error: (m, o) => push("error", m, o),
+      info: (m, o) => push("info", m, o),
+      warning: (m, o) => push("warning", m, o),
       dismiss,
     }),
     [toasts, push, dismiss],

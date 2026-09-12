@@ -1,0 +1,150 @@
+/* Same liquid-glass trigger+panel idiom as SortMenu (translucent float
+   surface, blur + saturation, layered shadow) — sized to sit compactly beside
+   Search and Sort in a single mobile control row. */
+.tag-menu {
+  position: relative;
+  flex: none;
+}
+
+.tag-menu__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--control-h);
+  max-width: 6.5rem;
+  padding: 0 var(--space-2);
+  /* Secondary tier — an interactive utility control, not a major surface
+     (tokens.css classifies Tag/Sort as secondary alongside their panels). */
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-pill);
+  background: var(--glass-sheen), var(--glass-bg-secondary);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--elev-1), var(--glass-highlight);
+  color: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard),
+    translate var(--dur-fast) var(--ease-standard);
+}
+.tag-menu__trigger:hover,
+.tag-menu__trigger:focus-visible {
+  color: var(--fg);
+  background: var(--glass-sheen), var(--glass-bg-secondary-hover);
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--elev-2), var(--glass-highlight-hover);
+  translate: 0 -1px;
+}
+.tag-menu__trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* Pressed — denser, flatter, back to baseline (cancels hover's lift). */
+.tag-menu__trigger:active {
+  background: var(--glass-sheen), var(--glass-bg-secondary-pressed);
+  border-color: var(--glass-border-pressed);
+  box-shadow: var(--elev-1), var(--glass-highlight-pressed);
+  translate: 0 0;
+}
+/* A tag is actively filtering — same accent language as the desktop chips. */
+.tag-menu__trigger[data-active] {
+  color: var(--accent-strong);
+  border-color: color-mix(in oklab, var(--accent) 40%, transparent);
+}
+:root[data-theme="dark"] .tag-menu__trigger[data-active] {
+  color: var(--accent);
+}
+.tag-menu__value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: inherit;
+}
+.tag-menu__caret {
+  flex: none;
+  color: var(--fg-faint);
+  transition: rotate var(--dur-fast) var(--ease-standard);
+}
+.tag-menu__caret[data-open] {
+  rotate: 180deg;
+}
+
+.tag-menu__panel {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  /* Same anchoring strategy as SortMenu's panel — right-edge anchored,
+     extending left. Tag sits mid-row in the compact control group (between
+     Search and Sort); anchoring its own left edge and extending rightward
+     ran the panel off the right side of narrow viewports. */
+  right: 0;
+  /* Deliberately below the floating nav (--z-nav: 40), not --z-overlay
+     (100) — this is a non-modal popover living beside the page content, not
+     a top-level overlay, and must never be able to out-rank the nav even in
+     a stacking context this popup didn't expect to be nested in. */
+  z-index: 30;
+  min-width: 10rem;
+  max-width: 14rem;
+  padding: var(--space-1);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  background: var(--glass-sheen), var(--glass-bg-secondary);
+  backdrop-filter: var(--glass-blur-heavy);
+  -webkit-backdrop-filter: var(--glass-blur-heavy);
+  box-shadow: var(--elev-3), var(--glass-highlight);
+  transform-origin: top right;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+/* Flips upward when the row sits low enough that a downward panel would run
+   off-screen (measured at open time in TagMenu.tsx). */
+.tag-menu__panel[data-placement="up"] {
+  top: auto;
+  bottom: calc(100% + var(--space-2));
+  transform-origin: bottom right;
+}
+
+.tag-menu__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 2.25rem;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
+}
+.tag-menu__item:hover,
+.tag-menu__item:focus-visible {
+  outline: none;
+  background-color: color-mix(in oklab, var(--fg) 6%, transparent);
+  color: var(--fg);
+}
+.tag-menu__item[aria-checked="true"] {
+  color: var(--accent-strong);
+  font-weight: var(--weight-semibold);
+}
+:root[data-theme="dark"] .tag-menu__item[aria-checked="true"] {
+  color: var(--accent);
+}
+
+@media (max-width: 374px) {
+  .tag-menu__trigger {
+    max-width: 5rem;
+    padding-inline: 6px;
+  }
+}

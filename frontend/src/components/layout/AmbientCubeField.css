@@ -1,0 +1,132 @@
+/* The ambient environment — mounted inside DeskBackdrop (position:fixed,
+   z-index: var(--z-base), pointer-events: none already set there).
+
+   Three nested layers per cube, each owning exactly one kind of motion so
+   they can never fight or interrupt each other:
+
+     .ambient-cubes__slot      framer spring — typing target (left %, y vh).
+     .ambient-cubes__parallax  pointer drift — plain CSS var, direct DOM write.
+     .ambient-cubes__cube      the continuous rise — CSS `@keyframes
+                                cube-rise`, linear, infinite, never paused.
+
+   Everything here stays compositor-friendly: only transform/opacity animate. */
+.ambient-cubes {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ambient-cubes__slot {
+  position: absolute;
+  top: 0;
+  width: 0;
+  height: 0;
+  transition: none; /* framer owns left/y directly */
+}
+
+.ambient-cubes__parallax {
+  position: absolute;
+  inset: 0;
+  /* Reads the root's --cube-parallax-x/y (written straight to the DOM in
+     AmbientCubeField.tsx, no React state) scaled by this cube's own depth —
+     nearer cubes drift a little more than far ones. Cheap depth, no
+     cursor-chasing. */
+  transform: translate3d(
+    calc(var(--cube-parallax-x, 0) * 34px * var(--cube-parallax-depth, 1)),
+    calc(var(--cube-parallax-y, 0) * 34px * var(--cube-parallax-depth, 1)),
+    0
+  );
+  transition: transform 0.6s var(--ease-standard, ease-out);
+}
+
+.ambient-cubes__cube {
+  position: absolute;
+  top: var(--cube-spawn-top, 0);
+  left: 50%;
+  translate: -50% -50%;
+  /* Radius is animated in @keyframes cube-rise (square → rounded-square →
+     circle as it climbs) — this is only the pre-animation fallback paint. */
+  border-radius: 4px;
+  /* Blue-violet, warm-compatible, the same accent family as the rest of
+     CloudBook — never a separate palette. Thin architectural geometry at
+     spawn, same as every other CloudBook surface; the circle it morphs into
+     on the way out is the one shape borrowed from Compile Palace's own
+     choreography (see cube-rise) — its movement, adapted to CloudBook's own
+     material, not its visual identity wholesale. */
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklab, var(--accent) 16%, transparent),
+    color-mix(in oklab, var(--accent) 7%, transparent)
+  );
+  /* One key light, upper-left — the same rule as every other shadow in the
+     system (tokens.css). */
+  border: 1px solid color-mix(in oklab, var(--key-light) 44%, transparent);
+  box-shadow:
+    -1px -1px 0 color-mix(in oklab, var(--key-light) 22%, transparent) inset,
+    2px 4px 10px -4px hsl(var(--shadow-hsl) / 0.22);
+  opacity: 0;
+  will-change: transform, opacity;
+  /* Constant-speed rise (Compile Palace's own `float linear infinite`) — a
+     negative delay starts each cube mid-cycle so the field is already in
+     full motion, staggered, on the very first frame instead of all 16
+     cubes launching from spawn together. */
+  animation: cube-rise var(--cube-duration, 30s) linear infinite;
+  animation-delay: var(--cube-delay, 0s);
+}
+
+/* Spawn (invisible) → fade in → rise the full viewport height, rotating once
+   → fade out before the loop restarts, so the reset is never seen. Fixed
+   -100vh travel regardless of --cube-spawn-top (matches the reference): a
+   cube spawned near the top exits almost immediately, one spawned low
+   travels the full height — that unevenness is *why* the field reads as a
+   continuous stream rather than one synchronized wave. */
+@keyframes cube-rise {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0;
+    border-radius: 4px;
+  }
+  6% {
+    opacity: var(--cube-opacity-peak, 0.3);
+  }
+  88% {
+    opacity: var(--cube-opacity-peak, 0.3);
+  }
+  100% {
+    transform: translateY(-100vh) rotate(var(--cube-rotate-end, 360deg));
+    opacity: 0;
+    border-radius: 50%;
+  }
+}
+
+/* Reduced motion: the rise stops outright — parked mid-flight, static, at a
+   visible opacity (not the keyframe's 0%/100% invisible edges) — rather than
+   frozen at an arbitrary invisible instant. Typing can still nudge the slot,
+   just without the spring (see AmbientCubeField.tsx's transition prop). */
+@media (prefers-reduced-motion: reduce) {
+  .ambient-cubes__cube {
+    animation: none;
+    opacity: var(--cube-opacity-peak, 0.3);
+    transform: translateY(-40vh);
+    border-radius: 20%; /* parked ~40% up the rise — mid-morph, not the spawn square */
+  }
+  .ambient-cubes__parallax {
+    transition: none;
+  }
+}
+.ambient-cubes__cube[data-reduce] {
+  animation: none;
+  opacity: var(--cube-opacity-peak, 0.3);
+  transform: translateY(-40vh);
+  border-radius: 20%;
+}
+
+/* Fewer cubes on phones — a lighter workload, not a different choreography:
+   the surviving cubes still spawn/rise/loop/reposition exactly as above.
+   Pure CSS, no resize listener. */
+@media (max-width: 767px) {
+  .ambient-cubes__slot:nth-child(n + 9) {
+    display: none;
+  }
+}

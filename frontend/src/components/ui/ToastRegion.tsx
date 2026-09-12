@@ -1,7 +1,7 @@
 import { AnimatePresence, m } from "framer-motion";
 import { useToast, type ToastType } from "@/context/ToastContext";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { duration, ease } from "@/utils/motion";
+import { duration, ease, spring } from "@/utils/motion";
 import { Icon, type IconName } from "./Icon";
 import { IconButton } from "./IconButton";
 import "./ToastRegion.css";
@@ -14,9 +14,12 @@ const ICON: Record<ToastType, IconName> = {
 };
 
 /**
- * Renders the toast stack. Mounted once in AppShell. `aria-live` announces new
- * toasts without stealing focus; errors are assertive. Each toast auto-dismisses
- * (see ToastContext) and has a manual close. Reduced motion → no slide/fade.
+ * The toast stack — a small stack of paper notes on the corner of the desk.
+ * Mounted once in AppShell. `aria-live` announces new toasts without stealing
+ * focus; errors are assertive. Each toast auto-dismisses (see ToastContext)
+ * and has a manual close. The surface, elevation and motion match the rest of
+ * CloudBook: warm float paper, a restrained shadow, a compact tinted glyph
+ * chip, and a spring entrance with one small settle. Reduced motion → fade only.
  */
 export function ToastRegion() {
   const { toasts, dismiss } = useToast();
@@ -31,17 +34,23 @@ export function ToastRegion() {
             className={`toast toast--${toast.type}`}
             role={toast.type === "error" ? "alert" : "status"}
             aria-live={toast.type === "error" ? "assertive" : "polite"}
-            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.98 }}
+            layout={reduceMotion ? false : "position"}
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 10, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={
               reduceMotion
                 ? { opacity: 0 }
-                : { opacity: 0, x: 16, transition: { duration: duration.fast, ease: ease.exit } }
+                : { opacity: 0, x: 12, scale: 0.98, transition: { duration: duration.fast, ease: ease.exit } }
             }
-            transition={{ duration: duration.base, ease: ease.entrance }}
+            transition={reduceMotion ? { duration: duration.fast } : spring.settle}
           >
-            <Icon name={ICON[toast.type]} size={18} className="toast__icon" />
-            <span className="toast__message">{toast.message}</span>
+            <span className="toast__glyph" aria-hidden="true">
+              <Icon name={ICON[toast.type]} size={15} />
+            </span>
+            <div className="toast__text">
+              {toast.title && <p className="toast__title">{toast.title}</p>}
+              <p className="toast__message">{toast.message}</p>
+            </div>
             <IconButton
               icon="x"
               label="Dismiss"

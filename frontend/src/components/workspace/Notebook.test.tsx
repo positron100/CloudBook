@@ -22,6 +22,7 @@ function mount(over: Partial<NotesContextValue> = {}, onCreated = vi.fn()) {
     status: "ready",
     error: null,
     getNotes: vi.fn(),
+    refreshIfStale: vi.fn(),
     addNote: vi.fn(() => ({ note: created, committed: Promise.resolve(created) })),
     editNote: vi.fn(() => ({ committed: Promise.resolve() })),
     deleteNote: vi.fn(() => ({ committed: Promise.resolve() })),

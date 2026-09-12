@@ -13,6 +13,28 @@
   backdrop-filter: blur(calc(var(--scrim-o) * 2px));
 }
 
+/* Mobile: a deliberate composition, not a raw viewport centre. The page sits
+   where it would if the (now-hidden-behind-the-scrim) top nav and floating
+   bottom pill were still the desk's frame — a fixed top gap sized off the
+   real nav height, a bottom gap sized off the real floating pill + its own
+   safe-area inset (the same tokens AppShell uses for the same reason), so the
+   page reads as placed on the desk rather than centred by the screen. */
+@media (max-width: 767px) {
+  .note-editor {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: calc(var(--nav-height) + var(--space-4)) var(--space-4)
+      calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + var(--space-4));
+    overflow-y: auto;
+  }
+  .note-editor__page {
+    width: 100%;
+    max-width: 30rem;
+    flex: none;
+  }
+}
+
 /* The page — the diary's own paper, at full size. `.diary__page` supplies the
    binding, rules, tag margin; these rules add the editor's size and footer. */
 .note-editor__page {
@@ -23,6 +45,9 @@
   cursor: auto;
   will-change: transform;
   backface-visibility: hidden;
+  /* Belt-and-braces: nothing — the counter-scaled text, the footer, the tag
+     panel — may ever paint past the sheet's own edge while it folds. */
+  overflow: hidden;
 }
 /* While folding back to the card, the page is in motion — no text selection,
    no stray clicks landing on the shrinking inputs. */
@@ -42,57 +67,19 @@
       hsl(var(--shadow-hsl) / calc(0.32 + var(--depth, 0) * 0.06)),
     inset 0 1px 0 color-mix(in oklab, var(--key-light) 80%, transparent);
 }
-/* Binding cross-fade on close: the diary's spiral gives way to the torn page's
-   punched-hole trace. `--bind-morph` 0→1 across stage 2. The trace is counter-
-   scaled (`--sx`/`--sy` carry the page's live scale) so it stays card-sized and
-   lines up with the real card's binding at the handoff. */
-.note-editor__page .diary__binding {
-  opacity: calc(1 - var(--bind-morph, 0));
-}
-.note-editor__page .note-card__tear,
-.note-editor__page .note-card__binding {
-  transform-origin: top center;
-  scale: calc(1 / max(var(--sx, 1), 0.05)) calc(1 / max(var(--sy, 1), 0.05));
-}
-.note-editor__page .note-card__tear {
-  opacity: var(--bind-morph, 0);
-}
-.note-editor__page .note-card__binding {
-  opacity: calc(var(--bind-morph, 0) * 0.46);
-}
+/* The torn top edge stays attached to the sheet at every size.
+   `--sx` / `--sy` carry the page's live scale.
 
-/* Fold crease — a hairline plus the soft shadow the upper flap casts as the
-   two halves fold toward each other. It rides upward (`--seam-y`, %) through
-   the close and fades out by stage 3. */
-.note-editor__page::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: calc(var(--seam-y, 34) * 1%);
-  height: 1.5px;
-  translate: 0 -0.75px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    hsl(var(--shadow-hsl) / 0.26) 14%,
-    hsl(var(--shadow-hsl) / 0.26) 86%,
-    transparent
-  );
-  opacity: var(--seam, 0);
-  pointer-events: none;
-}
-.note-editor__page::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: calc(var(--seam-y, 34) * 1%);
-  height: 40px;
-  translate: 0 -40px;
-  background: linear-gradient(to bottom, transparent, hsl(var(--shadow-hsl) / 0.13));
-  opacity: var(--seam, 0);
-  pointer-events: none;
+   Y: counter-scaled, so the strip's on-screen thickness holds at ~8px while the
+      page's height collapses to card height — it arrives matching the card's
+      own edge instead of a 2px sliver.
+   X: NOT counter-scaled. Counter-scaling X was the glitch: it rendered the
+      strip at the page's full 640px width while the sheet had shrunk to 275px,
+      so the edge visibly detached and hung off both sides mid-fold. Letting X
+      ride keeps the strip exactly as wide as the sheet it belongs to. */
+.note-editor__page .note-card__tear {
+  transform-origin: top center;
+  scale: 1 calc(1 / max(var(--sy, 1), 0.05));
 }
 
 /* The printed matter rides more stably than the paper — it counters the paper's
@@ -122,15 +109,53 @@
   margin-top: var(--space-4);
   padding-top: var(--space-3);
   border-top: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  /* Tag is the flexible control and can genuinely need more room than a
+     narrow viewport has beside Discard+Save (a long tag name must show in
+     full, never ellipsis) — wrap is the designed fallback for that case:
+     the actions group (kept together via its own flex:none) drops to a
+     second line as one unit, rather than the tag ever truncating. On every
+     normal width all three still sit on one line. */
   flex-wrap: wrap;
+}
+/* Tag, Discard/Close and Save share one geometry — same height, radius and
+   horizontal rhythm as the rest of CloudBook's control family (the same
+   --control-h/--radius-control the toolbar and nav pills use), so the row
+   reads as one coherent object instead of one large control beside two small
+   ones. Scoped to this row only — Notebook's own TagSelect (composer, not a
+   3-up group) keeps its wider default footprint. */
+.note-editor__foot .tag-select__trigger,
+.note-editor__foot .tag-select__custom {
+  height: var(--control-h);
+  /* The flexible control — grows to fit its full tag text rather than
+     capping and ellipsis-ing it; Discard/Save (flex: none) keep their own
+     compact width and the tag takes whatever room is left on the line. */
+  flex: 1 1 auto;
+  min-width: 6rem;
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-control);
+}
+/* The full tag name must always be readable in this row — no ellipsis. The
+   trigger above is flex: 1 and un-capped, so it grows to fit; this only
+   stops the browser's own default truncation from kicking in first. */
+.note-editor__foot .tag-select__value {
+  overflow: visible;
+  text-overflow: unset;
 }
 .note-editor__actions {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  flex: none;
+}
+.note-editor__cancel,
+.note-editor__save {
+  height: var(--control-h);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .note-editor__cancel {
-  padding: var(--space-2) var(--space-3);
+  padding-inline: var(--space-4);
   border: 0;
   border-radius: var(--radius-control);
   background: transparent;
@@ -145,7 +170,7 @@
   color: var(--fg);
 }
 .note-editor__save {
-  padding: var(--space-2) var(--space-5);
+  padding-inline: var(--space-4);
   border: 0;
   border-radius: var(--radius-control);
   background-image:
@@ -174,8 +199,12 @@
   outline-offset: 2px;
 }
 
-@media (max-width: 640px) {
-  .note-editor__foot {
-    justify-content: flex-end;
+/* Very narrow phones: tighten the compact buttons' own padding — Tag itself
+   is never capped (see above), so on a genuinely long tag the wrap fallback
+   is what activates here, not truncation. */
+@media (max-width: 374px) {
+  .note-editor__cancel,
+  .note-editor__save {
+    padding-inline: var(--space-3);
   }
 }

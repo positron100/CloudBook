@@ -24,7 +24,7 @@ export function RegisterForm() {
     try {
       // Backend contract: { name, email, password } — cPassword is client-only.
       await signup(form.name, form.email, form.password);
-      toast.success("Account created — log in to continue");
+      toast.success("Your desk is ready — log in to open it.", { title: "Account created" });
       navigate("/login");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not create account");

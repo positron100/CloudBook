@@ -1,43 +1,596 @@
+/* Profile = two objects on the same desk. Same materials, lighting and ring
+   binder as the diary and the notes: a notebook (identity object, closed:
+   cover with initials, open: name/id/joined/count) and, to its right, a
+   loose information page (notebook stats + recent thoughts). The cover
+   turns on its spine with the same curve as a section page-turn. */
+
 .profile {
-  max-width: 40rem;
-  margin-inline: auto;
-  padding-block: var(--space-6);
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: var(--space-5);
 }
-.profile__title {
-  margin: 0 0 var(--space-5);
-  font-family: var(--font-display);
-  font-size: var(--text-h1);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-tight);
+
+/* Carries the notebook's own footprint — the side page is absolutely
+   positioned off this box, so it can never change the notebook's centred
+   position, however wide or tall the page's content gets. The width lives
+   here (not on .profile-book) on purpose: .profile-book's own `width: 100%`
+   needs a definite containing-block width to resolve against, and an
+   `inline-block` shrink-to-fit wrapper with no explicit width can't supply
+   one — that combination collapsed the notebook to near-nothing. */
+.profile-desk {
+  position: relative;
+  /* One authoritative sheet geometry — the notebook page and the loose side
+     page both size themselves off these two variables, nowhere else. Change
+     the composition's page size here and both objects move together; they
+     can never drift apart into "book page" + "dashboard panel" again. */
+  --page-ratio-num: 1.6;
+  /* The vh term keeps the composition's total height inside the viewport on
+     short screens — 200px is the nav + section padding + a small buffer —
+     so the page never has to grow past what actually fits, and the whole
+     section never needs its own scrollbar when the content could fit. */
+  --page-w: clamp(19rem, min(23vw, calc((100vh - 200px) / var(--page-ratio-num))), 22rem);
+  --page-ratio: 1 / var(--page-ratio-num);
+  /* Shared heading tier — the notebook's name and the side page's title read
+     as the same publication's headings, not two different type scales. */
+  --page-heading: clamp(1.3rem, 1rem + 1.4vw, 1.75rem);
 }
-.profile__card {
-  padding: var(--space-5);
+
+.profile-book {
+  position: relative;
+  width: var(--page-w);
+  aspect-ratio: var(--page-ratio);
+  perspective: 1700px;
 }
-.profile__muted {
-  margin: 0;
+/* the spine — a soft shadow down the hinge, always visible */
+.profile-book::before {
+  content: "";
+  position: absolute;
+  left: -2px;
+  top: 2%;
+  bottom: 2%;
+  width: 16px;
+  border-radius: 3px;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--shadow-hsl) / 0.3),
+    hsl(var(--shadow-hsl) / 0.06) 60%,
+    transparent
+  );
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* --- the page inside -------------------------------------------------------- */
+.profile-book__inside {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  border-radius: var(--radius-xs) var(--radius-md) var(--radius-md) var(--radius-xs);
+  background-color: var(--sheet-raised);
+  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  box-shadow:
+    var(--elev-2),
+    inset 0 1px 0 color-mix(in oklab, var(--key-light) 85%, transparent);
+}
+/* the outer edge — a faint stack of page ends */
+.profile-book__inside::after {
+  content: "";
+  position: absolute;
+  right: -4px;
+  top: 4%;
+  bottom: 4%;
+  width: 4px;
+  border-radius: 0 2px 2px 0;
+  background: repeating-linear-gradient(
+    to right,
+    color-mix(in oklab, var(--border) 55%, transparent) 0 1px,
+    transparent 1px 2px
+  );
+  pointer-events: none;
+}
+
+.profile-book__rings {
+  position: absolute;
+  left: -0.41rem;
+  top: 1.8rem;
+  bottom: 1.8rem;
+  height: auto;
+}
+
+.profile-book__page {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(1.6rem, 5vw, 2.6rem) clamp(1.5rem, 5vw, 2.4rem) clamp(1.4rem, 4vw, 2rem)
+    clamp(1.9rem, 6vw, 2.8rem);
+  overflow: auto;
+}
+
+.profile-book__muted {
+  margin: auto;
   color: var(--fg-muted);
+  font-size: var(--text-label);
 }
-.profile__list {
-  display: grid;
+
+.profile-book__eyebrow {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-meta);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.profile-book__identity {
+  display: flex;
+  align-items: center;
   gap: var(--space-4);
-  margin: 0;
 }
-.profile__list div {
+/* A printed stamp, not an avatar — a fine outer ring standing off the disc
+   (the way an ink stamp's rim sits proud of its face), restrained size. */
+.profile-book__badge {
+  flex: none;
+  width: 2.3rem;
+  height: 2.3rem;
   display: grid;
-  gap: 2px;
+  place-items: center;
+  border-radius: 50%;
+  background-color: var(--accent);
+  color: var(--sheet);
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.05em;
+  box-shadow:
+    var(--elev-1),
+    0 0 0 3px color-mix(in oklab, var(--accent) 18%, transparent);
 }
-.profile__list dt {
+.profile-book__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--page-heading);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--fg);
+  text-wrap: balance;
+}
+.profile-book__rule {
+  display: block;
+  height: 1px;
+  margin: var(--space-4) 0 var(--space-5);
+  background: linear-gradient(
+    to right,
+    color-mix(in oklab, var(--fg) 24%, transparent),
+    transparent 72%
+  );
+}
+
+.profile-book__facts {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+.profile-book__facts > div {
+  display: grid;
+  gap: 3px;
+  padding-block: var(--space-3);
+  border-top: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+}
+.profile-book__facts > div:last-child {
+  border-bottom: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+}
+.profile-book__facts dt {
   font-size: var(--text-meta);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: 0.1em;
   color: var(--fg-faint);
 }
-.profile__list dd {
+.profile-book__facts dd {
   margin: 0;
-  font-size: var(--text-body);
+  font-size: var(--text-label);
+  color: var(--fg);
+  line-height: var(--leading-snug);
+}
+.profile-book__mono {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  word-break: break-all;
+  color: var(--fg-muted);
+}
+
+.profile-book__count {
+  margin: var(--space-5) 0 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+.profile-book__count-num {
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 1.3rem + 2.2vw, 2.6rem);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  letter-spacing: var(--tracking-tight);
+  color: var(--accent);
+}
+.profile-book__count-label {
+  font-size: var(--text-meta);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-faint);
+}
+
+.profile-book__close {
+  margin-top: var(--space-6);
+  align-self: flex-start;
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--fg-muted);
+  font: inherit;
+  font-size: var(--text-meta);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
+}
+.profile-book__close:hover {
+  color: var(--fg);
+  border-color: var(--border-strong);
+  background-color: color-mix(in oklab, var(--float) 60%, transparent);
+}
+.profile-book__close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* --- the cover ------------------------------------------------------------- */
+.profile-book__cover {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  padding: 0;
+  border: 1px solid color-mix(in oklab, var(--border) 78%, transparent);
+  border-radius: var(--radius-xs) var(--radius-md) var(--radius-md) var(--radius-xs);
+  background-color: var(--sheet);
+  box-shadow:
+    var(--elev-3),
+    inset 0 1px 0 color-mix(in oklab, var(--key-light) 78%, transparent);
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.profile-book__cover:disabled {
+  cursor: default;
+}
+.profile-book__cover:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.profile-book__face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  justify-items: center;
+  padding: clamp(1.8rem, 6vw, 2.8rem) var(--space-5);
+  backface-visibility: hidden;
+}
+.profile-book__brand {
+  font-family: var(--font-display);
+  font-size: var(--text-meta);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+.profile-book__band {
+  position: absolute;
+  left: 50%;
+  top: clamp(3.2rem, 10vw, 4.6rem);
+  width: 2.5rem;
+  height: 2px;
+  translate: -50% 0;
+  border-radius: 1px;
+  background-color: var(--accent);
+  opacity: 0.85;
+}
+.profile-book__initials {
+  align-self: center;
+  font-family: var(--font-display);
+  font-size: clamp(2.7rem, 1.5rem + 6.7vw, 4.1rem);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.04em;
+  color: var(--fg);
+  text-shadow:
+    0 1px 0 color-mix(in oklab, var(--key-light) 70%, transparent),
+    0 -1px 1px hsl(var(--shadow-hsl) / 0.18);
+}
+.profile-book__hint {
+  font-size: var(--text-meta);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--fg-faint);
+  opacity: 0.75;
+  transition: opacity var(--dur-base) var(--ease-standard);
+}
+.profile-book__cover:hover .profile-book__hint {
+  opacity: 1;
+  color: var(--fg-muted);
+}
+
+/* the underside of the cover — the inside-front endpaper, seen once turned.
+   Warm paper with a soft vignette and a shadow deepening toward the spine. */
+.profile-book__back {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(120% 80% at 30% 20%, color-mix(in oklab, var(--key-light) 40%, transparent), transparent 60%),
+    linear-gradient(to left, hsl(var(--shadow-hsl) / 0.16), transparent 32%),
+    var(--sheet);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--border) 45%, transparent),
+    inset 0 1px 0 color-mix(in oklab, var(--key-light) 60%, transparent);
+  transform: rotateY(180deg);
+  backface-visibility: hidden;
+}
+
+/* the crease/turn shade — opacity keyframed by the component during the turn */
+.profile-book__shade {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    hsl(var(--shadow-hsl) / 0.42) 0%,
+    hsl(var(--shadow-hsl) / 0.14) 38%,
+    transparent 70%
+  );
+}
+
+/* --- reduced motion: the cover simply clears (no turn); the page is fully
+   present underneath, so no content is lost ------------------------------- */
+.profile-book.is-reduced.is-open .profile-book__cover {
+  pointer-events: none;
+}
+
+/* =========================================================================
+   THE RIGHT PAGE — a second, loose sheet on the same desk. Same paper,
+   lighting and shadow language as the notebook, but its own flat page (no
+   ring binder, no cover) so it reads as a separate object, not a second
+   notebook. Positioned off the notebook's own untransformed box (see
+   .profile-desk) so it can never move or resize the notebook.
+   ========================================================================= */
+.profile-side {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  translate: 0 -50%;
+  margin-left: clamp(2rem, 5vw, 4rem);
+  /* Same sheet geometry as the notebook page — width, height and aspect
+     ratio all derive from .profile-desk's shared vars, so the two pages
+     align as a spread. */
+  width: var(--page-w);
+  aspect-ratio: var(--page-ratio);
+  padding: clamp(1.3rem, 2.2vw, 1.8rem) clamp(1.7rem, 3vw, 2.4rem);
+  border-radius: var(--radius-md);
+  background-color: var(--sheet-raised);
+  border: 1px solid color-mix(in oklab, var(--border) 55%, transparent);
+  box-shadow:
+    var(--elev-2),
+    inset 0 1px 0 color-mix(in oklab, var(--key-light) 80%, transparent);
+  overflow: auto;
+}
+.profile-side[aria-hidden="true"] {
+  pointer-events: none;
+}
+
+.profile-side__eyebrow {
+  margin: 0;
+  font-size: var(--text-meta);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.profile-side__title {
+  margin: 0.15em 0 var(--space-4);
+  font-family: var(--font-display);
+  font-size: var(--page-heading);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
   color: var(--fg);
 }
-.profile__mono {
-  font-family: var(--font-mono);
+
+.profile-side__section-label {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-meta);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+.profile-side__section-label + .profile-side__section-label {
+  margin-top: var(--space-4);
+}
+.profile-side__stats + .profile-side__section-label {
+  margin-top: var(--space-4);
+}
+
+/* a printed-ledger line, not a stat card */
+.profile-side__stats {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+.profile-side__stats > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: 0.45rem;
+  border-bottom: 1px dotted color-mix(in oklab, var(--border) 65%, transparent);
+}
+.profile-side__stats dt {
+  /* Same caption tier as the notebook's own facts (dt), not the body/value
+     tier — the two pages read as one printed system. */
+  font-size: var(--text-meta);
+  color: var(--fg-muted);
+}
+.profile-side__stats dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-semibold);
+  color: var(--fg);
+}
+
+/* recent thoughts: small paper slips, not dashboard cards */
+.profile-side__recent {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.profile-side__recent-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 0;
+  border-left: 2px solid color-mix(in oklab, var(--accent) 55%, transparent);
+  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+  /* Subtle tier — a loose slip on the (physical) side page, not the page
+     itself. Its transparency is meant to be barely perceptible at rest
+     (shared glass tokens); hover lifts it toward secondary's weight rather
+     than primary's — a picked-up slip should read as more present, not
+     suddenly the most see-through thing on the page. */
+  background: var(--glass-sheen), var(--glass-bg-subtle);
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background-color var(--dur-fast) var(--ease-standard),
+    translate var(--dur-fast) var(--ease-standard);
+}
+.profile-side__recent-item:hover {
+  background: var(--glass-sheen), var(--glass-bg-secondary);
+  translate: 2px 0;
+}
+.profile-side__recent-item:active {
+  background: var(--glass-sheen), var(--glass-bg-subtle-pressed);
+  translate: 0 0;
+}
+.profile-side__recent-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+/* "This is the one I picked" — set as a direct DOM write right before the
+   page-turn leaf's snapshot is taken, so the selection rides along into the
+   fold instead of vanishing the instant the route changes. */
+.profile-side__recent-item--selected {
+  background-color: color-mix(in oklab, var(--accent) 20%, transparent);
+  border-left-color: var(--accent);
+}
+.profile-side__recent-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: var(--text-label);
+  color: var(--fg);
+}
+.profile-side__recent-time {
+  flex: none;
+  font-size: var(--text-meta);
+  color: var(--fg-faint);
+}
+.profile-side__empty {
+  margin: 0;
+  font-size: var(--text-label);
+  color: var(--fg-faint);
+}
+.profile-side__link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.profile-side__link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* --- tablet: same side-by-side composition, tighter gap + narrower page -- */
+@media (max-width: 1279px) and (min-width: 900px) {
+  .profile-desk {
+    --page-w: clamp(16rem, min(21vw, calc((100vh - 200px) / var(--page-ratio-num))), 19rem);
+  }
+  .profile-side {
+    margin-left: clamp(1.25rem, 3vw, 2rem);
+    padding: clamp(1.2rem, 2vw, 1.6rem);
+  }
+}
+
+/* --- phone/small tablet: stack instead of side-by-side. The notebook keeps
+   its own geometry; the page becomes a normal-flow block underneath it,
+   full width up to the notebook's own cap, so the two still read as one
+   desk rather than being forced into a cramped two-column squeeze. -------- */
+@media (max-width: 899px) {
+  .profile {
+    padding-inline: var(--space-4);
+  }
+  .profile-desk {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    --page-w: min(24rem, 100%);
+  }
+  .profile-side {
+    position: static;
+    translate: none;
+    margin: var(--space-5) 0 0;
+    /* Stacked, not a spread — the identical-dimensions rule is a two-page-
+       layout rule. Here the side page keeps the same width but reverts to a
+       natural content height instead of matching the notebook's tall ratio,
+       so it doesn't carry a page's worth of empty space under a short list. */
+    aspect-ratio: auto;
+    max-height: none;
+  }
+}
+
+/* --- phone: the cover lifts away instead of turning in 3D ---------------- */
+@media (max-width: 640px) {
+  .profile-book {
+    aspect-ratio: 1 / 1.4;
+    perspective: none;
+  }
+  .profile-book__cover {
+    transform-origin: center top;
+    transform-style: flat;
+  }
+  .profile-book__back {
+    display: none;
+  }
+  .profile-book__initials {
+    font-size: clamp(3rem, 18vw, 4.2rem);
+  }
 }

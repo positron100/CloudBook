@@ -6,12 +6,13 @@
   min-height: 100dvh;
 }
 
+/* Full-width band. The centred content column + padding live on .route-stage
+   (see RouteTransition.css) so every section shares one stable frame. */
 .app-shell__main {
   flex: 1;
   width: 100%;
-  max-width: var(--container-wide);
-  margin-inline: auto;
-  padding-block: var(--space-6);
+  display: flex;
+  flex-direction: column;
 }
 
 /* Room for the fixed bottom nav on mobile so content never hides behind it. */

@@ -1,0 +1,53 @@
+/* Ring binder — the one binding mechanism shared by every bound sheet in
+   CloudBook: the diary page, each note card, and the Profile notebook. A row
+   (or, with --vertical, a column) of small refined rings clamping the sheet.
+   Small and physical; never the focus.
+
+   The parent element owns position (which edge, insets); this file owns only
+   the ring look and the flow. */
+.ring-binding {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+}
+.ring-binding--vertical {
+  flex-direction: column;
+}
+
+.ring-binding__ring {
+  flex: none;
+  width: 0.4rem;
+  height: 0.82rem;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--fg-faint) 74%, transparent),
+    color-mix(in oklab, var(--fg-faint) 36%, transparent)
+  );
+  box-shadow:
+    inset 0 -2px 2px hsl(var(--shadow-hsl) / 0.24),
+    inset 0 1px 1px color-mix(in oklab, var(--key-light) 70%, transparent),
+    0 1px 1px hsl(var(--shadow-hsl) / 0.12);
+}
+.ring-binding--vertical .ring-binding__ring {
+  width: 0.82rem;
+  height: 0.4rem;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--fg-faint) 74%, transparent),
+    color-mix(in oklab, var(--fg-faint) 36%, transparent)
+  );
+  box-shadow:
+    inset -2px 0 2px hsl(var(--shadow-hsl) / 0.24),
+    inset 1px 0 1px color-mix(in oklab, var(--key-light) 70%, transparent),
+    0 1px 1px hsl(var(--shadow-hsl) / 0.12);
+}
+
+:root[data-theme="dark"] .ring-binding__ring {
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--fg-faint) 90%, transparent),
+    color-mix(in oklab, var(--fg-faint) 46%, transparent)
+  );
+}

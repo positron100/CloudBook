@@ -5,6 +5,11 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { spring } from "@/utils/motion";
 import "./NavIndicator.css";
 
+interface Geo {
+  x: number;
+  width: number;
+}
+
 interface NavIndicatorProps {
   /** The nav list element containing the links. */
   containerRef: RefObject<HTMLElement | null>;
@@ -18,6 +23,10 @@ interface NavIndicatorProps {
    * no target. Used by the hover halo so it reads as light passing over the
    * glass rather than popping in. */
   fade?: boolean;
+  /** A live position from the drag-to-turn gesture. While non-null the pill
+   * sits here (no spring — it is tracking the pointer); when it clears, the
+   * pill springs from wherever it was onto the measured target. */
+  override?: Geo | null;
 }
 
 /**
@@ -33,15 +42,22 @@ export function NavIndicator({
   targetSelector = "[aria-current='page']",
   className,
   fade = false,
+  override = null,
 }: NavIndicatorProps) {
   const reduceMotion = useReducedMotion();
-  const [rect, setRect] = useState<{ x: number; width: number } | null>(null);
-  const lastRect = useRef<{ x: number; width: number } | null>(null);
+  const [rect, setRect] = useState<Geo | null>(null);
+  const lastRect = useRef<Geo | null>(null);
   if (rect) lastRect.current = rect;
 
   useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+
+    // Items observed for resize so far, beyond `container` itself — see why
+    // below. Re-observing an already-observed element is a defined no-op, so
+    // this only needs to grow, never reconcile.
+    const observedSlots = new Set<Element>();
+    let ro: ResizeObserver | null = null;
 
     const measure = () => {
       const target = container.querySelector<HTMLElement>(targetSelector);
@@ -49,22 +65,59 @@ export function NavIndicator({
         setRect(null);
         return;
       }
-      setRect({ x: target.offsetLeft, width: target.offsetWidth });
+      // Measure the item's slot (the direct child of the list) — its offset
+      // geometry, not `getBoundingClientRect()`. A newly-added nav item (e.g.
+      // Home, bubbling in right after login) mounts with a framer entrance
+      // transform (`scale: 0.55 -> 1`) on this exact element, and this effect
+      // runs via useLayoutEffect — synchronously after the DOM commit but
+      // before that animation has ticked forward from its initial value. A
+      // rect read then would capture the box at 55% scale. `offsetWidth` /
+      // `offsetLeft` are pure layout-box metrics: transform never touches
+      // them, so the very first measurement is correct regardless of where
+      // the entrance animation happens to be.
+      let slot: HTMLElement = target;
+      while (slot.parentElement && slot.parentElement !== container) {
+        slot = slot.parentElement;
+      }
+      // The nav items share the list's width equally (flex: 1 each). Two
+      // things change a slot's *own* rendered width without ever changing
+      // the *container's* box, so watching only `container` misses them:
+      // (1) a sibling item mid-exit (AnimatePresence keeps it mounted through
+      // its own spring) still claims a share of the flex row until it
+      // actually unmounts, after which the remaining items — this one
+      // included — widen to fill the space; (2) this item's text reflowing
+      // once the self-hosted Poppins weight it needs finishes loading (it
+      // isn't requested until first laid out, which for the *active* item's
+      // bold weight can be the moment it becomes current). Observing the
+      // slot itself catches both — and every other such case — generically.
+      if (ro && !observedSlots.has(slot)) {
+        observedSlots.add(slot);
+        ro.observe(slot);
+      }
+      // offsetLeft is already relative to the (unscrolled) content flow — the
+      // indicator is positioned absolute *inside* this same scrolling box, so
+      // no separate scrollLeft correction is needed (unlike a viewport rect).
+      let left = 0;
+      for (let el: HTMLElement | null = slot; el && el !== container; el = el.offsetParent as HTMLElement | null) {
+        left += el.offsetLeft;
+      }
+      setRect({ x: left, width: slot.offsetWidth });
     };
 
-    measure();
     if (typeof ResizeObserver === "undefined") {
+      measure();
       window.addEventListener("resize", measure);
       return () => window.removeEventListener("resize", measure);
     }
-    const ro = new ResizeObserver(measure);
+    ro = new ResizeObserver(measure);
     ro.observe(container);
-    return () => ro.disconnect();
+    measure();
+    return () => ro?.disconnect();
   }, [containerRef, activeKey, targetSelector]);
 
-  if (!rect && !(fade && lastRect.current)) return null;
+  if (!rect && !override && !(fade && lastRect.current)) return null;
 
-  const geo = rect ?? lastRect.current!;
+  const geo = override || rect || lastRect.current!;
 
   return (
     <m.div
@@ -73,7 +126,7 @@ export function NavIndicator({
       initial={false}
       animate={{ x: geo.x, width: geo.width, opacity: fade ? (rect ? 1 : 0) : 1 }}
       transition={
-        reduceMotion
+        reduceMotion || override
           ? { duration: 0 }
           : { ...spring.indicator, opacity: { duration: 0.16, ease: "easeOut" } }
       }

@@ -64,6 +64,7 @@ export default function WorkspacePreview() {
       status: forced === "loading" ? "loading" : forced === "error" ? "error" : "ready",
       error: forced === "error" ? "Preview error" : null,
       getNotes: async () => {},
+      refreshIfStale: () => {},
       addNote,
       editNote,
       deleteNote,

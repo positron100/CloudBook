@@ -20,6 +20,12 @@ html {
   /* Section scroll (anchors, scrollIntoView, the arrow-key nav) clears the
      floating pill instead of tucking content under it. */
   scroll-padding-top: calc(var(--nav-height) + 2 * var(--space-3));
+  /* Kills the default mobile-browser blue/grey tap-highlight rectangle
+     site-wide. This is a touch-only artifact — it has nothing to do with
+     keyboard accessibility, which every interactive control already handles
+     itself via its own `:focus-visible` treatment (never plain `outline:
+     none`), left completely untouched here. */
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Scrollbar is visually hidden site-wide — scrolling itself is untouched

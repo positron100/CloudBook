@@ -168,11 +168,23 @@ describe("signup flow", () => {
 });
 
 describe("profile", () => {
-  it("shows the authenticated user's details", async () => {
+  it("shows the authenticated user's details in the notebook", async () => {
     localStorage.setItem("token", "valid.jwt");
     window.history.pushState({}, "", "/profile");
     render(<App />);
-    expect(await screen.findByRole("heading", { name: /^profile$/i })).toBeInTheDocument();
-    expect(screen.getByText("m@example.com")).toBeInTheDocument();
+    // the cover carries the user's initials; open it to read the page inside
+    const cover = await screen.findByRole("button", { name: /open notebook/i });
+    await userEvent.click(cover);
+    // the notebook itself: simple identity — name, id, joined, note count
+    expect(await screen.findByRole("heading", { name: /^mukul$/i })).toBeInTheDocument();
+    expect(screen.getByText("u1")).toBeInTheDocument();
+    expect(screen.queryByText("m@example.com")).toBeNull(); // dropped from the notebook page
+    expect(screen.getByText(/notes on the desk/i)).toBeInTheDocument();
+    // the separate right-side information page — richer stats + recent thoughts
+    expect(screen.getByRole("heading", { name: /your notebook/i })).toBeInTheDocument();
+    expect(screen.getByText("About your notebook")).toBeInTheDocument();
+    expect(screen.getByText("January 2024")).toBeInTheDocument(); // Joined, from mockUser.date
+    // no notes in this test's store — the tasteful empty state, not a blank gap
+    expect(screen.getByText(/no thoughts captured yet/i)).toBeInTheDocument();
   });
 });

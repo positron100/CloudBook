@@ -7,7 +7,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { ToastProvider } from "@/context/ToastContext";
 import { RequireAuth } from "@/routes/RequireAuth";
 import { RouteTransitionProvider } from "@/components/transitions/RouteTransition";
-import { IntroOrchestrator } from "@/components/intro/IntroOrchestrator";
+import { OpeningGate } from "@/components/intro/OpeningGate";
 import { AppShell } from "@/components/layout/AppShell";
 import Home from "@/components/Home";
 import About from "@/components/About";
@@ -80,7 +80,7 @@ function App() {
                   </Routes>
                 </AppShell>
                 </RouteTransitionProvider>
-                <IntroOrchestrator />
+                <OpeningGate />
               </Router>
             </NotesProvider>
           </AuthProvider>

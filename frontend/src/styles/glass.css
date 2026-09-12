@@ -1,0 +1,37 @@
+/* ===========================================================================
+   CloudBook glass primitives — three weights built on the tokens in
+   tokens.css. Apply one of these classes instead of hand-rolling
+   background/backdrop-filter/border/shadow on a new floating surface.
+   Existing surfaces (nav, search, tag/sort) reference the same custom
+   properties directly rather than these classes, since they already carry
+   their own layout/shape rules — the tokens are the actual shared system;
+   these classes are the quick path for anything new.
+   =========================================================================== */
+
+.glass-primary,
+.glass-secondary,
+.glass-subtle {
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: var(--border-width) solid var(--glass-border);
+  box-shadow: var(--elev-2), var(--glass-highlight);
+}
+
+.glass-primary {
+  background: var(--glass-sheen), var(--glass-bg-primary);
+}
+
+.glass-secondary {
+  background: var(--glass-sheen), var(--glass-bg-secondary);
+  -webkit-backdrop-filter: var(--glass-blur-heavy);
+  backdrop-filter: var(--glass-blur-heavy);
+  box-shadow: var(--elev-3), var(--glass-highlight);
+}
+
+.glass-subtle {
+  background: var(--glass-sheen), var(--glass-bg-subtle);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
+  backdrop-filter: var(--glass-blur-soft);
+  border-color: var(--glass-border-subtle);
+  box-shadow: var(--elev-1), var(--glass-highlight);
+}

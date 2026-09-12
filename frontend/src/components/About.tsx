@@ -10,7 +10,7 @@ import "./About.css";
 export default function About() {
   return (
     <div className="about">
-      <section id="contact" data-section className="about__scene" aria-label="About and contact">
+      <section id="contact" data-section className="about__scene" aria-label="Contact us">
         <div className="about__grid">
           <Reveal as="div" onView={false} className="about__intro">
             <p className="about__eyebrow">CloudBook</p>

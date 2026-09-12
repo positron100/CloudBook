@@ -16,3 +16,19 @@
   color: var(--fg-faint);
   font-size: var(--text-meta);
 }
+/* Sits on the same baseline slot as .ws-header__sub so the title block keeps
+   its height while the count resolves. */
+.ws-header__sub-skeleton {
+  margin-top: 0.28rem;
+  margin-bottom: 0.28rem;
+}
+
+/* A quiet inline suffix — never its own element, never shifts layout. Plain
+   "syncing" reuses the same faint tone as the count; the stale/offline case
+   gets a touch more warmth so it reads as worth noticing without alarming. */
+.ws-header__sync {
+  color: var(--fg-faint);
+}
+.ws-header__sync[data-warn] {
+  color: var(--warning, var(--fg-muted));
+}

@@ -16,6 +16,9 @@ interface NoteCardProps {
   deleting?: boolean;
   /** A sibling is open — recede slightly. */
   dimmed?: boolean;
+  /** A brief moment of recognition right before this note opens — "this is
+   *  the one I selected" — between Home settling and the editor unfold. */
+  highlighted?: boolean;
 }
 
 const HOVER_SPRING = { type: "spring", stiffness: 320, damping: 28 } as const;
@@ -36,6 +39,7 @@ export function NoteCard({
   onDelete,
   deleting,
   dimmed,
+  highlighted,
 }: NoteCardProps) {
   const reduce = useReducedMotion();
   const tilt = useNoteTilt();
@@ -51,9 +55,11 @@ export function NoteCard({
 
   const lifted = open
     ? { y: -14, scale: 1.03, rotate: 0 }
-    : dimmed
-      ? { scale: 0.985, opacity: 0.62 }
-      : { y: 0, scale: 1, opacity: 1 };
+    : highlighted
+      ? { y: -6, scale: 1.02, rotate: 0 }
+      : dimmed
+        ? { scale: 0.985, opacity: 0.62 }
+        : { y: 0, scale: 1, opacity: 1 };
 
   return (
     <m.article
@@ -61,6 +67,7 @@ export function NoteCard({
       data-note-id={note._id}
       data-open={open || undefined}
       data-dimmed={dimmed || undefined}
+      data-highlighted={highlighted || undefined}
       aria-busy={deleting || undefined}
     >
       <m.div
@@ -68,14 +75,13 @@ export function NoteCard({
         onPointerMove={handlePointerMove}
         onPointerLeave={tilt.handlers.onPointerLeave}
         animate={lifted}
-        whileHover={reduce || open || dimmed ? undefined : { y: -8, scale: 1.015 }}
+        whileHover={reduce || open || dimmed || highlighted ? undefined : { y: -8, scale: 1.015 }}
         whileTap={reduce ? undefined : { scale: 0.99 }}
         transition={HOVER_SPRING}
         style={tilt.style}
       >
         <span className="note-card__light" aria-hidden="true" />
         <span className="note-card__tear" aria-hidden="true" />
-        <span className="note-card__binding" aria-hidden="true" />
 
         <button
           type="button"

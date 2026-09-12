@@ -23,16 +23,15 @@
   margin-inline: auto;
   padding: 0 var(--space-2) 0 var(--space-4);
   border-radius: var(--radius-pill);
-  /* Glass over the desk: translucent float surface, a modest blur and a touch
-     of saturation so what shows through stays warm. Depth is the layered
-     shadow plus an inner top-edge light — not a bright border. */
-  background-color: color-mix(in oklab, var(--float) 72%, transparent);
-  backdrop-filter: blur(12px) saturate(1.4);
-  -webkit-backdrop-filter: blur(12px) saturate(1.4);
-  border: var(--border-width) solid color-mix(in oklab, var(--border) 55%, transparent);
-  box-shadow:
-    var(--elev-2),
-    inset 0 1px 0 color-mix(in oklab, var(--key-light) 55%, transparent);
+  /* The shared CloudBook glass system (tokens.css) — translucent enough that
+     the ambient cube field behind the desk actually reads through it. The
+     sheen is a soft diagonal highlight from the same upper-left key light as
+     every other shadow in the system, layered ahead of the tier colour. */
+  background: var(--glass-sheen), var(--glass-bg-primary);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--border-width) solid var(--glass-border);
+  box-shadow: var(--elev-2), var(--glass-highlight);
 }
 
 /* The one "glass" cue: a hairline of light along the top edge. */
@@ -85,16 +84,25 @@
   list-style: none;
   margin: 0;
   padding: 0;
+  /* horizontal movement turns the page (useDragTurn); vertical stays the
+     browser's scroll */
+  touch-action: pan-y;
 }
 .topnav__item {
   position: static;
 }
 .topnav__magnet {
   display: inline-flex;
+  touch-action: pan-y;
 }
 .topnav__link {
   --mx: 50%;
   --my: 50%;
+  /* a press-drag that starts on a link is the page-turn gesture, not a text
+     selection or a native link drag */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-drag: none;
   position: relative;
   z-index: 1;
   isolation: isolate;
@@ -166,8 +174,8 @@
   color: var(--fg-muted);
   transition:
     color var(--dur-fast) var(--ease-standard),
-    background-color var(--dur-base) var(--ease-standard),
-    box-shadow var(--dur-base) var(--ease-standard);
+    background-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
 }
 .topnav__ctrl.icon-btn::before {
   content: "";
@@ -183,25 +191,28 @@
   );
   transition: opacity var(--dur-base) var(--ease-standard);
 }
-.topnav__ctrl.icon-btn:hover:not(:disabled) {
+.topnav__ctrl.icon-btn:hover:not(:disabled),
+.topnav__ctrl.icon-btn:focus-visible:not(:disabled) {
   color: var(--fg);
-  background-color: color-mix(in oklab, var(--float) 58%, transparent);
-  -webkit-backdrop-filter: blur(8px) saturate(1.3);
-  backdrop-filter: blur(8px) saturate(1.3);
-  box-shadow:
-    var(--elev-1),
-    inset 0 1px 0 color-mix(in oklab, var(--key-light) 42%, transparent);
+  background: var(--glass-sheen), var(--glass-bg-secondary-hover);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--elev-1), var(--glass-highlight-hover);
 }
-.topnav__ctrl.icon-btn:hover:not(:disabled)::before {
+.topnav__ctrl.icon-btn:hover:not(:disabled)::before,
+.topnav__ctrl.icon-btn:focus-visible:not(:disabled)::before {
   opacity: 1;
 }
 .topnav__actions .btn--ghost:hover:not(:disabled) {
-  background-color: color-mix(in oklab, var(--float) 58%, transparent);
-  -webkit-backdrop-filter: blur(8px) saturate(1.3);
-  backdrop-filter: blur(8px) saturate(1.3);
-  box-shadow:
-    var(--elev-1),
-    inset 0 1px 0 color-mix(in oklab, var(--key-light) 42%, transparent);
+  background: var(--glass-sheen), var(--glass-bg-secondary-hover);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--elev-1), var(--glass-highlight-hover);
+}
+.topnav__ctrl.icon-btn:active:not(:disabled),
+.topnav__actions .btn--ghost:active:not(:disabled) {
+  background: var(--glass-sheen), var(--glass-bg-secondary-pressed);
+  box-shadow: var(--glass-highlight-pressed);
 }
 
 /* Below md the primary nav moves to <BottomNav>; the pill keeps just the brand

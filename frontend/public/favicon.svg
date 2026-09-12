@@ -1,0 +1,10 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CloudBook">
+  <rect width="32" height="32" rx="7" fill="#5b53d6"/>
+  <g fill="none" stroke="#fdfbf6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <!-- open book — two page parallelograms meeting at the spine, the same
+         monoline construction as the opening animation, trimmed for small sizes -->
+    <path d="M15.2 23 L5 21 L5 9.4 L15.2 11.4 Z"/>
+    <path d="M16.8 23 L27 21 L27 9.4 L16.8 11.4 Z"/>
+    <path d="M16 11.8 L16 22.6"/>
+  </g>
+</svg>

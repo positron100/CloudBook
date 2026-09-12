@@ -83,7 +83,11 @@
   color: var(--fg-muted);
 }
 
-/* Ghost example text typed over an empty field. Visual only. */
+/* Ghost example text typed over an empty field. Visual only — but it must
+   start exactly where real typed text will, or the two visibly disagree the
+   moment the user types (and, with a leading icon, the default position sits
+   right under the icon). Mirrors .field__control--icon-start's own
+   padding-left below. */
 .field__preview {
   position: absolute;
   left: var(--space-4);
@@ -99,6 +103,10 @@
   font-size: var(--text-body);
   line-height: 1;
   pointer-events: none;
+}
+.field__control-wrap:has(.field__icon--start) .field__preview {
+  left: 2.6rem;
+  max-width: calc(100% - 2.6rem - 2.75rem);
 }
 .field__preview-caret {
   display: inline-block;

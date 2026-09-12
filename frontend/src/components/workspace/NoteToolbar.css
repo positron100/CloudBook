@@ -75,17 +75,79 @@
   outline-offset: 2px;
 }
 
+.note-toolbar__sort {
+  flex: none;
+}
+
+/* The mobile compact row — hidden on desktop, where Search/chips/Sort above
+   show instead. Three matching icon-first glass controls, one row, always. */
+.note-toolbar__compact {
+  display: none;
+}
+
 @media (max-width: 767px) {
-  .note-toolbar {
+  .note-toolbar__search,
+  .note-toolbar__tags,
+  .note-toolbar__sort {
+    display: none;
+  }
+  .note-toolbar__compact {
+    display: flex;
+    align-items: center;
     width: 100%;
+    gap: var(--space-2);
   }
-  .note-toolbar__search {
-    flex-basis: 100%;
-    order: -1;
-  }
-  .note-toolbar__tags {
-    flex: 1 1 auto;
-    order: 0;
-    justify-content: flex-start;
-  }
+}
+
+/* Search itself is the self-contained SearchPill component (SearchPill.css)
+   — one persistent element, not a swapped icon-button/Field pair. Its slot
+   is the row's only flexible child — grows to fill whatever room the fixed
+   actions group (below) doesn't occupy, via plain CSS, not a layout
+   animation, so there is nothing to keep in sync frame-by-frame. */
+.note-toolbar__compact-search-slot {
+  flex: 1 1 auto;
+  min-width: var(--control-h);
+  display: flex;
+}
+/* Tag + Sort: a fixed-width group, never a participant in Search's width
+   change. Its own width never varies (both stay icon-only always), so its X
+   position — container width minus this group's constant width — is a plain
+   CSS arithmetic result, identical whether Search is open or closed. Nothing
+   here is wrapped in a motion/layout element. */
+.note-toolbar__compact-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Tag and Sort inside the compact row: the same TagMenu/SortMenu components,
+   just pared down to a matching icon-only circle — no label, no caret, so
+   nothing is ever clipped. Their dropdown panels are untouched. */
+.note-toolbar__compact .tag-menu__trigger,
+.note-toolbar__compact .sort-menu__trigger {
+  width: var(--control-h);
+  max-width: none;
+  height: var(--control-h);
+  padding: 0;
+  justify-content: center;
+  gap: 0;
+}
+.note-toolbar__compact .tag-menu__value,
+.note-toolbar__compact .sort-menu__value,
+.note-toolbar__compact .tag-menu__caret,
+.note-toolbar__compact .sort-menu__caret {
+  display: none;
+}
+/* Sort is the row's rightmost icon — its panel must open anchored to its own
+   right edge (extending left) regardless of viewport width, or it runs off
+   the screen. SortMenu's own <640px "anchor left" rule assumes a wider
+   toolbar where Sort isn't flush with the edge; override it here. */
+.note-toolbar__compact .sort-menu__panel {
+  left: auto;
+  right: 0;
+  transform-origin: top right;
+}
+.note-toolbar__compact .sort-menu__panel[data-placement="up"] {
+  transform-origin: bottom right;
 }

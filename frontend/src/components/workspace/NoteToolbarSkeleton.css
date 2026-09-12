@@ -1,0 +1,19 @@
+.note-toolbar--skeleton {
+  justify-content: flex-end;
+}
+.note-toolbar__search-skeleton {
+  flex: 0 1 15rem;
+  min-width: 9rem;
+}
+.note-toolbar--skeleton .note-toolbar__tags {
+  display: flex;
+  gap: 6px;
+  flex: 0 1 auto;
+  justify-content: flex-end;
+}
+
+@media (max-width: 767px) {
+  .note-toolbar__search-skeleton {
+    flex-basis: 100%;
+  }
+}

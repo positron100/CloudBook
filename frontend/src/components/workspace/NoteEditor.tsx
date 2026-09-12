@@ -1,20 +1,35 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 import { m, useMotionValue, useTransform, animate } from "framer-motion";
 import type { Note } from "@shared/types";
-import { Icon } from "@/components/ui";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { noteEl, noteSlotPose } from "@/lib/noteGeometry";
+import { DEFAULT_TAG } from "@/lib/tags";
+import { DeskOverlay } from "./DeskOverlay";
+import { TagSelect } from "./TagSelect";
 import "./NoteEditor.css";
 
 interface NoteEditorProps {
   note: Note;
-  /** The card's on-screen rect — the page unfolds out of it and folds back. */
+  /** The card's settled box — the page unfolds out of it and folds back. */
   from: DOMRect;
   onClose: () => void;
+  /**
+   * The page and the card are the same sheet, so only one of them may be on
+   * screen at a time. The editor drives that: it takes the card over once the
+   * page has grown big enough to cover it (and immediately if a close starts
+   * first), and hands it back the frame its geometry has resolved onto the
+   * card — at which point the page cross-fades out over it. Same paper, same
+   * rect, so all the eye sees is the writing resolving.
+   */
+  onOccupyCard?: (occupied: boolean) => void;
   onSave: (id: string, title: string, description: string, tag: string) => void;
 }
-
-const escId = (v: string) =>
-  typeof window !== "undefined" && window.CSS?.escape ? window.CSS.escape(v) : v;
 
 /** Close easing — soft in, controlled glide, soft settle, no bounce. Shared by
  *  every geometry channel in stage 2 so they arrive at the card together. */
@@ -32,7 +47,13 @@ const CLOSE_EASE: [number, number, number, number] = [0.32, 0, 0.24, 1];
  * the page reaches card geometry and unmounts there is nothing to fade — the
  * handoff is a no-op. Save / Discard / Close / Escape / scrim all run it.
  */
-export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
+export function NoteEditor({
+  note,
+  from,
+  onClose,
+  onOccupyCard,
+  onSave,
+}: NoteEditorProps) {
   const reduce = useReducedMotion();
   const [form, setForm] = useState({
     title: note.title,
@@ -44,71 +65,117 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
   const pageRef = useRef<HTMLDivElement>(null);
   const closingRef = useRef(false);
 
-  const invalid = form.title.trim().length < 3 || form.description.trim().length < 3;
+  const invalid =
+    form.title.trim().length < 3 || form.description.trim().length < 3;
   const dirty =
-    form.title !== note.title || form.description !== note.description || form.tag !== note.tag;
+    form.title !== note.title ||
+    form.description !== note.description ||
+    form.tag !== note.tag;
 
-  // The uniform transform that makes the centred page overlay a card rect — the
-  // open pose. (Close computes its own non-uniform pose against the live card.)
-  const poseFor = (r: DOMRect) => {
-    if (typeof window === "undefined" || r.width === 0) return { x: 0, y: 0, scale: 0.92 };
-    const pageW = Math.min(640, window.innerWidth * 0.92);
+  /** The page's own untransformed box, measured once before the first paint.
+   *  Everything is expressed against this rather than against an assumed
+   *  viewport centre, so nothing depends on how the page happens to be laid
+   *  out. */
+  const restRef = useRef<DOMRect | null>(null);
+
+  /** The transform that lays the page exactly over a card box — same width,
+   *  same height, same centre. Non-uniform on purpose: a card is short and a
+   *  page is tall, and the two must coincide *exactly* or the moment one
+   *  becomes the other is visible. */
+  const cardPose = (r: DOMRect) => {
+    const rest = restRef.current;
+    if (!rest || !rest.width || !rest.height) return { x: 0, y: 0, sx: 1, sy: 1 };
     return {
-      x: r.left + r.width / 2 - window.innerWidth / 2,
-      y: r.top + r.height / 2 - window.innerHeight / 2,
-      scale: Math.max(0.18, r.width / pageW),
+      x: r.left + r.width / 2 - (rest.left + rest.width / 2),
+      y: r.top + r.height / 2 - (rest.top + rest.height / 2),
+      sx: Math.max(0.05, r.width / rest.width),
+      sy: Math.max(0.05, r.height / rest.height),
     };
   };
-  const start = useMemo(() => poseFor(from), [from]);
 
-  const x = useMotionValue(reduce ? 0 : start.x);
-  const y = useMotionValue(reduce ? 0 : start.y);
-  // scaleX / scaleY move independently on close so notebook-page proportions
-  // (tall) morph back into note-card proportions (short) as it shrinks.
-  const sx = useMotionValue(reduce ? 1 : start.scale);
-  const sy = useMotionValue(reduce ? 1 : start.scale);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  // scaleX / scaleY move independently so notebook-page proportions (tall)
+  // morph into note-card proportions (short) at both ends of the transition.
+  const sx = useMotionValue(1);
+  const sy = useMotionValue(1);
   const skewX = useMotionValue(0);
   const rotate = useMotionValue(0);
-  // Close-only: a subtle 3D bend, a deepening-then-settling shadow (`depth`),
-  // and a fold seam that surfaces while the paper folds (`seam`).
+  // Close-only: a brief pick-up tilt and a deepening-then-settling shadow
+  // (`depth`). No fold plane — the sheet stays one continuous surface.
   const rotateX = useMotionValue(0);
   const depth = useMotionValue(0);
-  const seam = useMotionValue(0);
-  // The fold crease's vertical position (%). It rides upward as the lower half
-  // folds under the top during the close.
-  const seamY = useMotionValue(50);
-  // 0 = the diary's full spiral binding (open / at rest); 1 = the torn page's
-  // punched-hole trace. Cross-faded as the page folds back to a card so the
-  // binding detail *reforms* rather than popping in at the handoff.
-  const bindMorph = useMotionValue(0);
-  const pageOpacity = useMotionValue(reduce ? 0 : 0.55);
+  const pageOpacity = useMotionValue(reduce ? 1 : 0.62);
   const scrim = useMotionValue(0);
+  // The writing on the sheet. It fades out over the back half of the fold so
+  // the page arrives as blank paper and the card's own ink resolves in during
+  // the hand-off — the alternative is watching card-sized text be squashed by
+  // the page's non-uniform scale.
+  const ink = useMotionValue(1);
+  const occupied = useRef(false);
+  const occupy = (v: boolean) => {
+    if (occupied.current === v) return;
+    occupied.current = v;
+    onOccupyCard?.(v);
+  };
 
   // The paper deforms; the content rides more stably. Content counters the
   // paper's non-uniform squash (so text scales uniformly, never stretched) and
   // leans back against most of the skew — it reads as printed matter on a sheet
   // that is folding, not a scaled rectangle.
-  const contentScaleY = useTransform([sx, sy] as [typeof sx, typeof sy], ([a, b]: number[]) =>
-    b > 0.02 ? Math.min(1.3, 1 + (a / b - 1) * 0.5) : 1,
+  const contentScaleY = useTransform(
+    [sx, sy] as [typeof sx, typeof sy],
+    ([a, b]: number[]) => (b > 0.02 ? Math.min(1.3, 1 + (a / b - 1) * 0.5) : 1),
   );
   const contentSkew = useTransform(skewX, (v) => -v * 0.55);
 
-  // Unfold on mount (unchanged — the open animation is not part of this task).
-  useEffect(() => {
+  // Unfold on mount. The page is laid *exactly* over the card box first (before
+  // the first paint, so nothing flashes), then released to its resting size.
+  // The card itself is suppressed for the editor's whole life, so this is a
+  // continuation of the same sheet rather than a second copy of it.
+  useLayoutEffect(() => {
     if (reduce) {
-      pageOpacity.set(1);
       scrim.set(1);
+      occupy(true);
       return;
     }
-    const spring = { type: "spring", stiffness: 300, damping: 30, mass: 0.9 } as const;
+    const page = pageRef.current;
+    // Measured once, ever — not on every effect run. StrictMode double-invokes
+    // this layout effect in dev; the `.set()` calls below commit the initial
+    // transform to the DOM synchronously, so a second `getBoundingClientRect()`
+    // would read the *already-shrunk* box back as "rest", collapsing the pose
+    // math toward identity on the second pass and stomping the real unfold.
+    if (page && restRef.current === null) restRef.current = page.getBoundingClientRect();
+    if (page && from.width > 0) {
+      const s = cardPose(from);
+      x.set(s.x);
+      y.set(s.y);
+      sx.set(s.sx);
+      sy.set(s.sy);
+    }
+    const spring = {
+      type: "spring",
+      stiffness: 300,
+      damping: 30,
+      mass: 0.9,
+    } as const;
     animate(x, 0, spring);
     animate(y, 0, spring);
     animate(sx, 1, spring);
     animate(sy, 1, spring);
     animate(pageOpacity, 1, { duration: 0.16 });
     animate(scrim, 1, { duration: 0.22 });
+    // The card is left in place until the page has grown past it — the page
+    // starts *exactly* over the card and only ever gets bigger, so it is
+    // covered the whole time; suppressing it early would just flash a gap.
+    const grown = window.setTimeout(() => occupy(true), 220);
+    return () => window.clearTimeout(grown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Whatever happens, never leave the pile with a permanently missing card.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => () => occupy(false), []);
 
   /**
    * Fold the page back onto the card as one physical transformation, in three
@@ -132,6 +199,8 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
     if (closingRef.current) return;
     closingRef.current = true;
     setClosing(true);
+    // From here the page owns the card outright, however early the close came.
+    occupy(true);
     // Reduced motion, or the test runner (no rAF budget for the fold) — hand
     // off immediately. The fold choreography is exercised in the browser.
     if (reduce || import.meta.env.MODE === "test") {
@@ -139,63 +208,58 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
       return;
     }
 
-    const el =
-      typeof document !== "undefined"
-        ? (document.querySelector(`[data-note-id="${escId(note._id)}"]`) as HTMLElement | null)
-        : null;
-    const page = pageRef.current;
-    const W0 = page?.offsetWidth || Math.min(640, window.innerWidth * 0.92);
-    const H0 = page?.offsetHeight || W0 * 0.85;
+    const el = noteEl(note._id);
+    const H0 = restRef.current?.height || pageRef.current?.offsetHeight || 1;
 
-    let target: { x: number; y: number; sx: number; sy: number; rotate: number };
-    const live = el?.getBoundingClientRect();
-    if (el && live && live.width > 0) {
-      // AABB centre is rotation-invariant; offset size is the true card box.
-      const cardW = el.offsetWidth || live.width;
-      const cardH = el.offsetHeight || live.height;
-      const syT = Math.max(0.05, cardH / H0);
-      target = {
-        x: live.left + live.width / 2 - window.innerWidth / 2,
-        // origin sits at 34% vertically, so scaling contracts the sheet toward
-        // its top edge; this term keeps the shrinking page centred on the card.
-        y: live.top + live.height / 2 - window.innerHeight / 2 + 0.16 * H0 * (1 - syT),
-        sx: Math.max(0.05, cardW / W0),
-        sy: syT,
-        rotate: parseFloat(getComputedStyle(el).rotate) || 0,
-      };
-    } else {
-      target = { x: start.x, y: start.y, sx: start.scale, sy: start.scale, rotate: 0 };
-    }
+    // The destination is the card's *settled* slot, read from layout — the pile
+    // may still be gliding from an optimistic edit or a re-sort, and a live
+    // bounding rect would hand us a pose that has moved on by the time we
+    // arrive. Rotation is the card's resting tilt so the sheet lands as it.
+    const slot = noteSlotPose(note._id);
+    const base = cardPose(
+      slot ? new DOMRect(slot.left, slot.top, slot.width, slot.height) : from,
+    );
+    const target = {
+      ...base,
+      // the origin sits at 34% vertically, so the scale contracts the sheet
+      // toward its top edge; this term keeps the shrinking page on the card
+      y: base.y + 0.16 * H0 * (1 - base.sy),
+      rotate: slot?.rotate ?? 0,
+    };
 
     const run = async () => {
-      // Stage 1 — establish the fold plane (~150ms). Barely smaller: a small
-      // lift, a 3D bend, the shadow deepens, the crease appears near mid-height.
+      // Stage 1 — pick up (~130ms). A small lift and a slight physical tilt,
+      // the shadow deepens. The sheet is one continuous surface throughout —
+      // no fold plane, no crease.
       await Promise.all([
         animate(y, y.get() - 7, { duration: 0.13, ease: [0.3, 0, 0.3, 1] }),
-        animate(sx, 1 - (1 - target.sx) * 0.07, { duration: 0.15, ease: "easeOut" }),
-        animate(sy, 1 - (1 - target.sy) * 0.13, { duration: 0.15, ease: "easeOut" }),
-        animate(skewX, -1.6, { duration: 0.15, ease: "easeOut" }),
-        animate(rotateX, 8, { duration: 0.15, ease: "easeOut" }),
+        animate(sx, 1 - (1 - target.sx) * 0.07, {
+          duration: 0.15,
+          ease: "easeOut",
+        }),
+        animate(sy, 1 - (1 - target.sy) * 0.13, {
+          duration: 0.15,
+          ease: "easeOut",
+        }),
+        animate(skewX, -1, { duration: 0.15, ease: "easeOut" }),
+        animate(rotateX, 5, { duration: 0.15, ease: "easeOut" }),
         animate(depth, 1, { duration: 0.13 }),
-        animate(seam, 0.9, { duration: 0.14 }),
-        animate(seamY, 43, { duration: 0.15, ease: "easeOut" }),
       ]);
 
-      // Stage 2 — contract around the fold while travelling (~430ms). The two
-      // halves compress toward the crease (rotateX tents up then flattens, the
-      // seam rides upward), geometry resolves on one shared ease, and the
-      // crease fades out by the end so stage 3 has nothing left to do.
+      // Stage 2 — contract while travelling (~430ms). The tilt straightens out
+      // (monotonically, never re-bending) as width, height, x, y and rotation
+      // all resolve toward the card together on one shared ease.
       const D = 0.43;
-      animate(rotateX, [rotateX.get(), 11, 0], {
-        duration: D,
-        times: [0, 0.32, 1],
-        ease: [0.4, 0, 0.2, 1],
-      });
+      animate(rotateX, 0, { duration: D * 0.55, ease: "easeOut" });
       animate(depth, 0.12, { duration: D, ease: "easeOut" });
-      animate(seam, [seam.get(), 1, 0], { duration: D, times: [0, 0.42, 1], ease: "easeInOut" });
-      animate(seamY, 26, { duration: D, ease: "easeInOut" });
-      animate(skewX, [-1.6, 0.5, 0.1], { duration: D, ease: "easeInOut" });
-      animate(bindMorph, 1, { duration: D, ease: "easeOut" });
+      animate(skewX, [-1, 0.3, 0], { duration: D, ease: "easeInOut" });
+      // the writing lets go over the back half — by the time the sheet is
+      // card-sized it is blank paper, ready for the card's ink to resolve in
+      animate(ink, 0, {
+        duration: D * 0.62,
+        delay: D * 0.3,
+        ease: [0.4, 0, 0.7, 1],
+      });
       animate(scrim, 0, { duration: D * 0.96 });
       await Promise.all([
         animate(x, target.x, { duration: D, ease: CLOSE_EASE }),
@@ -209,18 +273,20 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
         animate(rotate, target.rotate, { duration: D, ease: CLOSE_EASE }),
       ]);
 
-      // Stage 3 — the boring last 15%. The page is already the card's exact
-      // size, rotation and position; it just settles. The destination card
-      // gives a 1px "received" dip. Then the editor unmounts.
+      // Stage 3 — the hand-off (~180ms). The page is already at the card's
+      // exact size, rotation and position, and blank. The card is revealed
+      // underneath it in this frame and the page cross-fades away over it:
+      // same paper, same rect, so all that is visible is the writing arriving.
+      occupy(false);
       if (el) {
         el.setAttribute("data-received", "");
         window.setTimeout(() => el.removeAttribute("data-received"), 320);
       }
       await Promise.all([
         animate(skewX, 0, { duration: 0.14, ease: "easeOut" }),
-        animate(seam, 0, { duration: 0.1 }),
         animate(depth, 0, { duration: 0.14 }),
         animate(y, target.y, { duration: 0.14, ease: "easeOut" }),
+        animate(pageOpacity, 0, { duration: 0.18, ease: "easeInOut" }),
       ]);
       then();
     };
@@ -228,7 +294,10 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
   };
 
   useEffect(() => {
-    const id = window.setTimeout(() => titleRef.current?.focus(), reduce ? 0 : 240);
+    const id = window.setTimeout(
+      () => titleRef.current?.focus(),
+      reduce ? 0 : 240,
+    );
     return () => window.clearTimeout(id);
   }, [reduce]);
 
@@ -246,104 +315,113 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
 
   const save = () => {
     if (invalid) return;
-    onSave(note._id, form.title.trim(), form.description.trim(), form.tag.trim() || "General");
+    onSave(
+      note._id,
+      form.title.trim(),
+      form.description.trim(),
+      form.tag.trim() || DEFAULT_TAG,
+    );
     foldAway(onClose);
   };
 
   return (
-    <m.div
-      className="note-editor"
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Edit note: ${note.title}`}
-      data-closing={closing || undefined}
-      style={{ "--scrim-o": scrim } as React.CSSProperties}
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) foldAway(onClose);
-      }}
-    >
+    <DeskOverlay>
       <m.div
-        ref={pageRef}
-        className="note-editor__page diary__page"
-        style={{
-          x,
-          y,
-          scaleX: sx,
-          scaleY: sy,
-          skewX,
-          rotate,
-          rotateX,
-          opacity: pageOpacity,
-          // Centre while opening; on close (transforms are at rest the instant
-          // `closing` flips, so no visual jump) the origin moves to the upper
-          // third and the sheet contracts toward its top edge.
-          transformOrigin: closing ? "50% 34%" : "center",
-          ["--depth" as string]: depth,
-          ["--seam" as string]: seam,
-          ["--seam-y" as string]: seamY,
-          ["--bind-morph" as string]: bindMorph,
-          ["--sx" as string]: sx,
-          ["--sy" as string]: sy,
+        className="note-editor"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Edit note: ${note.title}`}
+        data-closing={closing || undefined}
+        style={{ "--scrim-o": scrim } as React.CSSProperties}
+        onMouseDown={(e) => {
+          if (e.target === e.currentTarget) foldAway(onClose);
         }}
       >
-        <span className="diary__binding" aria-hidden="true">
-          {Array.from({ length: 9 }).map((_, i) => (
-            <span key={i} className="diary__ring" />
-          ))}
-        </span>
-        {/* The torn-page binding trace — hidden until the close fold reforms it. */}
-        <span className="note-card__tear" aria-hidden="true" />
-        <span className="note-card__binding" aria-hidden="true" />
-
         <m.div
-          className="note-editor__content"
-          style={{ scaleY: contentScaleY, skewX: contentSkew, transformOrigin: "top center" }}
+          ref={pageRef}
+          className="note-editor__page diary__page"
+          style={{
+            x,
+            y,
+            scaleX: sx,
+            scaleY: sy,
+            skewX,
+            rotate,
+            rotateX,
+            opacity: pageOpacity,
+            // Centre while opening; on close (transforms are at rest the instant
+            // `closing` flips, so no visual jump) the origin moves to the upper
+            // third and the sheet contracts toward its top edge.
+            transformOrigin: closing ? "50% 34%" : "center",
+            ["--depth" as string]: depth,
+            ["--sx" as string]: sx,
+            ["--sy" as string]: sy,
+          }}
         >
-          <label className="sr-only" htmlFor="editor-title">
-            Title
-          </label>
-          <input
-            ref={titleRef}
-            id="editor-title"
-            name="title"
-            className="diary__title"
-            placeholder="Untitled"
-            value={form.title}
-            onChange={onChange}
-            autoComplete="off"
-          />
+          {/* The sheet's torn top edge. It is the same edge the card carries and
+            it stays attached the whole way: counter-scaled on Y only (so its
+            thickness holds at ~8px while the page's height collapses) with the
+            scallop pitch divided by the page's X scale (so the notches stay
+            12px on screen and match the card's exactly at the hand-off). */}
+          <span className="note-card__tear" aria-hidden="true" />
 
-          <label className="sr-only" htmlFor="editor-body">
-            Note
-          </label>
-          <textarea
-            id="editor-body"
-            name="description"
-            className="diary__body note-editor__body"
-            placeholder="Write it down…"
-            value={form.description}
-            onChange={onChange}
-          />
+          {/* Counter-scaled: title + body only. This is the part that needs
+            to stay readable — never uniformly scaled — while the paper folds.
+            The footer below is deliberately NOT part of this wrapper: it used
+            to be a child here, and the same counter-scale that keeps text
+            legible was blowing it up past the shrinking page's own edges —
+            the "controls floating off the paper" bug. Un-scaled, the footer
+            shrinks at exactly the paper's own rate and can never exceed it. */}
+          <m.div
+            className="note-editor__content"
+            style={{
+              scaleY: contentScaleY,
+              skewX: contentSkew,
+              opacity: ink,
+              transformOrigin: "top center",
+            }}
+          >
+            <label className="sr-only" htmlFor="editor-title">
+              Title
+            </label>
+            <input
+              ref={titleRef}
+              id="editor-title"
+              name="title"
+              className="diary__title"
+              placeholder="Untitled"
+              value={form.title}
+              onChange={onChange}
+              autoComplete="off"
+            />
 
-          <div className="note-editor__foot">
-            <span className="diary__tag-field">
-              <Icon name="sparkle" size={13} className="diary__tag-icon" />
-              <label className="sr-only" htmlFor="editor-tag">
-                Tag
-              </label>
-              <input
-                id="editor-tag"
-                name="tag"
-                className="diary__tag-input"
-                placeholder="Add a tag"
-                value={form.tag}
-                onChange={onChange}
-                autoComplete="off"
-              />
-            </span>
+            <label className="sr-only" htmlFor="editor-body">
+              Note
+            </label>
+            <textarea
+              id="editor-body"
+              name="description"
+              className="diary__body note-editor__body"
+              placeholder="Write it down…"
+              value={form.description}
+              onChange={onChange}
+            />
+          </m.div>
+
+          <m.div className="note-editor__foot" style={{ opacity: ink }}>
+            <TagSelect
+              id="editor-tag"
+              label="Tag"
+              value={form.tag}
+              onChange={(tag) => setForm((f) => ({ ...f, tag }))}
+            />
 
             <span className="note-editor__actions">
-              <button type="button" className="note-editor__cancel" onClick={() => foldAway(onClose)}>
+              <button
+                type="button"
+                className="note-editor__cancel"
+                onClick={() => foldAway(onClose)}
+              >
                 {dirty ? "Discard" : "Close"}
               </button>
               <button
@@ -352,12 +430,12 @@ export function NoteEditor({ note, from, onClose, onSave }: NoteEditorProps) {
                 onClick={save}
                 disabled={invalid || !dirty}
               >
-                Save changes
+                Save
               </button>
             </span>
-          </div>
+          </m.div>
         </m.div>
       </m.div>
-    </m.div>
+    </DeskOverlay>
   );
 }

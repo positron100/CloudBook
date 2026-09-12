@@ -1,24 +1,20 @@
 .about {
   width: 100%;
+  display: flex;
 }
 
-/* This route drives its own full-viewport rhythm — drop the shell's centred
-   column + block padding. */
-.app-shell__main:has(.about) {
-  max-width: none;
-  padding-block: 0;
-}
-
+/* Fill the shared frame and centre the hero within it — same column as every
+   other section, so switching to/from About does not move the page. */
 .about__scene {
+  flex: 1;
+  width: 100%;
   display: grid;
   place-items: center;
-  min-height: calc(100svh - var(--nav-height) - 2 * var(--space-3));
-  padding: var(--space-7) var(--pad-page-inline);
+  padding-block: var(--space-4);
 }
 
 .about__grid {
   width: 100%;
-  max-width: var(--container-max);
   display: grid;
   gap: var(--space-8);
   align-items: center;

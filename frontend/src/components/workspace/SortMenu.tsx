@@ -11,6 +11,10 @@ interface SortMenuProps {
   onChange: (value: SortKey) => void;
 }
 
+const ROW_PX = 36;
+const PANEL_PADDING_PX = 16;
+const PANEL_GAP_PX = 8;
+
 /**
  * Liquid-glass sort control — a magnetic pill trigger and a floating glass
  * panel, in the TextUtils navigation idiom (translucent float surface, blur +
@@ -22,6 +26,12 @@ export function SortMenu({ value, onChange }: SortMenuProps) {
   const reduce = useReducedMotion();
   const magnetic = useMagnetic({ strength: 4 });
   const [open, setOpen] = useState(false);
+  // Preference is down (the toolbar usually sits near the top of the page);
+  // flip up only when measured space says down genuinely won't fit — same
+  // idiom as the note editor's TagSelect.
+  const [placement, setPlacement] = useState<"up" | "down">("down");
+  // Same convention as TagSelect/TagMenu's `dir`: +1 opens upward, -1 down.
+  const dir = placement === "up" ? 1 : -1;
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -32,6 +42,17 @@ export function SortMenu({ value, onChange }: SortMenuProps) {
   const close = (refocus = true) => {
     setOpen(false);
     if (refocus) triggerRef.current?.focus();
+  };
+
+  const openMenu = () => {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (rect) {
+      const need = SORT_OPTIONS.length * ROW_PX + PANEL_PADDING_PX + PANEL_GAP_PX;
+      const spaceAbove = rect.top;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      setPlacement(spaceBelow >= need || spaceBelow >= spaceAbove ? "down" : "up");
+    }
+    setOpen(true);
   };
 
   useEffect(() => {
@@ -85,7 +106,7 @@ export function SortMenu({ value, onChange }: SortMenuProps) {
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
         aria-label={`Sort: ${current.label}`}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => (open ? close() : openMenu())}
         onMouseMove={magnetic.onMouseMove}
         onMouseLeave={magnetic.onMouseLeave}
         style={magnetic.style}
@@ -106,13 +127,39 @@ export function SortMenu({ value, onChange }: SortMenuProps) {
             ref={panelRef}
             id={menuId}
             className="sort-menu__panel"
+            data-placement={placement}
             role="menu"
             aria-label="Sort notes"
             onKeyDown={onKeyDown}
-            initial={reduce ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={reduce ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.97 }}
-            transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+            // Same slow overshoot as TagSelect / TagMenu — see TagMenu.tsx.
+            initial={
+              reduce
+                ? { opacity: 0 }
+                : { opacity: 0, y: 20 * dir, scaleY: 0.62, scaleX: 0.96 }
+            }
+            animate={
+              reduce
+                ? { opacity: 1 }
+                : {
+                    opacity: [0, 1, 1, 1],
+                    y: [20 * dir, -8 * dir, 2 * dir, 0],
+                    scaleY: [0.62, 1.08, 0.985, 1],
+                    scaleX: [0.96, 1.02, 0.997, 1],
+                    transition: { duration: 0.46, times: [0, 0.58, 0.86, 1], ease: [0.22, 1, 0.36, 1] },
+                  }
+            }
+            exit={
+              reduce
+                ? { opacity: 0 }
+                : {
+                    opacity: [1, 1, 1, 0],
+                    y: [0, 2 * dir, -8 * dir, 20 * dir],
+                    scaleY: [1, 0.985, 1.08, 0.62],
+                    scaleX: [1, 0.997, 1.02, 0.96],
+                    transition: { duration: 0.4, times: [0, 0.14, 0.42, 1], ease: [0.64, 0, 0.78, 0] },
+                  }
+            }
+            transition={{ duration: 0.16 }}
           >
             {SORT_OPTIONS.map((opt) => (
               <button

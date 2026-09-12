@@ -1,0 +1,71 @@
+/* The opening animation — a recreation of Downloads/Book.mp4: a flat monoline
+   "open book" icon that a pen draws on, light strokes on near-black, no fills,
+   no gradients, no shadow, no 3-D transform. One opaque layer above everything;
+   the real app renders underneath from the first frame, so the circular reveal
+   exposes the running UI, never a swap. All timing lives in OpeningScene.tsx. */
+.opening {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-intro);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  cursor: pointer;
+  background: #000;
+  --reveal-r: 0.5; /* mask hole radius (vmax), driven 0.5 → ~160 by revealOut() */
+}
+
+/* The circular reveal: a soft-edged transparent hole grows from the centre out
+   past the book to the app underneath. `--reveal-r` is written per-frame from
+   JS (setInterval) — no @property registration or keyframe interpolation. */
+.opening[data-revealing] {
+  pointer-events: none;
+  -webkit-mask: radial-gradient(
+    circle calc(var(--reveal-r) * 1vmax) at 50% 50%,
+    transparent 78%,
+    #000 100%
+  );
+  mask: radial-gradient(
+    circle calc(var(--reveal-r) * 1vmax) at 50% 50%,
+    transparent 78%,
+    #000 100%
+  );
+  will-change: mask;
+}
+
+/* The clip's book spans 45 % of the frame width / 69 % of its height; the user
+   asked for a smaller book three times, so this is that at 0.32× (14vw / 22vh).
+   The SVG box (viewBox 100×80) holds the book at 90 % of its width. */
+.opening__stage {
+  width: min(16vw, 31vh);
+}
+.opening__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* the pen ink — a single monoline weight, round caps + joins. The clip's is
+   4.8 at this scale; the user asked for lighter three times, so 1.4. */
+.opening__ink {
+  fill: none;
+  stroke: #e8e8e8;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* the bookmark ribbon is solid — same ink as the lines; its fill-opacity is
+   driven by the draw progress in OpeningScene.tsx */
+.opening__ink--filled {
+  fill: #e8e8e8;
+}
+
+@media (max-width: 600px) {
+  .opening__stage {
+    width: min(29vw, 31vh);
+  }
+}
+
+/* Reduced motion: OpeningScene assembles the finished book with no drawing and
+   fades out (handled in JS). Nothing to disable here — all timing is JS. */

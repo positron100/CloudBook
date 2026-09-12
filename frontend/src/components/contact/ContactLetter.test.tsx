@@ -37,13 +37,14 @@ describe("ContactLetter", () => {
     expect(screen.queryByText(/github|positron100/i)).toBeNull();
   });
 
-  it("ContactReach — direct address with a copy control, no github", () => {
+  it("ContactReach — direct address copies to the clipboard, never opens a mail app", () => {
     render(wrap(<ContactReach />));
-    expect(screen.getByRole("link", { name: /mukuknegi2005@gmail\.com/i })).toHaveAttribute(
-      "href",
-      "mailto:mukuknegi2005@gmail.com",
-    );
-    expect(screen.getByRole("button", { name: /copy email address/i })).toBeInTheDocument();
+    // A button, not a mailto link — clicking it must never hand off to the
+    // visitor's own mail client.
+    const addr = screen.getByRole("button", { name: /mukuknegi2005@gmail\.com/i });
+    expect(addr.tagName).toBe("BUTTON");
+    expect(addr).not.toHaveAttribute("href");
+    expect(screen.getAllByRole("button", { name: /copy email address/i }).length).toBeGreaterThan(0);
     expect(screen.queryByText(/github|positron100/i)).toBeNull();
   });
 });

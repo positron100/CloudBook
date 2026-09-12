@@ -1,14 +1,18 @@
 import { useEffect } from "react";
 import { m, useMotionValue, animate } from "framer-motion";
 import type { Note } from "@shared/types";
+import type { SlotPose } from "@/lib/noteGeometry";
+import { DeskOverlay } from "./DeskOverlay";
 import { NoteFace } from "./NoteFace";
 import "./TearSheet.css";
 
 interface TearSheetProps {
   /** The diary's written-area rect. */
   from: DOMRect;
-  /** The exact slot the new card occupies in the pile. */
-  to: DOMRect;
+  /** The settled pose of the slot this sheet is being placed into — measured
+   *  from layout, not from a rect that may still be mid-animation, and
+   *  carrying the card's resting tilt so the sheet lands *as* the card. */
+  to: SlotPose;
   note: Note;
   onDone: () => void;
 }
@@ -16,20 +20,18 @@ interface TearSheetProps {
 // The torn top edge, drawn as a clip polygon (8 points across the top, 2 at the
 // bottom). The tear runs left→right: the spine bites first (NICK), the rip
 // crosses the middle (HALF), then the sheet is free (TORN), and it relaxes back
-// toward flat in flight (SETTLE → FLAT). Exported so the opening intro's page
-// tears with the exact same edge language.
-export const EDGE_FLAT =
+// toward flat in flight (SETTLE → FLAT).
+const EDGE_FLAT =
   "polygon(0% 0.5%, 13% 0.2%, 27% 0.6%, 41% 0.1%, 55% 0.5%, 69% 0.2%, 82% 0.7%, 100% 0.3%, 100% 100%, 0% 100%)";
-export const EDGE_NICK =
+const EDGE_NICK =
   "polygon(0% 2.6%, 13% 0.6%, 27% 2.9%, 41% 0.4%, 55% 0.5%, 69% 0.2%, 82% 0.7%, 100% 0.3%, 100% 100%, 0% 100%)";
-export const EDGE_HALF =
+const EDGE_HALF =
   "polygon(0% 2.6%, 13% 0.5%, 27% 3.3%, 41% 1.0%, 55% 2.8%, 69% 0.7%, 82% 1.2%, 100% 0.4%, 100% 100%, 0% 100%)";
-export const EDGE_TORN =
+const EDGE_TORN =
   "polygon(0% 2.6%, 13% 0.5%, 27% 3.4%, 41% 1.1%, 55% 2.8%, 69% 0.7%, 82% 3.6%, 100% 1.5%, 100% 100%, 0% 100%)";
-export const EDGE_SETTLE =
+const EDGE_SETTLE =
   "polygon(0% 1.3%, 13% 0.4%, 27% 1.7%, 41% 0.5%, 55% 1.4%, 69% 0.4%, 82% 1.8%, 100% 0.7%, 100% 100%, 0% 100%)";
 
-const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 /**
@@ -72,71 +74,88 @@ export function TearSheet({ from, to, note, onDone }: TearSheetProps) {
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
-      // 1 — resistance (~85ms). The page pulls against the binding: it dips,
+      // 1 — resistance (~120ms). The page pulls against the binding: it dips,
       // the sheet bows, the holes stretch, the shadow lifts a little, and only
       // the spine end of the perforation has opened. Nothing has left yet.
       await Promise.all([
-        animate(y, 4, { duration: 0.085, ease: "easeOut" }),
-        animate(scaleY, upY * 1.02, { duration: 0.085, ease: "easeOut" }),
-        animate(skewX, -1.4, { duration: 0.085, ease: "easeOut" }),
-        animate(clipPath, EDGE_NICK, { duration: 0.085, ease: "easeOut" }),
-        animate(bindTension, 1, { duration: 0.09, ease: "easeOut" }),
-        animate(lift, 0.3, { duration: 0.085, ease: "easeOut" }),
+        animate(y, 4, { duration: 0.12, ease: "easeOut" }),
+        animate(scaleY, upY * 1.02, { duration: 0.12, ease: "easeOut" }),
+        animate(skewX, -1.4, { duration: 0.12, ease: "easeOut" }),
+        animate(clipPath, EDGE_NICK, { duration: 0.12, ease: "easeOut" }),
+        animate(bindTension, 1, { duration: 0.12, ease: "easeOut" }),
+        animate(lift, 0.3, { duration: 0.12, ease: "easeOut" }),
       ]);
       if (cancelled) return;
 
-      // 2 — release (~80ms). The rip runs across the rest of the edge and, a
-      // beat in, the sheet lifts — accelerating, so the carry inherits its
-      // speed rather than starting from rest.
-      animate(clipPath, [EDGE_NICK, EDGE_HALF, EDGE_TORN], {
-        duration: 0.1,
-        times: [0, 0.55, 1],
-        ease: [0.3, 0, 0.4, 1],
-      });
-      animate(scaleY, upY, { duration: 0.12, ease: "easeOut" });
-      animate(y, -13, { duration: 0.14, ease: [0.4, 0, 0.65, 1] });
-      animate(rotate, -2.4, { duration: 0.14, ease: [0.4, 0, 0.65, 1] });
-      animate(lift, 1, { duration: 0.14, ease: "easeOut" });
-      await sleep(80);
+      // 2 — release (~230ms). The rip runs across the rest of the edge while
+      // the sheet lifts — accelerating, so the carry inherits its speed rather
+      // than starting from rest. Awaited (not a fixed sleep) so stage 3 always
+      // picks up exactly where this leaves off, with no gap or double-motion.
+      const REL = 0.23;
+      await Promise.all([
+        animate(clipPath, [EDGE_NICK, EDGE_HALF, EDGE_TORN], {
+          duration: REL,
+          times: [0, 0.55, 1],
+          ease: [0.3, 0, 0.4, 1],
+        }),
+        animate(scaleY, upY, { duration: REL, ease: [0.3, 0, 0.4, 1] }),
+        animate(y, -13, { duration: REL, ease: [0.4, 0, 0.5, 1] }),
+        animate(rotate, -2.4, { duration: REL, ease: [0.4, 0, 0.5, 1] }),
+        animate(lift, 1, { duration: REL, ease: [0.3, 0, 0.4, 1] }),
+      ]);
       if (cancelled) return;
 
-      // 3 — uninterrupted flight (~460ms). Carries from the release velocity;
+      // 3 — uninterrupted flight (~660ms). Carries from the release velocity;
       // the ragged edge relaxes as the sheet flies free; every channel lands
       // on the card's exact pose in the same frame. The pile takes the page
       // with a 1px dip just before the handoff.
-      const D = 0.46;
+      const D = 0.66;
       const yFrom = y.get();
-      animate(skewX, [skewX.get(), 0.6, 0], { duration: D, ease: "easeInOut" });
-      animate(lift, [1, 0.55, 0], { duration: D, ease: "easeInOut" });
+      animate(skewX, [skewX.get(), 0.6, 0], { duration: D, ease: [0.33, 0, 0.4, 1] });
+      animate(lift, [1, 0.55, 0], { duration: D, ease: [0.33, 0, 0.4, 1] });
       animate(bindTension, 0, { duration: D * 0.6, ease: "easeOut" });
       animate(clipPath, [EDGE_TORN, EDGE_SETTLE, EDGE_FLAT], {
         duration: D * 0.72,
         times: [0, 0.45, 1],
         ease: "easeOut",
       });
-      window.setTimeout(() => {
-        if (cancelled) return;
-        const esc = window.CSS?.escape ?? String;
-        const card = document.querySelector(`[data-note-id="${esc(note._id)}"]`);
-        if (card) {
-          card.setAttribute("data-received", "");
-          window.setTimeout(() => card.removeAttribute("data-received"), 320);
-        }
-      }, D * 1000 - 70);
+      window.setTimeout(
+        () => {
+          if (cancelled) return;
+          const esc = window.CSS?.escape ?? String;
+          const card = document.querySelector(
+            `[data-note-id="${esc(note._id)}"]`,
+          );
+          if (card) {
+            card.setAttribute("data-received", "");
+            window.setTimeout(() => card.removeAttribute("data-received"), 320);
+          }
+        },
+        D * 1000 - 70,
+      );
       await Promise.all([
         animate(x, dx, { duration: D, ease: [0.22, 0.55, 0.3, 1] }),
-        // rise toward the line, then settle straight onto the pile — no overshoot
+        // rise toward the line, then settle straight onto the pile — no
+        // overshoot. One shared ease across both segments (rather than two
+        // named eases meeting mid-flight) keeps the arc's velocity continuous
+        // through the join, and the longer back half gives the landing a
+        // softer final settle.
         animate(y, [yFrom, dy - 22, dy], {
           duration: D,
-          times: [0, 0.52, 1],
-          ease: ["easeOut", "easeInOut"],
+          times: [0, 0.44, 1],
+          ease: [0.33, 0, 0.2, 1],
         }),
-        // rotational inertia — swings the other way, settles flat
-        animate(rotate, [rotate.get(), 1.1, 0.2, 0], {
-          duration: D,
-          times: [0, 0.42, 0.78, 1],
-          ease: "easeInOut",
-        }),
+        // rotational inertia — swings the other way, settles onto the tilt the
+        // card rests at in the pile (not square, or it would twitch on handoff)
+        animate(
+          rotate,
+          [rotate.get(), to.rotate + 1.1, to.rotate + 0.2, to.rotate],
+          {
+            duration: D,
+            times: [0, 0.42, 0.78, 1],
+            ease: "easeInOut",
+          },
+        ),
         // page-sized for most of the trip, converges late and gently
         animate(scaleX, [upX, upX * 0.985, lerp(upX, 1, 0.72), 1], {
           duration: D,
@@ -159,29 +178,31 @@ export function TearSheet({ from, to, note, onDone }: TearSheetProps) {
   }, []);
 
   return (
-    <m.div
-      className="tear-sheet"
-      aria-hidden="true"
-      style={{
-        position: "fixed",
-        left: startLeft,
-        top: startTop,
-        width: to.width,
-        height: to.height,
-        transformOrigin: "top left",
-        zIndex: 850,
-        x,
-        y,
-        rotate,
-        skewX,
-        scaleX,
-        scaleY,
-        clipPath,
-        ["--lift" as string]: lift,
-        ["--bind-tension" as string]: bindTension,
-      }}
-    >
-      <NoteFace note={note} />
-    </m.div>
+    <DeskOverlay>
+      <m.div
+        className="tear-sheet"
+        aria-hidden="true"
+        style={{
+          position: "fixed",
+          left: startLeft,
+          top: startTop,
+          width: to.width,
+          height: to.height,
+          transformOrigin: "top left",
+          zIndex: 850,
+          x,
+          y,
+          rotate,
+          skewX,
+          scaleX,
+          scaleY,
+          clipPath,
+          ["--lift" as string]: lift,
+          ["--bind-tension" as string]: bindTension,
+        }}
+      >
+        <NoteFace note={note} />
+      </m.div>
+    </DeskOverlay>
   );
 }

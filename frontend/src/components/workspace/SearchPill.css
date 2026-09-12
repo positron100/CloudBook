@@ -1,0 +1,77 @@
+/* Closed: a circular glass icon button, same family as TagMenu/SortMenu's
+   compact triggers. Open: the SAME element grows into a full glass pill —
+   no swapped DOM, just width/padding/justify-content animating. */
+.search-pill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--control-h);
+  height: var(--control-h);
+  border-radius: var(--radius-pill);
+  background: var(--glass-sheen), var(--glass-bg-primary);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--elev-1), var(--glass-highlight);
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    background-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard);
+}
+.search-pill:hover {
+  background: var(--glass-sheen), var(--glass-bg-primary-hover);
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--elev-2), var(--glass-highlight-hover);
+}
+.search-pill:focus-within {
+  background: var(--glass-sheen), var(--glass-bg-primary-hover);
+  border-color: color-mix(in oklab, var(--accent) 45%, transparent);
+  box-shadow: 0 0 0 3px var(--accent-soft), var(--elev-1), var(--glass-highlight-hover);
+}
+.search-pill:active {
+  background: var(--glass-sheen), var(--glass-bg-primary-pressed);
+  border-color: var(--glass-border-pressed);
+  box-shadow: var(--elev-1), var(--glass-highlight-pressed);
+}
+.search-pill[data-open] {
+  flex: 1 1 auto;
+  width: 100%;
+  justify-content: flex-start;
+  padding-inline: var(--space-3);
+  cursor: text;
+}
+
+.search-pill__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  color: var(--fg-muted);
+  pointer-events: none;
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+.search-pill[data-open] .search-pill__icon {
+  color: var(--accent);
+}
+
+.search-pill__input {
+  flex: none;
+  min-width: 0;
+  margin-left: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  padding: 0;
+}
+.search-pill[data-open] .search-pill__input {
+  margin-left: 8px;
+}
+.search-pill__input::placeholder {
+  color: var(--fg-faint);
+}

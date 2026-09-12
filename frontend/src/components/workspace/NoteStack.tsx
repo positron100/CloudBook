@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, m } from "framer-motion";
+import { AnimatePresence, LayoutGroup, m } from "framer-motion";
 import type { Note } from "@shared/types";
 import { Icon } from "@/components/ui";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
@@ -18,6 +18,8 @@ interface NoteStackProps {
   hiddenId?: string | null;
   /** Card that just landed — settles into the pile instead of rising in. */
   arrivedId?: string | null;
+  /** Briefly emphasized right before it opens — see Workspace's `settle`. */
+  highlightId?: string | null;
 }
 
 // Deterministic pose per position in a column — a placed pile, not a shuffle.
@@ -25,6 +27,10 @@ const ROT = [-1, 0.8, -0.6, 1.1, -0.9, 0.5];
 const TX = [-4, 5, -3, 4, -5, 3];
 
 const ENTER_SPRING = { type: "spring", stiffness: 320, damping: 30, mass: 0.9 } as const;
+// A calmer spring for the board *reflowing* (existing cards sliding to a new
+// slot) — no overshoot, so only a newly arriving note gets the springier
+// entrance above; everyone else just glides.
+const REFLOW_SPRING = { type: "spring", stiffness: 260, damping: 34, mass: 0.9 } as const;
 
 /**
  * The clipboard — a horizontal pile of torn pages. Notes fill short columns
@@ -41,6 +47,7 @@ export function NoteStack({
   deletingId,
   hiddenId,
   arrivedId,
+  highlightId,
 }: NoteStackProps) {
   const reduce = useReducedMotion();
   const sideBySide = useMediaQuery("(min-width: 1200px)");
@@ -79,6 +86,14 @@ export function NoteStack({
   return (
     <div className="note-stack" data-more={!atEnd || undefined}>
       <div className="note-stack__scroll" ref={scrollRef}>
+        {/* `layoutId` (below, per card) bridges a note across columns: when an
+            insertion shifts notes into a different column, React unmounts the
+            card from its old column's list and mounts a "new" one in its new
+            column's list — ordinarily an instant swap (the old jump/pop bug).
+            LayoutGroup + a shared layoutId tells Framer these are the same
+            physical sheet, so it FLIPs continuously from the old box to the
+            new one instead of popping. */}
+        <LayoutGroup>
         {columns.map((col, colIndex) => (
           <div
             className="note-stack__col"
@@ -93,6 +108,7 @@ export function NoteStack({
                 return (
                   <m.div
                     key={note._id}
+                    layoutId={`note-${note._id}`}
                     layout={reduce ? false : "position"}
                     className="note-stack__slot"
                     style={
@@ -104,16 +120,29 @@ export function NoteStack({
                     }
                     initial={reduce ? { opacity: 0 } : { opacity: 0, y: 20, scale: 0.94 }}
                     animate={
-                      suppressed ? { opacity: 0, scale: 1 } : { opacity: 1, y: 0, scale: 1 }
+                      // A suppressed slot is standing in for a sheet that is
+                      // currently in flight (or open in the editor). It must
+                      // sit at its *exact* settled pose — `y: 0` included —
+                      // because that is what the flying sheet is aiming at.
+                      // Leaving the mount offset in would land the sheet 20px
+                      // low and make the card jump when it is revealed.
+                      suppressed
+                        ? { opacity: 0, y: 0, scale: 1 }
+                        : { opacity: 1, y: 0, scale: 1 }
                     }
                     exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.9, y: 8 }}
-                    transition={
-                      suppressed || arrived
+                    transition={{
+                      ...(suppressed || arrived
                         ? { duration: 0 } // the flying sheet already did the motion — no swap flicker
                         : reduce
                           ? { duration: 0.15 }
-                          : ENTER_SPRING
-                    }
+                          : ENTER_SPRING),
+                      // The reflow FLIP (this card sliding to a new slot because
+                      // another note was inserted/removed elsewhere) always gets
+                      // the calmer spring, independent of whether this card is
+                      // itself entering/exiting/suppressed.
+                      layout: reduce ? { duration: 0.15 } : REFLOW_SPRING,
+                    }}
                   >
                     <NoteCard
                       note={note}
@@ -123,6 +152,7 @@ export function NoteStack({
                       onEdit={onEdit}
                       onDelete={onDelete}
                       deleting={deletingId === note._id}
+                      highlighted={note._id === highlightId}
                     />
                   </m.div>
                 );
@@ -130,6 +160,7 @@ export function NoteStack({
             </AnimatePresence>
           </div>
         ))}
+        </LayoutGroup>
       </div>
 
       {!atEnd && (

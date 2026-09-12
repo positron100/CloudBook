@@ -401,32 +401,43 @@
   align-items: center;
   gap: 2px;
   padding: 3px 3px 3px var(--space-2);
-  border: 1px solid color-mix(in oklab, var(--border) 55%, transparent);
+  /* Secondary tier — a compact utility control (address + copy), the same
+     weight class as Tag/Sort, not a major surface (shared glass tokens). */
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-pill);
-  background-color: color-mix(in oklab, var(--float) 62%, transparent);
-  backdrop-filter: blur(12px) saturate(1.4);
-  -webkit-backdrop-filter: blur(12px) saturate(1.4);
-  box-shadow:
-    var(--elev-1),
-    inset 0 1px 0 color-mix(in oklab, var(--key-light) 55%, transparent);
-  transition: box-shadow var(--dur-fast) var(--ease-standard);
+  background: var(--glass-sheen), var(--glass-bg-secondary);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--elev-1), var(--glass-highlight);
+  transition:
+    background-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
   will-change: transform;
 }
-.contact-reach:hover {
-  box-shadow:
-    var(--elev-2),
-    inset 0 1px 0 color-mix(in oklab, var(--key-light) 70%, transparent);
+.contact-reach:hover,
+.contact-reach:focus-within {
+  background: var(--glass-sheen), var(--glass-bg-secondary-hover);
+  box-shadow: var(--elev-2), var(--glass-highlight-hover);
+}
+/* The clickable surfaces are the children (address link, copy button); :has()
+   lets the shared pill itself show the press rather than only the child. */
+.contact-reach:has(:active) {
+  background: var(--glass-sheen), var(--glass-bg-secondary-pressed);
+  box-shadow: var(--elev-1), var(--glass-highlight-pressed);
 }
 .contact-reach__addr {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-1) var(--space-2);
+  border: 0;
   border-radius: var(--radius-pill);
+  background: transparent;
   color: var(--fg-muted);
   font-family: var(--font-sans);
   font-size: var(--text-label);
   text-decoration: none;
+  cursor: pointer;
   transition: color var(--dur-fast) var(--ease-standard);
 }
 .contact-reach__addr:hover {

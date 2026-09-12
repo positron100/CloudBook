@@ -1,13 +1,18 @@
+/* A floating liquid-glass pill, detached from every edge — the same object as
+   the desktop nav's .topnav__inner, adapted to a compact icon row. The outer
+   <nav> is a transparent positioning frame (pointer-events: none) so only the
+   pill itself catches the pointer; the gutters around it stay part of the
+   page/desk. */
 .bottomnav {
   position: fixed;
-  bottom: 0;
   left: 0;
   right: 0;
+  bottom: 0;
   z-index: var(--z-nav);
-  background-color: color-mix(in oklab, var(--float) 92%, transparent);
-  backdrop-filter: blur(12px);
-  border-top: var(--border-width) solid var(--border);
-  padding-bottom: env(safe-area-inset-bottom);
+  display: flex;
+  justify-content: center;
+  padding: 0 var(--space-4) max(var(--space-4), env(safe-area-inset-bottom));
+  pointer-events: none;
 }
 @media (min-width: 768px) {
   .bottomnav {
@@ -15,25 +20,66 @@
   }
 }
 
+.bottomnav__pill {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 21rem;
+  border-radius: var(--radius-pill);
+  /* Glass + paper + light, not a white rounded rectangle: noticeably more
+     translucent than a solid surface (the desk shows through), a restrained
+     blur, and a soft directional shadow — falling down-and-right, consistent
+     with the desk's upper-left key light — instead of a symmetric drop
+     shadow. That reads as a small object resting just above the desk.
+     Sheen/blur/border/highlight draw from the shared glass tokens
+     (tokens.css); the background alpha is kept a touch higher than the
+     shared --glass-bg-primary on purpose — this pill carries small
+     (0.6875rem) labels over a busy background, and primary tier's own
+     alpha was tuned for larger surfaces with more room to spare. The
+     directional shadow is this pill's own signature, kept local. */
+  background: var(--glass-sheen), color-mix(in oklab, var(--float) 48%, transparent);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--border-width) solid var(--glass-border);
+  box-shadow:
+    0 1px 1px hsl(var(--shadow-hsl) / 0.04),
+    2px 8px 18px -9px hsl(var(--shadow-hsl) / 0.22),
+    var(--glass-highlight);
+}
+
 .bottomnav__list {
+  position: relative;
   display: flex;
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 3px;
+  /* horizontal movement turns the page (useDragTurn); vertical stays the
+     browser's scroll */
+  touch-action: pan-y;
 }
 .bottomnav__item {
+  position: static;
   flex: 1;
+  min-width: 0;
 }
 .bottomnav__link {
+  /* a press-drag that starts on a link is the page-turn gesture, not a text
+     selection or a native link drag */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-drag: none;
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 3px;
   width: 100%;
-  min-height: var(--bottom-nav-height);
-  padding: var(--space-2) var(--space-1);
+  min-height: 2.75rem;
+  padding: 0.4rem var(--space-1);
   border: none;
+  border-radius: var(--radius-pill);
   background: transparent;
   color: var(--fg-faint);
   font-family: var(--font-sans);
@@ -41,11 +87,67 @@
   font-weight: var(--weight-medium);
   text-decoration: none;
   cursor: pointer;
-  transition: color var(--dur-fast) var(--ease-standard);
+  transition:
+    color var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
 }
+.bottomnav__label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* A faint tint under the label before it's the active item — the same glass
+   material the pill itself is made of, not a generic hover background. The
+   active .nav-indicator (its own glass capsule) takes over once selected. */
 .bottomnav__link:hover {
   color: var(--fg-muted);
+  background: var(--glass-sheen), var(--glass-bg-subtle-hover);
+}
+.bottomnav__link:active {
+  background: var(--glass-sheen), var(--glass-bg-subtle-pressed);
 }
 .bottomnav__link[aria-current="page"] {
-  color: var(--accent);
+  color: var(--fg);
+  font-weight: var(--weight-semibold);
+}
+.bottomnav__link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Very narrow screens: the pill keeps its floating gap, just with tighter
+   internal spacing — it never grows to touch the viewport edges. */
+@media (max-width: 374px) {
+  .bottomnav {
+    padding-inline: var(--space-3);
+  }
+  .bottomnav__link {
+    min-height: 2.5rem;
+    padding-inline: 2px;
+  }
+}
+
+/* Landscape phones: less vertical room — trim the floating gap rather than
+   letting the pill crowd the content above it. */
+@media (max-height: 480px) and (orientation: landscape) {
+  .bottomnav {
+    padding-bottom: max(var(--space-2), env(safe-area-inset-bottom));
+  }
+  .bottomnav__link {
+    min-height: 2.25rem;
+  }
+}
+
+/* The active pill sits *under* the icon/label as one continuous surface, not
+   a background swap — slightly taller than the desktop marker (mobile items
+   are taller, icon-over-label) and lighter, so it reads as the same glass
+   object catching light rather than a solid capsule. */
+.bottomnav__list .nav-indicator {
+  height: calc(100% - 6px);
+  background-color: color-mix(in oklab, var(--sheet-raised) 82%, transparent);
+  box-shadow: var(--elev-1);
+}
+:root[data-theme="dark"] .bottomnav__list .nav-indicator {
+  background-color: color-mix(in oklab, var(--sheet-raised) 60%, transparent);
 }

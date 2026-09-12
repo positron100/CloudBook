@@ -1,16 +1,112 @@
-/* Transparent transform layer around the routed page. At rest it is a plain
-   block; during a dissolve it carries the scale / opacity / blur. The nav and
-   the desk backdrop sit outside it and never move. */
-.route-stage {
-  display: block;
+/* Section navigation = turning a page of the same book as the opening.
+   `.route-host` is the desk the page lies on (it provides the perspective);
+   `.route-stage` is the page itself. During a turn a static snapshot of the
+   outgoing page (`.page-turn`) is laid over it and swung over the spine while
+   the real next page sits underneath. The nav and the desk backdrop sit
+   outside all of this and never move. */
+.route-host {
+  position: relative;
+  flex: 1;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  perspective: 1800px;
+  perspective-origin: 50% 35%;
+}
+/* The one stable content frame. Every section renders into this exact column —
+   same width, same inline/block padding, same minimum height — so switching
+   sections is a change of contents, not a re-layout of the page. Sections must
+   NOT set their own max-width / margin-inline / full-viewport min-height; they
+   compose *within* this frame. */
+.route-stage {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--pad-page-inline);
+  padding-block: var(--space-6);
+  min-height: calc(100svh - var(--nav-height) - 2 * var(--space-3));
   transform-origin: center 40%;
+}
+.route-stage > * {
+  flex: 1;
+  min-width: 0;
+}
+
+/* --- the turning leaf ----------------------------------------------------- */
+.page-turn {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 2;
+  pointer-events: none;
+  transform-style: preserve-3d;
+}
+.page-turn__panel {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  backface-visibility: hidden; /* the leaf disappears edge-on, no mirrored back */
+  will-change: transform;
+}
+/* the spine half rotates about the spine edge; the leading half is nested in
+   it and rotates a little further about the crease, so the sheet bends */
+.page-turn[data-dir="forward"] .page-turn__panel--spine { transform-origin: 0% 50%; }
+.page-turn[data-dir="back"] .page-turn__panel--spine { transform-origin: 100% 50%; }
+.page-turn__panel--edge { transform-origin: 50% 50%; }
+
+/* each panel holds a full copy of the page, clipped to its own half. The copy
+   is backed with the desk surface so the leaf is opaque paper — the section
+   content alone would let the next page show through it. */
+.page-turn__copy {
+  position: absolute;
+  inset: 0;
+  transform: none !important;
+  background: var(--surface);
+}
+.page-turn[data-dir="forward"] .page-turn__panel--spine > .page-turn__copy { clip-path: inset(0 50% 0 0); }
+.page-turn[data-dir="forward"] .page-turn__panel--edge > .page-turn__copy { clip-path: inset(0 0 0 50%); }
+.page-turn[data-dir="back"] .page-turn__panel--spine > .page-turn__copy { clip-path: inset(0 0 0 50%); }
+.page-turn[data-dir="back"] .page-turn__panel--edge > .page-turn__copy { clip-path: inset(0 50% 0 0); }
+
+/* a soft shade along the crease as the sheet bends — opacity is animated */
+.page-turn__shade {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: linear-gradient(
+    to right,
+    transparent 32%,
+    hsl(var(--shadow-hsl) / 0.28) 50%,
+    transparent 68%
+  );
+}
+
+/* the shadow the lifting leaf casts on the page beneath — opacity is animated */
+.page-turn__cast {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  /* feather top and bottom so the band has no hard edge against the desk */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent);
+}
+.page-turn__cast[data-dir="forward"] {
+  background: linear-gradient(to right, hsl(var(--shadow-hsl) / 0.16), transparent 55%);
+}
+.page-turn__cast[data-dir="back"] {
+  background: linear-gradient(to left, hsl(var(--shadow-hsl) / 0.16), transparent 55%);
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .page-turn,
+  .page-turn__cast {
+    display: none;
+  }
   .route-stage {
     transform: none !important;
-    filter: none !important;
     opacity: 1 !important;
   }
 }

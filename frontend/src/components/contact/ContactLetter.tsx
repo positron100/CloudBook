@@ -29,8 +29,10 @@ const CONTACT_EMAIL = "mukuknegi2005@gmail.com";
  *   delivered → it resolves into the confirmation
  *   unsealing → "Write another" runs the seal backwards to a blank letter
  *
- * No backend — "Seal & Send" opens the visitor's mail client with the letter
- * composed. Reduced motion keeps the plain flow: compose, confirm, done.
+ * "Seal & Send" posts the letter to `/api/contact` (a Vercel Edge function
+ * that relays it through Resend — see `api/_contact.ts`); nothing opens the
+ * visitor's own mail client. Reduced motion keeps the plain flow: compose,
+ * confirm, done.
  */
 type Phase = "writing" | "sealing" | "flying" | "delivered" | "unsealing";
 
@@ -74,11 +76,33 @@ export function ContactLetter() {
   const card = useAnimationControls();
   const inFlight = useRef(false);
   const alive = useRef(true);
+  // The letter's one authoritative width — captured once at rest (never
+  // corrupted by an animation) and always the value every fold/unfold
+  // animation starts and ends on. Without this, `width: "auto"` at the end of
+  // each cycle hands sizing back to the *flex item's* shrink-to-fit default
+  // (the `.contact-letter` wrapper is a centering flex column, so an
+  // unstretched "auto" child sizes to its content, not the container) —
+  // narrower than the CSS-authored width, and it compounds on every cycle
+  // since the next fold reads its starting size from that already-shrunk box.
+  const restWidthRef = useRef<number | null>(null);
   useEffect(() => {
     alive.current = true;
     return () => {
       alive.current = false;
     };
+  }, []);
+
+  useEffect(() => {
+    const measure = () => {
+      // Only while genuinely at rest — mid fold/unfold the box is
+      // deliberately not at its resting width, and measuring then would
+      // capture the wrong number.
+      if (inFlight.current || !cardRef.current) return;
+      restWidthRef.current = cardRef.current.offsetWidth;
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
   }, []);
 
   const written = useMemo(() => 3 - Object.keys(validate(values)).length, [values]);
@@ -90,18 +114,17 @@ export function ContactLetter() {
     setFailed(false);
   };
 
-  const compose = () => {
-    const subject = encodeURIComponent(`CloudBook — ${values.name || "a note"}`);
-    const body = encodeURIComponent(`${values.message}\n\nKind regards,\n${values.name}\n${values.email}`);
-    return `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
-  };
-
-  /** Hands the composed letter to the OS mail client. Never throws — a blocked
-   *  handler just means the visitor uses the address in the margin. */
-  const openMail = (): boolean => {
+  /** Posts the letter to `/api/contact`, which relays it through Resend
+   *  server-side. Never throws — a failed request just means the fold
+   *  unwinds and the writer can retry. */
+  const sendLetter = async (): Promise<boolean> => {
     try {
-      window.location.href = compose();
-      return true;
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      return res.ok;
     } catch {
       return false;
     }
@@ -109,17 +132,22 @@ export function ContactLetter() {
 
   async function runDelivery() {
     const el = cardRef.current;
+    // The one authoritative width for this whole cycle — never re-measured
+    // mid-flight, so nothing can compound a shrink across cycles.
+    const width = restWidthRef.current ?? el?.offsetWidth ?? 0;
     if (!el || reduce) {
-      openMail();
-      if (alive.current) {
+      const ok = await sendLetter();
+      if (!alive.current) return;
+      if (ok) {
         setValues(EMPTY);
         setPhase("delivered");
+      } else {
+        setFailed(true);
       }
       return;
     }
 
     const height = el.offsetHeight;
-    const width = el.offsetWidth;
     const envW = Math.min(ENVELOPE.width, width);
 
     // Pin the card to its current size so the first fold frame equals the last
@@ -137,12 +165,15 @@ export function ContactLetter() {
     await sleep(STAGE.flap + STAGE.seal);
     if (!alive.current) return;
 
-    // The "send" is the mail client opening. If that fails, unwind.
-    if (!openMail()) {
+    // The actual send — relayed through Resend server-side. If it fails,
+    // unwind: the letter's content is untouched, so the writer can retry.
+    const ok = await sendLetter();
+    if (!alive.current) return;
+    if (!ok) {
       setPhase("writing");
       await card.start({ height, width }, { duration: STAGE.fold / 1000, ease: ease.standard });
       if (!alive.current) return;
-      card.set({ height: "auto", width: "auto" });
+      card.set({ height: "auto", width });
       setReservedHeight(null);
       setFailed(true);
       return;
@@ -159,7 +190,7 @@ export function ContactLetter() {
     });
     if (!alive.current) return;
 
-    card.set({ x: 0, y: 0, rotate: 0, scale: 1, opacity: 0, height: "auto", width: "auto" });
+    card.set({ x: 0, y: 0, rotate: 0, scale: 1, opacity: 0, height: "auto", width });
     setValues(EMPTY);
     setPhase("delivered");
     setReservedHeight(null);
@@ -194,7 +225,9 @@ export function ContactLetter() {
     inFlight.current = true;
     try {
       const height = el.offsetHeight;
-      const width = el.offsetWidth;
+      // The same authoritative width as runDelivery — never re-measured from
+      // a box that might already be mid-animation or previously corrupted.
+      const width = restWidthRef.current ?? el.offsetWidth;
       card.set({ height, width });
       setReservedHeight(height);
       setPhase("unsealing");
@@ -208,7 +241,7 @@ export function ContactLetter() {
       if (!alive.current) return;
       setPhase("writing");
       await card.start(
-        { height: "auto", width: "auto" },
+        { height: "auto", width },
         { duration: STAGE.fold / 1000, ease: ease.standard },
       );
       if (!alive.current) return;
@@ -312,7 +345,7 @@ export function ContactLetter() {
                       className="contact-letter__error"
                     >
                       <Icon name="alert-circle" size={13} />
-                      Couldn't open your mail app —{" "}
+                      Couldn't send that — try again, or{" "}
                       <a href={`mailto:${CONTACT_EMAIL}`}>email directly</a>.
                     </m.p>
                   )}
@@ -330,8 +363,9 @@ export function ContactLetter() {
 
 /**
  * The direct address + a copy control — a small tactile object that sits under
- * the About note (not on the letter). Magnetic on fine pointers, copy flips to
- * a check for a moment; the mailto link works regardless.
+ * the About note (not on the letter). Magnetic on fine pointers; clicking
+ * either the address itself or the copy button copies it to the clipboard —
+ * neither opens the visitor's own mail client.
  */
 export function ContactReach() {
   const reduce = useReducedMotion();
@@ -343,16 +377,21 @@ export function ContactReach() {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1800);
     } catch {
-      /* mailto still works */
+      /* clipboard unavailable (very old browser / permissions) — no-op */
     }
   };
 
   return (
     <Magnetic as="div" strength={4} className="contact-reach">
-      <a className="contact-reach__addr" href={`mailto:${CONTACT_EMAIL}`}>
+      <button
+        type="button"
+        className="contact-reach__addr"
+        onClick={copyEmail}
+        aria-label={copied ? "Email address copied" : `Copy email address ${CONTACT_EMAIL}`}
+      >
         <Icon name="mail" size={15} />
         <span>{CONTACT_EMAIL}</span>
-      </a>
+      </button>
       <m.button
         type="button"
         className="contact-reach__copy"
@@ -449,7 +488,7 @@ function FlightTrail({ active }: { active: boolean }) {
 }
 
 function Delivered({ onWriteAnother }: { name: string; onWriteAnother: () => void }) {
-  const line = useTypingPreview("Your letter is composed — your mail app should be opening.", true, 34);
+  const line = useTypingPreview("Your letter is on its way to Mukul's desk.", true, 34);
   return (
     <m.div
       className="contact-letter__delivered"

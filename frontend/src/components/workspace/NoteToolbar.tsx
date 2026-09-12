@@ -6,6 +6,8 @@ import { useMagnetic } from "@/hooks/useMagnetic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { type SortKey } from "@/lib/notesQuery";
 import { SortMenu } from "./SortMenu";
+import { TagMenu } from "./TagMenu";
+import { SearchPill } from "./SearchPill";
 import "./NoteToolbar.css";
 
 interface NoteToolbarProps {
@@ -68,7 +70,8 @@ export function NoteToolbar({
       <div className="note-toolbar" role="search">
         {/* `lift` carries the whole affordance: a small pointer magnetism, a
             focus Z-lift instead of a blue ring, and the leading icon rides
-            inside the control so it never drifts out of line with the text. */}
+            inside the control so it never drifts out of line with the text.
+            Desktop only — mobile uses the collapsible icon row below. */}
         <div className="note-toolbar__search">
           <Field
             label="Search notes"
@@ -100,7 +103,27 @@ export function NoteToolbar({
           </m.div>
         )}
 
-        <SortMenu value={sort} onChange={onSort} />
+        <div className="note-toolbar__sort">
+          <SortMenu value={sort} onChange={onSort} />
+        </div>
+
+        {/* Mobile — Search lives in its own flexible slot (grows into
+            whatever room is left); Tag and Sort sit in a plain, un-animated
+            fixed-width group after it. Two flex children, one flexible + one
+            fixed — Tag/Sort's own X is then pure CSS arithmetic (container
+            width minus their own constant width), never touched by React or
+            framer, so they can't drift/jitter as Search's width changes,
+            only Search itself moves. See NoteToolbar.css. */}
+        <div className="note-toolbar__compact">
+          <div className="note-toolbar__compact-search-slot">
+            <SearchPill value={search} onChange={onSearch} />
+          </div>
+
+          <div className="note-toolbar__compact-actions">
+            {tags.length > 0 && <TagMenu tags={tags} activeTag={activeTag} onTag={onTag} />}
+            <SortMenu value={sort} onChange={onSort} />
+          </div>
+        </div>
       </div>
     </LayoutGroup>
   );

@@ -35,11 +35,11 @@ describe("NoteEditor", () => {
     expect(screen.getByLabelText(/^note$/i).tagName).toBe("TEXTAREA");
   });
 
-  it("Save changes hands the edit up, then folds away", async () => {
+  it("Save hands the edit up, then folds away", async () => {
     const user = userEvent.setup({ delay: null });
     const { onSave, onClose } = mount();
     await user.type(screen.getByLabelText(/^note$/i), " today");
-    await user.click(screen.getByRole("button", { name: /save changes/i }));
+    await user.click(screen.getByRole("button", { name: /^save$/i }));
     expect(onSave).toHaveBeenCalledWith("n1", "Standup", "shipped the thing today", "Work");
     await waitFor(() => expect(onClose).toHaveBeenCalled(), { timeout: 4000 });
   });

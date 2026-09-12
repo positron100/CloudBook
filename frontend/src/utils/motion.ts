@@ -29,12 +29,29 @@ export const spring = {
   snappy: { type: "spring", stiffness: 500, damping: 32 } satisfies Transition,
   soft: { type: "spring", stiffness: 260, damping: 28 } satisfies Transition,
   indicator: { type: "spring", stiffness: 380, damping: 34 } satisfies Transition,
+  /** Introducing an element — one small, physical overshoot, then settle.
+   *  Used for the Home nav item appearing on sign-in and the toast entrance.
+   *  Underdamped just enough to read as "placed", never elastic. */
+  bubble: { type: "spring", stiffness: 440, damping: 17, mass: 0.9 } satisfies Transition,
+  /** A firmer sibling for toast surfaces — barely a bounce. */
+  settle: { type: "spring", stiffness: 380, damping: 30 } satisfies Transition,
 } as const;
 
 /** The circular theme reveal (Web Animations API — its own ms units). */
 export const reveal = {
   durationMs: 700,
   easing: "cubic-bezier(0.65, 0, 0.35, 1)",
+} as const;
+
+/**
+ * The signature page turn. Section navigation (RouteTransition) and the
+ * Profile notebook cover both use this, so every leaf in CloudBook turns at
+ * the same unhurried pace: a slow build off the spine, a glide through
+ * vertical, a long soft settle. Gentle at both ends — never a snap.
+ */
+export const pageTurn = {
+  durationMs: 1000,
+  ease: [0.42, 0, 0.25, 1] as [number, number, number, number],
 } as const;
 
 /**
