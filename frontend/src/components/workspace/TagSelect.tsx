@@ -11,6 +11,7 @@ import { Icon } from "@/components/ui";
 import { useMagnetic } from "@/hooks/useMagnetic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { PRESET_TAGS, matchPreset } from "@/lib/tags";
+import { resolvePanelFit } from "@/lib/panelPlacement";
 import "./TagSelect.css";
 
 interface TagSelectProps {
@@ -58,6 +59,10 @@ export function TagSelect({
   // The direction actually used — starts at the preference, resolved against
   // real available space each time the panel opens (see openPanel).
   const [resolved, setResolved] = useState<"up" | "down">(placement);
+  // Set only when the chosen side still can't fit the panel's estimated
+  // height clear of the sticky header / BottomNav — clamps to the visible
+  // gap with internal scroll rather than letting the panel render behind them.
+  const [maxHeight, setMaxHeight] = useState<number | null>(null);
   // +1 opens upward (panel rests above the trigger, entrance travels up into
   // place); -1 opens downward (mirrored). Bounce/exit math below is expressed
   // once in terms of this sign so both directions share the same trace-back.
@@ -110,17 +115,17 @@ export function TagSelect({
   const openPanel = () => {
     setActive(selectedIndex >= 0 ? selectedIndex : 0);
     // Prefer `placement`, but flip if it genuinely won't fit — measured
-    // against the trigger's live position, not assumed from where it usually
-    // sits, so the panel never opens off-screen.
+    // against the trigger's live position (and the sticky header / BottomNav,
+    // which eat into the raw viewport edges), not assumed from where it
+    // usually sits, so the panel never opens behind them or off-screen.
     const rect = triggerRef.current?.getBoundingClientRect();
     if (rect) {
-      const spaceAbove = rect.top;
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const need = PANEL_ESTIMATE_PX + PANEL_GAP_PX;
-      const fitsPreferred = placement === "up" ? spaceAbove >= need : spaceBelow >= need;
-      setResolved(fitsPreferred ? placement : spaceAbove > spaceBelow ? "up" : "down");
+      const fit = resolvePanelFit(rect, placement, PANEL_ESTIMATE_PX, PANEL_GAP_PX);
+      setResolved(fit.placement);
+      setMaxHeight(fit.maxHeightPx);
     } else {
       setResolved(placement);
+      setMaxHeight(null);
     }
     setOpen(true);
   };
@@ -285,6 +290,8 @@ export function TagSelect({
             id={listId}
             className="tag-select__panel"
             data-placement={resolved}
+            data-clamped={maxHeight != null || undefined}
+            style={maxHeight != null ? { maxHeight, overflowY: "auto" } : undefined}
             role="listbox"
             aria-label="Choose a tag"
             aria-activedescendant={`${listId}-${active}`}

@@ -4,6 +4,7 @@ import { Icon } from "@/components/ui";
 import { useMagnetic } from "@/hooks/useMagnetic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { SORT_OPTIONS, type SortKey } from "@/lib/notesQuery";
+import { resolvePanelFit } from "@/lib/panelPlacement";
 import "./SortMenu.css";
 
 interface SortMenuProps {
@@ -30,6 +31,7 @@ export function SortMenu({ value, onChange }: SortMenuProps) {
   // flip up only when measured space says down genuinely won't fit — same
   // idiom as the note editor's TagSelect.
   const [placement, setPlacement] = useState<"up" | "down">("down");
+  const [maxHeight, setMaxHeight] = useState<number | null>(null);
   // Same convention as TagSelect/TagMenu's `dir`: +1 opens upward, -1 down.
   const dir = placement === "up" ? 1 : -1;
   const rootRef = useRef<HTMLDivElement>(null);
@@ -47,10 +49,10 @@ export function SortMenu({ value, onChange }: SortMenuProps) {
   const openMenu = () => {
     const rect = triggerRef.current?.getBoundingClientRect();
     if (rect) {
-      const need = SORT_OPTIONS.length * ROW_PX + PANEL_PADDING_PX + PANEL_GAP_PX;
-      const spaceAbove = rect.top;
-      const spaceBelow = window.innerHeight - rect.bottom;
-      setPlacement(spaceBelow >= need || spaceBelow >= spaceAbove ? "down" : "up");
+      const need = SORT_OPTIONS.length * ROW_PX + PANEL_PADDING_PX;
+      const fit = resolvePanelFit(rect, "down", need, PANEL_GAP_PX);
+      setPlacement(fit.placement);
+      setMaxHeight(fit.maxHeightPx);
     }
     setOpen(true);
   };
@@ -128,6 +130,8 @@ export function SortMenu({ value, onChange }: SortMenuProps) {
             id={menuId}
             className="sort-menu__panel"
             data-placement={placement}
+            data-clamped={maxHeight != null || undefined}
+            style={maxHeight != null ? { maxHeight, overflowY: "auto" } : undefined}
             role="menu"
             aria-label="Sort notes"
             onKeyDown={onKeyDown}

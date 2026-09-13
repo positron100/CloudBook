@@ -3,6 +3,7 @@ import { AnimatePresence, m } from "framer-motion";
 import { Icon } from "@/components/ui";
 import { useMagnetic } from "@/hooks/useMagnetic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { resolvePanelFit } from "@/lib/panelPlacement";
 import "./TagMenu.css";
 
 interface TagMenuProps {
@@ -29,6 +30,7 @@ export function TagMenu({ tags, activeTag, onTag }: TagMenuProps) {
   const magnetic = useMagnetic({ strength: 4 });
   const [open, setOpen] = useState(false);
   const [placement, setPlacement] = useState<"up" | "down">("down");
+  const [maxHeight, setMaxHeight] = useState<number | null>(null);
   // +1 opens upward (panel rests above the trigger, entrance travels up into
   // place); -1 opens downward — same convention as TagSelect's own `dir`.
   const dir = placement === "up" ? 1 : -1;
@@ -48,12 +50,13 @@ export function TagMenu({ tags, activeTag, onTag }: TagMenuProps) {
   const openMenu = () => {
     const rect = triggerRef.current?.getBoundingClientRect();
     if (rect) {
-      const need = options.length * ROW_PX + PANEL_PADDING_PX + PANEL_GAP_PX;
-      const spaceAbove = rect.top;
-      const spaceBelow = window.innerHeight - rect.bottom;
       // Prefer down (the row usually sits near the top of the page); flip up
-      // only when down genuinely doesn't fit.
-      setPlacement(spaceBelow >= need || spaceBelow >= spaceAbove ? "down" : "up");
+      // only when down genuinely doesn't fit clear of the sticky header /
+      // BottomNav.
+      const need = options.length * ROW_PX + PANEL_PADDING_PX;
+      const fit = resolvePanelFit(rect, "down", need, PANEL_GAP_PX);
+      setPlacement(fit.placement);
+      setMaxHeight(fit.maxHeightPx);
     }
     setOpen(true);
   };
@@ -128,6 +131,8 @@ export function TagMenu({ tags, activeTag, onTag }: TagMenuProps) {
             id={menuId}
             className="tag-menu__panel"
             data-placement={placement}
+            data-clamped={maxHeight != null || undefined}
+            style={maxHeight != null ? { maxHeight, overflowY: "auto" } : undefined}
             role="menu"
             aria-label="Filter notes by tag"
             onKeyDown={onKeyDown}
